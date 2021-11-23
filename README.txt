@@ -32,17 +32,34 @@ List of algorithms
 
 You don't have to use all of those algorithms. The algorithm indices of the best choices for different situations are as follows:
 
-					   Dynamic range
-				low (<= 16-bit)	high (> 16-bit)
-	    single thread             2                     9
-shared-memory multithread            11                    12
+					                                Dynamic range
+                                 low (<= 16-bit)  	high (> 16-bit)
+--------------------------------------------------------------------
+	          single-thread     |          2                9
+shared-memory multi-thread    |         11               12
 
 
 After calling the method BuildAlphaTree, the alpha tree is constructed as the array of AlphaNodes (AlphaNode *node) in the class ATree. You can validate the alpha-tree by calling a simple area-based filter:
 
 void AreaFilter(double *outimg, double area)
-	
-where outimg is the preallocated memory space to put the output image in, and area is the parameter of the area filter used as the threshold in filtering.		
+
+where outimg is the preallocated memory space to put the output image in, and area is the parameter of the area filter used as the threshold in filtering.
+
+List of sentinel-2 remote sensing images used in [6]
+
+This is the list of images used to test alpha-tree algorithms in my research [6]. You can download them from Copernicus Open Access Hub (https://scihub.copernicus.eu/dhus/#/home). You will need to make a free account, and probably have to wait for a few hours after requesting for each image to download them.
+
+Here is the list of product names of the images I used that you can use to search in the open access hub.
+
+S2A_MSIL1C_20151206T075212_N0204_R092_T37PFP_20151206T075547.SAFE
+S2A_MSIL1C_20151206T075212_N0204_R092_T37PGQ_20151206T075547.SAFE
+S2A_MSIL1C_20151229T075332_N0201_R135_T37PCN_20151229T080343.SAFE
+S2A_MSIL1C_20151229T075332_N0201_R135_T37PDQ_20151229T080343.SAFE
+S2A_MSIL1C_20151208T100412_N0204_R122_T32SNE_20151208T100409.SAFE
+S2A_MSIL1C_20151208T100412_N0204_R122_T32SPE_20151208T100409.SAFE
+S2A_MSIL1C_20151211T083342_N0204_R021_T36RUU_20151211T083340.SAFE
+S2A_MSIL1C_20151211T083342_N0204_R021_T36RVV_20151211T083340.SAFE
+S2A_MSIL1C_20151211T101412_N0204_R022_T32SLE_20151211T101905.SAFE
 
 [1] G. K. Ouzounis and P. Soille, The alpha-tree algorithm, theory, algorithms, and applications, ser. JRC Technical Reports, Joint Research Centre. European Commission, 2012
 [2] P. Salembier and J. Serra, “Flat zones filtering, connected operators, and filters by reconstruction,” IEEE Transactions on Image Processing, vol. 7, no. 4, pp. 1153–1160, 1995.
@@ -51,4 +68,3 @@ where outimg is the preallocated memory space to put the output image in, and ar
 [5] M. H. F. Wilkinson, “A fast component-tree algorithm for high dynamic-range images and second generation connectivity,” inICIP 2011, 18thIEEE International Conference on Image Processing, 2011, pp. 1021–1024.
 [6] J.  You,  S.  C.  Trager,  and  M.  H.  F.  Wilkinson,  “Efficient Alpha-Tree Algorithms”, to be submitted, 2021
 [7] U. Moschini, A. Meijster, and M. H. F. Wilkinson, “A hybrid shared-memory parallel max-tree algorithm for extreme dynamic-range images,”IEEE transactions on pattern analysis and machine intelligence, vol. 40,no. 3, pp. 513–526, 2017
-
