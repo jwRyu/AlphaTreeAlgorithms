@@ -32,10 +32,10 @@ List of algorithms
 
 You don't have to use all of those algorithms. The algorithm indices of the best choices for different situations are as follows:
 
-					                                Dynamic range
-                                 low (<= 16-bit)  	high (> 16-bit)
+                                            Dynamic range
+                                 low (<= 16-bit)      high (> 16-bit)
 --------------------------------------------------------------------
-	          single-thread     |          2                9
+	     single-thread    |          2                9
 shared-memory multi-thread    |         11               12
 
 
