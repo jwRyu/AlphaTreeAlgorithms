@@ -3,6 +3,8 @@ Alpha-Tree algorithms
 by Jiwoo Ryu (You), November 2021
 Parallel radix sorting written by Paul Teeninga.
 
+*The test code in the current version only accept pgm files as an input.
+
 This C++ code implements several serial and shared-memory parallel alpha-tree algorithms for both low dynamic range (LDR) images and high dynamic range (HDR) images. Use the makefile to compile (the code was developed on gcc 9.3.0, Ubuntu 20.04.2 LTS). An alpha-tree can be built by calling the following method:
 
 void BuildAlphaTree(Pixel *img, int height, int width, int channel, int connectivity, int algorithm, int numthreads, int tse)
