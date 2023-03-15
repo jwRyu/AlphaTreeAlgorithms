@@ -42,7 +42,7 @@ double get_wall_time(){
         //  Handle error
     }
 //
-    return (double)time.tv_sec + (double)time.tv_usec * .000001; //yogi: program dies here
+    return (double)time.tv_sec + (double)time.tv_usec * .000001;
 }
 double get_cpu_time(){
     return (double)clock() / CLOCKS_PER_SEC;

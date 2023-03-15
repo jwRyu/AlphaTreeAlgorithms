@@ -464,6 +464,9 @@ void alg_name(char*dst, int alg)
 		case(FLOOD_HIERARQUEUE_PAR):
 			strcpy(dst,"Block-based parallel using Hierarqueue (FLOOD_HQUEUE_PAR)");
 			break;
+		case(FLOOD_HIERARHEAPQUEUE):
+			strcpy(dst,"Flood using hierarchical heap queue (FLOOD_HIERARHEAPQUEUE)");
+			break;
 		default:
 			strcpy(dst,"NO_NAME");
 			break;
@@ -534,34 +537,6 @@ _uint64 rand64()
 	return ret;
 }
 
-struct AtreeInputParams
-{
-	char *name;
-	int nchannels;
-	int numthreads;
-	int testimgsize;
-	int algorithmcode;
-	int bitdepth;
-	int tse;
-	int connectivity;
-	char *fnameheader;
-};
-
-void parse_input(AtreeInputParams& input, int argc, char **argv)
-{
-	input.name = argv[1];
-	input.nchannels = atoi(argv[2]);
-	input.numthreads = atoi(argv[3]);
-	input.testimgsize = atoi(argv[4]);
-	input.algorithmcode = atoi(argv[5]);
-	input.bitdepth = atoi(argv[6]);
-	input.tse = atoi(argv[7]);
-	input.fnameheader = argv[8];
-	if(argc >= 10)
-		input.connectivity = atoi(argv[9]);
-	else
-		input.connectivity = 4;
-}
 
 template <class Pixel>
 void adjust_bitdepth(Pixel *img, int imgsize, int bitdepth)
@@ -635,12 +610,49 @@ void imread(Pixel*& img, char *filename, int imgidx, int& height, int& width, in
 	printf("imread: %s\n", fname);
 }
 
+struct AtreeInputParams
+{
+	char *name;
+	int nchannels;
+	int numthreads;
+	int testimgsize;
+	int algorithmcode;
+	int bitdepth;
+	int tse;
+	int connectivity;
+	int numitr;
+	double fparam1;
+	double fparam2;
+	int iparam1;
+	char *fnameheader;
+};
+
+void parse_input(AtreeInputParams& input, int argc, char **argv)
+{
+	input.name = argv[1];
+	input.nchannels = atoi(argv[2]);
+	input.numthreads = atoi(argv[3]);
+	input.testimgsize = atoi(argv[4]);
+	input.algorithmcode = atoi(argv[5]);
+	input.bitdepth = atoi(argv[6]);
+	input.tse = atoi(argv[7]);
+	input.fnameheader = argv[8];
+	if(argc >= 10)
+		input.connectivity = atoi(argv[9]);
+	else
+		input.connectivity = 4;
+	input.numitr = atoi(argv[10]);
+	input.fparam1 = atof(argv[11]);
+	input.fparam2 = atof(argv[12]);
+	input.iparam1 = atoi(argv[13]);
+}
+
 //args: Filename, nchannels, numthreads, testimgsize, algorithmcode, bitdepth, tseflag
 int main(int argc, char **argv)
 {
 	if(argc == 1)
 	{
-		printf("args: Filename, nchannels, numthreads, testimgsize, algorithmcode, bitdepth, tseflag, outfnameheader\n");
+		printf("args: Filename, nchannels, numthreads, testimgsize, algorithmcode, bitdepth, tseflag, outfnameheader connectivity float_param1 float_param2 int_param1\n");
 		return -1;
 	}
 
@@ -653,10 +665,12 @@ int main(int argc, char **argv)
 	char outfname[128];
 
 	int numimg = randomimg ? 1 : 10;
-	int numitr = 1;
+	//int numitr = 10;
 
 	int imgidxstart = 0;
 	int thrstart = 0;
+
+	srand(time(NULL));
 
 
 	//if(!randomimg)
@@ -719,10 +733,10 @@ int main(int argc, char **argv)
 			printf("-----------------------------------------------------------------------------------\n");
 			double minruntime = 0;
 
-			for (int testrep = 0; testrep < numitr; testrep++)
+			for (int testrep = 0; testrep < input.numitr; testrep++)
 			{
-				double t = get_wall_time();
-				double runtime;// = get_wall_time() - t;
+				double t = get_cpu_time();
+				double runtime;// = get_cpu_time() - t;
 				//t = omp_get_wtime();
 
 				if(!randomimg)
@@ -746,42 +760,39 @@ int main(int argc, char **argv)
 					int bitdepth = input.bitdepth;
 					_uint32 *img32 = 0;
 					_uint64 *img64 = 0;
-					if(bitdepth <= 8)				Randomizedimage(img8, height * width, bitdepth, 1);
+					if(bitdepth <= 8)		Randomizedimage(img8, height * width, bitdepth, 1);
 					else if(bitdepth <= 16) Randomizedimage(img, height * width, bitdepth, 1);
 					else if(bitdepth <= 32) Randomizedimage(img32, height * width, bitdepth, 1);
-					else										Randomizedimage(img64, height * width, bitdepth, 1);
-
+					else					Randomizedimage(img64, height * width, bitdepth, 1);
 
 					int queueprofile = 0;
 					if(queueprofile)
 					{
 						qrecord = 0;
-						if(bitdepth <= 8)				tree->BuildAlphaTree(img8, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse);
-						else if(bitdepth <= 16) tree->BuildAlphaTree(img, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse);
-						else if(bitdepth <= 32) tree->BuildAlphaTree(img32, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse);
-						else										tree->BuildAlphaTree(img64, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse);
+						if(bitdepth <= 8)		tree->BuildAlphaTree(img8, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse, input.fparam1, input.fparam2, input.iparam1);
+						else if(bitdepth <= 16) tree->BuildAlphaTree(img, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse, input.fparam1, input.fparam2, input.iparam1);
+						else if(bitdepth <= 32) tree->BuildAlphaTree(img32, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse, input.fparam1, input.fparam2, input.iparam1);
+						else					tree->BuildAlphaTree(img64, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse, input.fparam1, input.fparam2, input.iparam1);
 						delete tree;
 						tree = new AlphaTree;
 					}
 
-
-
-					t = get_wall_time();
-					if(bitdepth <= 8)				tree->BuildAlphaTree(img8, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse);
-					else if(bitdepth <= 16) tree->BuildAlphaTree(img, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse);
-					else if(bitdepth <= 32) tree->BuildAlphaTree(img32, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse);
-					else										tree->BuildAlphaTree(img64, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse);
-					runtime = get_wall_time() - t;
+					t = get_cpu_time();
+					if(bitdepth <= 8)		tree->BuildAlphaTree(img8, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse, input.fparam1, input.fparam2, input.iparam1);
+					else if(bitdepth <= 16) tree->BuildAlphaTree(img, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse, input.fparam1, input.fparam2, input.iparam1);
+					else if(bitdepth <= 32) tree->BuildAlphaTree(img32, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse, input.fparam1, input.fparam2, input.iparam1);
+					else					tree->BuildAlphaTree(img64, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse, input.fparam1, input.fparam2, input.iparam1);
+					runtime = get_cpu_time() - t;
 
 					if(img32) delete[] img32;
 					if(img64) delete[] img64;
 				}
 				else
 				{
-					t = get_wall_time();
-					if(img8) tree->BuildAlphaTree(img8, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse);
-					else 		 tree->BuildAlphaTree(img, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse);
-					runtime = get_wall_time() - t;
+					t = get_cpu_time();
+					if(img8) tree->BuildAlphaTree(img8, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse, input.fparam1, input.fparam2, input.iparam1);
+					else 	 tree->BuildAlphaTree(img, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse, input.fparam1, input.fparam2, input.iparam1);
+					runtime = get_cpu_time() - t;
 				}
 
 				printf("-------------------Run %d: %.3f------------------\n",(int)testrep, runtime);
