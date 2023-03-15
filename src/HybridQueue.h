@@ -15,7 +15,10 @@ using namespace std;
 #define HEAPSIZE_DEFAULT 128
 
 #define TRACK_QUEUEING	0
-#define QUEUE_DEBUG		  0
+#define QUEUE_DEBUG		0
+
+#define PROFILE			0
+
 //tmp
 #if (TRACK_QUEUEING || QUEUE_DEBUG)
 #include <iostream>
@@ -192,7 +195,7 @@ public:
 		printf("\n");
 #endif
 
-			//qtime += get_wall_time() - tt; //tmp
+			//qtime += get_cpu_time() - tt; //tmp
 	}
 
 	void push_queue(Imgidx idx, Pixel alpha)
@@ -216,7 +219,7 @@ public:
 	Imgidx pop(_uint8 *isVisited)
 	{
 		Imgidx ret = top();
-		//double tt = get_wall_time(); //tmp
+		//double tt = get_cpu_time(); //tmp
 
 		_int8 i;
 		//Imgidx idx;
@@ -272,7 +275,7 @@ public:
 		//f << list[0] << endl;
 #endif
 
-		//qtime += get_wall_time() - tt; //tmp
+		//qtime += get_cpu_time() - tt; //tmp
 		return ret;
 	}
 
@@ -313,7 +316,7 @@ public:
 
 	void pop_queue(_uint8 *isVisited)
 	{
-		hqueue[queue_minlev]->pop(); //yogi
+		hqueue[queue_minlev]->pop(); 
 
 		if(!hqueue[queue_minlev]->get_cursize())
 		{
@@ -326,9 +329,8 @@ public:
 };
 
 template<class Imgidx, class Pixel>
-class HierarHeapQueue_cache
+class HierarHeapQueue
 {
-	HQentry<Imgidx, Pixel> *list;
 	HeapQueue_naive_quad<Imgidx, Pixel> **hqueue;
 	HQentry<Imgidx, Pixel> **storage;
 	Imgidx *storage_cursize;
@@ -338,10 +340,8 @@ class HierarHeapQueue_cache
 	double a;
 	Imgidx queue_minlev;
 
-	_int16 curSize_list, maxSize_list;
 	Imgidx maxSize_queue, mask_field;
 	_int8 shamt, nbit;
-	int emptytop;
 
 public:
 	#if TRACK_QUEUEING
@@ -351,11 +351,8 @@ public:
 		Imgidx numqueue;
 	#endif
 
-	void initHQ(Imgidx *dhist, Imgidx numlevels_in, Imgidx size, double a_in, int listsize, int connectivity)
+	HierarHeapQueue(Imgidx *dhist, Imgidx numlevels_in, Imgidx size, double a_in, int listsize, int connectivity, double r)
 	{
-		/*		cnt = 0;//tmp*/
-		//Imgidx i;
-
 		#if TRACK_QUEUEING
 				f.open("../../groupmeeting/next/queuelog.dat", std::ofstream::out);
 				f << size << endl;
@@ -363,93 +360,81 @@ public:
 				numqueue = 0;
 		#endif
 
-		list = (HQentry<Imgidx, Pixel>*)Malloc((listsize) * sizeof(HQentry<Imgidx, Pixel>));
-		maxSize_list = listsize - 1;
-		curSize_list = -1;
-
 		this->numlevels = numlevels_in;
 		this->a = a_in;
 		this->queue_minlev = numlevels;
 
-		qsizes = dhist; //do not free dhist outside
-		storage_cursize = (Imgidx*)Calloc(numlevels * sizeof(Imgidx));
-
 		Imgidx cumsum = 0;
-		double r = (connectivity == 4) ? 0.4 : 0.2; //optimize these later
-		Imgidx thr_nonredundantnodes = (Imgidx)(size * r);
-		for(int level = 0;level < numlevels;level++)
+		qsizes = dhist; //do not free dhist outside
+		if(r >= 1)
 		{
-			cumsum += qsizes[level];
-			if(cumsum > thr_nonredundantnodes)
-			{
-				thr_hqueue = curthr = level;
-				break;
-			}
+			thr_hqueue = curthr = numlevels;
+			hqueue = (HeapQueue_naive_quad<Imgidx, Pixel>**)Calloc(numlevels * sizeof(HeapQueue_naive_quad<Imgidx, Pixel>*));
+			for(int level = 0;level < thr_hqueue;level++)
+				hqueue[level] = new HeapQueue_naive_quad<Imgidx, Pixel>(qsizes[level]);
+			storage = 0;
+			storage_cursize = 0;
 		}
+		else
+		{
+			storage_cursize = (Imgidx*)Calloc(numlevels * sizeof(Imgidx));
+			Imgidx thr_nonredundantnodes = (Imgidx)(size * r);
+			for(int level = 0;level < numlevels;level++)
+			{
+				cumsum += qsizes[level];
+				if(cumsum > thr_nonredundantnodes)
+				{
+					thr_hqueue = curthr = level;
+					break;
+				}
+			}
 
-		hqueue = (HeapQueue_naive_quad<Imgidx, Pixel>**)Calloc(numlevels * sizeof(HeapQueue_naive_quad<Imgidx, Pixel>*));
-		for(int level = 0;level < thr_hqueue;level++)
-			hqueue[level] = new HeapQueue_naive_quad<Imgidx, Pixel>(qsizes[level]);
-		//hqueue[numlevels] = new HeapQueue_naive_quad<Imgidx, Pixel>(1);
-		//hqueue[numlevels]->push(0,(Pixel)-1);
+			hqueue = (HeapQueue_naive_quad<Imgidx, Pixel>**)Calloc(numlevels * sizeof(HeapQueue_naive_quad<Imgidx, Pixel>*));
+			for(int level = 0;level < thr_hqueue;level++)
+				hqueue[level] = new HeapQueue_naive_quad<Imgidx, Pixel>(qsizes[level]);
+			//hqueue[numlevels] = new HeapQueue_naive_quad<Imgidx, Pixel>(1);
+			//hqueue[numlevels]->push(0,(Pixel)-1);
 
-		storage = (HQentry<Imgidx, Pixel>**)Calloc((numlevels - thr_hqueue) * sizeof(HQentry<Imgidx, Pixel>*));
-		storage -= thr_hqueue;
-		for(int level = thr_hqueue;level < numlevels;level++)
-			storage[level] = (HQentry<Imgidx, Pixel>*)Malloc(qsizes[level] * sizeof(HQentry<Imgidx, Pixel>));
+			storage = (HQentry<Imgidx, Pixel>**)Calloc((numlevels - thr_hqueue) * sizeof(HQentry<Imgidx, Pixel>*));
+			storage -= thr_hqueue;
+			for(int level = thr_hqueue;level < numlevels;level++)
+				storage[level] = (HQentry<Imgidx, Pixel>*)Malloc(qsizes[level] * sizeof(HQentry<Imgidx, Pixel>));
+		}
 	}
 
-	HierarHeapQueue_cache(Imgidx *dhist, Imgidx numlevels_in, double a_in, Imgidx size, Imgidx connectivity = 4)
+	~HierarHeapQueue()
 	{
-		initHQ(dhist, numlevels_in, size, a_in, 12, (int)connectivity);
-	}
-	HierarHeapQueue_cache(Imgidx *dhist, Imgidx numlevels_in, Imgidx size, double a_in, int listsize, Imgidx connectivity = 4)
-	{
-		initHQ(dhist, numlevels_in, size, a_in, listsize, (int)connectivity);
-	}
-
-	~HierarHeapQueue_cache()
-	{
-		Free(list);
 		Free(qsizes);
-		Free(storage_cursize);
 
 		for(int level = 0;level < numlevels;level++)
 			if(hqueue[level]) delete hqueue[level];
 		Free(hqueue);
 
-		for(int level = thr_hqueue;level < numlevels;level++)
-			if(storage[level]) Free(storage[level]);
-		Free(storage + thr_hqueue);
+		if(storage)
+		{
+			Free(storage_cursize);
+			for(int level = thr_hqueue;level < numlevels;level++)
+				if(storage[level]) Free(storage[level]);
+			Free(storage + thr_hqueue);
+		}
 	}
 
-	inline void start_pushes()
-	{
-	#if TRACK_QUEUEING
-			f << '1' << endl;
-	#endif
-		 emptytop = 1;
-	}
-	inline Pixel get_minlev() { return list[0].alpha; }
-	inline Imgidx top() { return list[0].pidx; }
-	inline Pixel top_alpha() { return list[0].alpha; }
+	inline Imgidx top() { return hqueue[queue_minlev]->top(); }
+	inline Pixel top_alpha() { return hqueue[queue_minlev]->top_alpha(); }
 	inline void push_1stitem(Imgidx idx, Pixel alpha)
 	{
-		list[0].pidx = idx;
-		list[0].alpha = alpha;
-		curSize_list++;
+		push_queue(idx, alpha);
 
 		#if TRACK_QUEUEING
-				//tmp
-				f << '0' << '\n' << idx << endl << alpha << endl;
-				numproc++;
+			//tmp
+			f << '0' << '\n' << idx << endl << alpha << endl;
+			numproc++;
 		#endif
 	}
 
-	inline void end_pushes(_uint8 *isVisited)
+	inline void end_pushes(_uint8* isVisited)
 	{
-		if(emptytop)
-			pop(isVisited);
+		pop(isVisited);
 	}
 
 	void push(Imgidx idx, Pixel alpha)
@@ -460,66 +445,11 @@ public:
 #endif
 		//printf("Q: push %d at level %d\n", (int)idx, (int)alpha);
 
-		#if TRACK_QUEUEING
-				//tmp
-				numproc++;
-				f << '0' << '\n' << idx << endl << alpha << endl;
-		#endif
-
-		if(emptytop && alpha < list[0].alpha)
-		{
-			emptytop = 0;
-			list[0].pidx = idx;
-			list[0].alpha = alpha;
-			return;
-		}
-
 		// 		cnt++;//tmp
 		//
 		// 		if (cnt == 786)//tmp
 		// 			idx = idx;
-
-		bool push2list = (queue_minlev < curthr) ?  alpha < hqueue[queue_minlev]->top_alpha()
-																						 :  (int)(a * log2(1 + (double)alpha)) < queue_minlev;
-
-		if (push2list)
-		{
-			if (curSize_list < maxSize_list) //spare room in the list
-			{
-				int i;
-				for (i = curSize_list; alpha < list[i].alpha; i--)
-					list[i + 1] = list[i];
-				list[i + 1].pidx = idx;
-				list[i + 1].alpha = alpha;
-				curSize_list++;
-			}
-			else if (alpha < list[curSize_list].alpha)// push to the full list
-			{
-				push_queue(list[curSize_list].pidx, list[curSize_list].alpha);
-
-				int i;
-				for (i = curSize_list - 1; alpha < list[i].alpha; i--)
-					list[i + 1] = list[i];
-				list[i + 1].pidx = idx;
-				list[i + 1].alpha = alpha;
-			}
-			else
-				push_queue(idx, alpha); // push to the queue
-		}
-		else
-			push_queue(idx, alpha); // push to the queue
-
-
-#if QUEUE_DEBUG
-		printf("List(%d): ", (int)(curSize_list + 1));
-		for(int i = 0;i <= curSize_list;i++)
-		{
-			printf("%d-%.3f ", (int)list[i].pidx, log2((double)list[i].alpha));
-		}
-		printf("\n");
-#endif
-
-			//qtime += get_wall_time() - tt; //tmp
+		push_queue(idx, alpha); // push to the queue
 	}
 
 	void push_queue(Imgidx idx, Pixel alpha)
@@ -564,7 +494,413 @@ public:
 	Imgidx pop(_uint8 *isVisited)
 	{
 		Imgidx ret = top();
-		//double tt = get_wall_time(); //tmp
+		//double tt = get_cpu_time(); //tmp
+
+		//Imgidx idx;
+		// 		cnt++;//tmp
+		// 		if (cnt == 776)//tmp
+		// 			cnt = cnt;
+
+#if QUEUE_DEBUG
+		printf("pop: %d at %.2f\n", (int)top_alpha(), log2((double)top_alpha()));
+#endif
+		pop_queue(isVisited);
+
+#if TRACK_QUEUEING
+		//f << list[0] << endl;
+#endif
+
+		//qtime += get_cpu_time() - tt; //tmp
+		return ret;
+	}
+
+	int check_queue_level(_uint8* isVisited)
+	{
+		if(queue_minlev < curthr)
+			return hqueue[queue_minlev]->get_cursize();
+		else
+		{
+			while(curthr < queue_minlev)
+			{
+				hqueue[curthr] = new HeapQueue_naive_quad<Imgidx, Pixel>(qsizes[curthr]);
+
+				Free(storage[curthr]);
+				storage[curthr] = 0;
+				curthr++;
+			}
+			curthr++;
+
+			hqueue[queue_minlev] = new HeapQueue_naive_quad<Imgidx, Pixel>(qsizes[queue_minlev]);
+
+			HQentry<Imgidx, Pixel>* store = storage[queue_minlev];
+			Imgidx cur = storage_cursize[queue_minlev];
+			HeapQueue_naive_quad<Imgidx, Pixel> *pQ = hqueue[queue_minlev];
+			for(Imgidx p = 0;p < cur;p++)
+			{
+				if(!isVisited[store[p].pidx])
+					pQ->push(store[p].pidx, store[p].alpha);
+			}
+
+			Free(storage[queue_minlev]);
+			storage[queue_minlev] = 0;
+
+			return pQ->get_cursize();
+		}
+	}
+
+	void pop_queue(_uint8* isVisited)
+	{
+		hqueue[queue_minlev]->pop();
+
+		if(!hqueue[queue_minlev]->get_cursize())
+		{
+			do
+			{
+				queue_minlev++;
+			}while(queue_minlev < numlevels && !check_queue_level(isVisited));
+		}
+	}
+};
+
+
+template<class Imgidx, class Pixel>
+class HierarHeapQueue_cache
+{
+	HQentry<Imgidx, Pixel> *list;
+	HeapQueue_naive_quad<Imgidx, Pixel> **hqueue;
+	HQentry<Imgidx, Pixel> **storage;
+	Imgidx *storage_cursize;
+	Imgidx *qsizes;
+
+	Imgidx thr_hqueue, curthr, numlevels;
+	double a;
+	Imgidx queue_minlev;
+
+	_int16 curSize_list, maxSize_list;
+	Imgidx maxSize_queue, mask_field;
+	_int8 shamt, nbit;
+	int emptytop;
+
+	Imgidx totalsize;
+
+public:
+#if PROFILE
+	double t0;
+	double tconv;
+	double tcache;
+	double tqueue;
+
+	Imgidx num_cache;
+	Imgidx num_cache_ovfl;
+	Imgidx num_hq;
+	Imgidx num_store;
+	Imgidx num_conv;
+#endif
+
+	#if TRACK_QUEUEING
+		Imgidx *in_size;
+		ofstream f;
+		Imgidx numproc;
+		Imgidx numqueue;
+	#endif
+
+	void initHQ(Imgidx *dhist, Imgidx numlevels_in, Imgidx size, double a_in, int listsize, int connectivity, double r)
+	{
+		/*		cnt = 0;//tmp*/
+		//Imgidx i;
+		totalsize = size;
+
+#if PROFILE
+		t0 = get_cpu_time();
+		tconv = tcache = tqueue = 0;
+		num_cache =
+		num_cache_ovfl =
+		num_hq =
+		num_store =
+		num_conv = 0;
+#endif
+
+#if TRACK_QUEUEING
+		f.open("../../groupmeeting/next/queuelog.dat", std::ofstream::out);
+		f << size << endl;
+		numproc = 0;
+		numqueue = 0;
+#endif
+
+		list = (HQentry<Imgidx, Pixel>*)Malloc((listsize) * sizeof(HQentry<Imgidx, Pixel>));
+		maxSize_list = listsize - 1;
+		curSize_list = -1;
+
+		this->numlevels = numlevels_in;
+		this->a = a_in;
+		this->queue_minlev = numlevels;
+
+		Imgidx cumsum = 0;
+		qsizes = dhist; //do not free dhist outside
+		if(r >= 1)
+		{
+			thr_hqueue = curthr = numlevels;
+			hqueue = (HeapQueue_naive_quad<Imgidx, Pixel>**)Calloc(numlevels * sizeof(HeapQueue_naive_quad<Imgidx, Pixel>*));
+			for(int level = 0;level < thr_hqueue;level++)
+				hqueue[level] = new HeapQueue_naive_quad<Imgidx, Pixel>(qsizes[level]);
+			storage = 0;
+			storage_cursize = 0;
+		}
+		else
+		{
+			storage_cursize = (Imgidx*)Calloc(numlevels * sizeof(Imgidx));
+			Imgidx thr_nonredundantnodes = (Imgidx)(size * r);
+			for(int level = 0;level < numlevels;level++)
+			{
+				cumsum += qsizes[level];
+				if(cumsum > thr_nonredundantnodes)
+				{
+					thr_hqueue = curthr = level;
+					break;
+				}
+			}
+
+			hqueue = (HeapQueue_naive_quad<Imgidx, Pixel>**)Calloc(numlevels * sizeof(HeapQueue_naive_quad<Imgidx, Pixel>*));
+			for(int level = 0;level < thr_hqueue;level++)
+				hqueue[level] = new HeapQueue_naive_quad<Imgidx, Pixel>(qsizes[level]);
+			//hqueue[numlevels] = new HeapQueue_naive_quad<Imgidx, Pixel>(1);
+			//hqueue[numlevels]->push(0,(Pixel)-1);
+
+			storage = (HQentry<Imgidx, Pixel>**)Calloc((numlevels - thr_hqueue) * sizeof(HQentry<Imgidx, Pixel>*));
+			storage -= thr_hqueue;
+			for(int level = thr_hqueue;level < numlevels;level++)
+				storage[level] = (HQentry<Imgidx, Pixel>*)Malloc(qsizes[level] * sizeof(HQentry<Imgidx, Pixel>));
+		}		
+	}
+
+	HierarHeapQueue_cache(Imgidx *dhist, Imgidx numlevels_in, double a_in, Imgidx size, Imgidx connectivity = 4, double r = 0.2)
+	{
+		initHQ(dhist, numlevels_in, size, a_in, 12, (int)connectivity, r);
+	}
+	HierarHeapQueue_cache(Imgidx *dhist, Imgidx numlevels_in, Imgidx size, double a_in, int listsize, Imgidx connectivity = 4, double r = 0.2)
+	{
+		initHQ(dhist, numlevels_in, size, a_in, listsize, (int)connectivity, r);
+	}
+
+	~HierarHeapQueue_cache()
+	{
+		Free(list);
+		Free(qsizes);
+
+		for(int level = 0;level < numlevels;level++)
+			if(hqueue[level]) delete hqueue[level];
+		Free(hqueue);
+
+		if(storage)
+		{
+			Free(storage_cursize);
+			for(int level = thr_hqueue;level < numlevels;level++)
+				if(storage[level]) Free(storage[level]);
+			Free(storage + thr_hqueue);
+		}
+
+#if PROFILE
+		double t1 = get_cpu_time() - t0;
+		double sz = (double)totalsize;
+		printf("HQ Profile - Total: %f, Cache: %f, Queue: %f, Conv: %f\n", t1, tcache, tqueue, tconv);
+		printf("Cached: %d(%f), C. ovfl: %d(%f), Heap Queued: %d(%f), Stored: %d(%f), Converted: %d(%f), \n",
+		 (int)num_cache, (double)num_cache / sz, 
+		 (int)num_cache_ovfl, (double)num_cache_ovfl / sz, 
+		 (int)num_hq, (double)num_hq / sz, 
+		 (int)num_store, (double)num_store / sz, 
+		 (int)num_conv, (double)num_conv / sz);
+		printf("Initial: %d queues + %d storages (%d total) End: %d queues + %d storages (%d total)\n",
+		 (int)thr_hqueue, (int)(numlevels - thr_hqueue), (int)numlevels, (int)curthr, (int)(numlevels - curthr), (int)numlevels);
+
+#endif
+	}
+
+	inline void start_pushes()
+	{
+	#if TRACK_QUEUEING
+			f << '1' << endl;
+	#endif
+		 emptytop = 1;
+	}
+	inline Pixel get_minlev() { return list[0].alpha; }
+	inline Imgidx top() { return list[0].pidx; }
+	inline Pixel top_alpha() { return list[0].alpha; }
+	inline void push_1stitem(Imgidx idx, Pixel alpha)
+	{
+		list[0].pidx = idx;
+		list[0].alpha = alpha;
+		curSize_list++;
+
+		#if TRACK_QUEUEING
+				//tmp
+				f << '0' << '\n' << idx << endl << alpha << endl;
+				numproc++;
+		#endif
+	}
+
+	inline void end_pushes(_uint8 *isVisited)
+	{
+		if(emptytop)
+			pop(isVisited);
+	}
+
+	void push(Imgidx idx, Pixel alpha)
+	{
+#if QUEUE_DEBUG
+		printf("push: %d at %.2f\n", (int)idx, log2((double)alpha));
+		//cout << "push: " << idx << " at " << (int)alpha << endl;
+#endif
+		//printf("Q: push %d at level %d\n", (int)idx, (int)alpha);
+
+#if TRACK_QUEUEING
+		//tmp
+		numproc++;
+		f << '0' << '\n' << idx << endl << alpha << endl;
+#endif
+
+		if(emptytop && alpha < list[0].alpha)
+		{
+#if PROFILE
+			num_cache++;
+#endif
+			emptytop = 0;
+			list[0].pidx = idx;
+			list[0].alpha = alpha;
+			return;
+		}
+
+		// 		cnt++;//tmp
+		//
+		// 		if (cnt == 786)//tmp
+		// 			idx = idx;
+
+		bool push2list = (queue_minlev < curthr) ?  alpha < hqueue[queue_minlev]->top_alpha()
+																						 :  (int)(a * log2(1 + (double)alpha)) < queue_minlev;
+
+		if (push2list)
+		{
+#if PROFILE
+		num_cache++;
+		double t1 = get_cpu_time(), t2, tq = 0;
+#endif
+			if (curSize_list < maxSize_list) //spare room in the list
+			{
+				int i;
+				for (i = curSize_list; alpha < list[i].alpha; i--)
+					list[i + 1] = list[i];
+				list[i + 1].pidx = idx;
+				list[i + 1].alpha = alpha;
+				curSize_list++;
+			}
+			else if (alpha < list[curSize_list].alpha)// push to the full list
+			{
+#if PROFILE
+				num_cache_ovfl++;
+				t2 = get_cpu_time();
+#endif
+				push_queue(list[curSize_list].pidx, list[curSize_list].alpha);
+
+#if PROFILE
+				tq = get_cpu_time() - t2;
+#endif
+				int i;
+				for (i = curSize_list - 1; alpha < list[i].alpha; i--)
+					list[i + 1] = list[i];
+				list[i + 1].pidx = idx;
+				list[i + 1].alpha = alpha;
+			}
+			else
+			{
+#if PROFILE
+				num_cache_ovfl++;
+				t2 = get_cpu_time();
+#endif
+				push_queue(idx, alpha); // push to the queue
+#if PROFILE
+				tq = get_cpu_time() - t2;
+#endif
+			}
+
+#if PROFILE
+			tcache += get_cpu_time() - t1 - tq;
+			tqueue += tq;
+#endif
+		}
+		else
+		{
+#if PROFILE
+			double t1 = get_cpu_time();
+#endif
+			push_queue(idx, alpha); // push to the queue
+#if PROFILE
+			tqueue += get_cpu_time() - t1;
+#endif
+		}
+
+
+#if QUEUE_DEBUG
+		printf("List(%d): ", (int)(curSize_list + 1));
+		for(int i = 0;i <= curSize_list;i++)
+		{
+			printf("%d-%.3f ", (int)list[i].pidx, log2((double)list[i].alpha));
+		}
+		printf("\n");
+#endif
+
+			//qtime += get_cpu_time() - tt; //tmp
+	}
+
+	void push_queue(Imgidx idx, Pixel alpha)
+	{
+
+	#if TRACK_QUEUEING
+		numqueue++;
+	#endif
+		int level = (int)(a * log2(1 + (double)alpha));
+
+		//hidx = (int)(log2(1 + pow((double)dimg[dimgidx++],a)));
+		if(level < queue_minlev)
+			queue_minlev = level;
+
+		if(level < curthr)
+		{
+#if PROFILE
+			num_hq++;
+#endif
+			hqueue[level]->push(idx, alpha);
+		}
+		else
+		{
+#if PROFILE
+			num_store++;
+#endif
+			Imgidx cur = storage_cursize[level]++;
+			storage[level][cur].pidx = idx;
+			storage[level][cur].alpha = alpha;
+		}
+	}
+
+
+	#if TRACK_QUEUEING
+	inline void mark(int m)
+	{
+		if(m == 0)
+			f << m << endl;
+		else
+		{
+			f << '1' << endl << m << endl;
+		}
+	}
+	inline void redundant(Pixel alpha)
+	{
+		f << '2' << endl << alpha << endl;
+	}
+	#endif
+
+	Imgidx pop(_uint8 *isVisited)
+	{
+		Imgidx ret = top();
+		//double tt = get_cpu_time(); //tmp
 
 		_int8 i;
 		//Imgidx idx;
@@ -616,7 +952,7 @@ public:
 		//f << list[0] << endl;
 #endif
 
-		//qtime += get_wall_time() - tt; //tmp
+		//qtime += get_cpu_time() - tt; //tmp
 		return ret;
 	}
 
@@ -625,7 +961,10 @@ public:
 		if(queue_minlev < curthr)
 			return hqueue[queue_minlev]->get_cursize();
 		else
-		{
+		{			
+#if PROFILE
+			double t1 = get_cpu_time();
+#endif
 			while(curthr < queue_minlev)
 			{
 				hqueue[curthr] = new HeapQueue_naive_quad<Imgidx, Pixel>(qsizes[curthr]);
@@ -646,18 +985,31 @@ public:
 				if(!isVisited[store[p].pidx])
 					pQ->push(store[p].pidx, store[p].alpha);
 			}
+#if PROFILE
+			num_conv += cur;
+#endif
 
 			Free(storage[queue_minlev]);
 			storage[queue_minlev] = 0;
-
+	
+#if PROFILE
+			tconv += get_cpu_time() - t1;
+#endif
 			return pQ->get_cursize();
 		}
 	}
 
 	void pop_queue(_uint8 *isVisited)
 	{
-
-		hqueue[queue_minlev]->pop(); //yogi
+			
+#if PROFILE
+		double t1 = get_cpu_time();
+#endif
+		hqueue[queue_minlev]->pop(); 
+			
+#if PROFILE
+		tqueue += get_cpu_time() - t1;
+#endif
 
 		if(!hqueue[queue_minlev]->get_cursize())
 		{
@@ -764,7 +1116,7 @@ public:
 
 	inline void push(Imgidx idx, Pixel alpha)
 	{
-		//double tt = get_wall_time(); //tmp
+		//double tt = get_cpu_time(); //tmp
 
 		//MinList1<Imgidx> *p, *q;
 		_int16 i;
@@ -816,7 +1168,7 @@ public:
 			push_queue(idx, alpha); // push to the queue
 
 
-			//qtime += get_wall_time() - tt; //tmp
+			//qtime += get_cpu_time() - tt; //tmp
 	}
 	inline void push_queue(Imgidx idx, Pixel alpha)
 	{
@@ -825,7 +1177,7 @@ public:
 	inline Imgidx pop()
 	{
 		Imgidx ret = top();
-		//double tt = get_wall_time(); //tmp
+		//double tt = get_cpu_time(); //tmp
 
 		_int8 i;
 		//Imgidx idx;
@@ -858,7 +1210,7 @@ public:
 		//f << list[0] << endl;
 #endif
 
-		//qtime += get_wall_time() - tt; //tmp
+		//qtime += get_cpu_time() - tt; //tmp
 		return ret;
 	}
 	inline void pop_queue()
@@ -977,7 +1329,7 @@ public:
 
 	inline void push(Imgidx idx, Pixel alpha)
 	{
-		//double tt = get_wall_time(); //tmp
+		//double tt = get_cpu_time(); //tmp
 
 		//MinList1<Imgidx> *p, *q;
 		_int16 i;
@@ -1029,7 +1381,7 @@ public:
 			push_queue(idx, alpha); // push to the queue
 
 
-			//qtime += get_wall_time() - tt; //tmp
+			//qtime += get_cpu_time() - tt; //tmp
 	}
 	inline void push_queue(Imgidx idx, Pixel alpha)
 	{
@@ -1038,7 +1390,7 @@ public:
 	inline Imgidx pop()
 	{
 		Imgidx ret = top();
-		//double tt = get_wall_time(); //tmp
+		//double tt = get_cpu_time(); //tmp
 
 		_int8 i;
 		//Imgidx idx;
@@ -1075,7 +1427,7 @@ public:
 		//f << list[0] << endl;
 #endif
 
-		//qtime += get_wall_time() - tt; //tmp
+		//qtime += get_cpu_time() - tt; //tmp
 		return ret;
 	}
 	inline void pop_queue()
@@ -1197,7 +1549,7 @@ public:
 
 	inline void push(Imgidx idx, _int32 alpha)
 	{
-		//double tt = get_wall_time(); //tmp
+		//double tt = get_cpu_time(); //tmp
 
 		//MinList1<Imgidx> *p, *q;
 		_int16 i, j, k;
@@ -1263,7 +1615,7 @@ public:
 #endif
 
 
-			//qtime += get_wall_time() - tt; //tmp
+			//qtime += get_cpu_time() - tt; //tmp
 	}
 	inline void push_queue(Imgidx idx, _int32 alpha)
 	{
@@ -1272,7 +1624,7 @@ public:
 	inline Imgidx pop()
 	{
 		Imgidx ret = top();
-		//double tt = get_wall_time(); //tmp
+		//double tt = get_cpu_time(); //tmp
 
 		//_int8 i;
 		//Imgidx idx;
@@ -1310,7 +1662,7 @@ public:
 		//f << list[0] << endl;
 #endif
 
-		//qtime += get_wall_time() - tt; //tmp
+		//qtime += get_cpu_time() - tt; //tmp
 		return ret;
 	}
 	inline void pop_queue()
@@ -1432,7 +1784,7 @@ public:
 
 	inline void push(Imgidx idx, _int32 alpha)
 	{
-		//double tt = get_wall_time(); //tmp
+		//double tt = get_cpu_time(); //tmp
 
 		//MinList1<Imgidx> *p, *q;
 		_int16 i;
@@ -1493,7 +1845,7 @@ public:
 		printf("\n");
 #endif
 
-			//qtime += get_wall_time() - tt; //tmp
+			//qtime += get_cpu_time() - tt; //tmp
 	}
 	inline void push_queue(Imgidx idx, _int32 alpha)
 	{
@@ -1502,7 +1854,7 @@ public:
 	inline Imgidx pop()
 	{
 		Imgidx ret = top();
-		//double tt = get_wall_time(); //tmp
+		//double tt = get_cpu_time(); //tmp
 
 		_int8 i;
 		//Imgidx idx;
@@ -1538,7 +1890,7 @@ public:
 		//f << list[0] << endl;
 #endif
 
-		//qtime += get_wall_time() - tt; //tmp
+		//qtime += get_cpu_time() - tt; //tmp
 		return ret;
 	}
 	inline void pop_queue()
@@ -1660,7 +2012,7 @@ public:
 
 	inline void push(Imgidx idx, _int32 alpha)
 	{
-		//double tt = get_wall_time(); //tmp
+		//double tt = get_cpu_time(); //tmp
 
 		//MinList1<Imgidx> *p, *q;
 		_int16 i;
@@ -1712,7 +2064,7 @@ public:
 			push_queue(idx, alpha); // push to the queue
 
 
-			//qtime += get_wall_time() - tt; //tmp
+			//qtime += get_cpu_time() - tt; //tmp
 	}
 	inline void push_queue(Imgidx idx, _int32 alpha)
 	{
@@ -1721,7 +2073,7 @@ public:
 	inline Imgidx pop()
 	{
 		Imgidx ret = top();
-		//double tt = get_wall_time(); //tmp
+		//double tt = get_cpu_time(); //tmp
 
 		_int8 i;
 		//Imgidx idx;
@@ -1758,7 +2110,7 @@ public:
 		//f << list[0] << endl;
 #endif
 
-		//qtime += get_wall_time() - tt; //tmp
+		//qtime += get_cpu_time() - tt; //tmp
 		return ret;
 	}
 	inline void pop_queue()
@@ -1880,7 +2232,7 @@ public:
 
 	inline void push(Imgidx idx, _int32 alpha)
 	{
-		//double tt = get_wall_time(); //tmp
+		//double tt = get_cpu_time(); //tmp
 
 		//MinList1<Imgidx> *p, *q;
 		_int16 i;
@@ -1932,7 +2284,7 @@ public:
 			push_queue(idx, alpha); // push to the queue
 
 
-			//qtime += get_wall_time() - tt; //tmp
+			//qtime += get_cpu_time() - tt; //tmp
 	}
 	inline void push_queue(Imgidx idx, _int32 alpha)
 	{
@@ -1941,7 +2293,7 @@ public:
 	inline Imgidx pop()
 	{
 		Imgidx ret = top();
-		//double tt = get_wall_time(); //tmp
+		//double tt = get_cpu_time(); //tmp
 
 		_int8 i;
 		//Imgidx idx;
@@ -1978,7 +2330,7 @@ public:
 		//f << list[0] << endl;
 #endif
 
-		//qtime += get_wall_time() - tt; //tmp
+		//qtime += get_cpu_time() - tt; //tmp
 		return ret;
 	}
 	inline void pop_queue()
