@@ -1,0 +1,22 @@
+./AlphaTree rand 1 1 1000 9 64 0 test 8 10 45.0 0.3 1
+./AlphaTree rand 1 1 1000 9 64 0 test 8 10 45.0 0.3 2
+./AlphaTree rand 1 1 1000 9 64 0 test 8 10 45.0 0.3 3
+./AlphaTree rand 1 1 1000 9 64 0 test 8 10 45.0 0.3 4
+./AlphaTree rand 1 1 1000 9 64 0 test 8 10 45.0 0.3 5
+./AlphaTree rand 1 1 1000 9 64 0 test 8 10 45.0 0.3 7
+./AlphaTree rand 1 1 1000 9 64 0 test 8 10 45.0 0.3 9
+./AlphaTree rand 1 1 1000 9 64 0 test 8 10 45.0 0.3 11
+./AlphaTree rand 1 1 1000 9 64 0 test 8 10 45.0 0.3 13
+./AlphaTree rand 1 1 1000 9 64 0 test 8 10 45.0 0.3 15
+./AlphaTree rand 1 1 1000 9 64 0 test 8 10 45.0 0.3 17
+./AlphaTree rand 1 1 1000 9 64 0 test 8 10 45.0 0.3 19
+./AlphaTree rand 1 1 1000 9 64 0 test 8 10 45.0 0.3 23
+./AlphaTree rand 1 1 1000 9 64 0 test 8 10 45.0 0.3 29
+./AlphaTree rand 1 1 1000 9 64 0 test 8 10 45.0 0.3 33
+./AlphaTree rand 1 1 1000 9 64 0 test 8 10 45.0 0.3 41
+./AlphaTree rand 1 1 1000 9 64 0 test 8 10 45.0 0.3 53
+./AlphaTree rand 1 1 1000 9 64 0 test 8 10 45.0 0.3 61
+./AlphaTree rand 1 1 1000 9 64 0 test 8 10 45.0 0.3 73
+./AlphaTree rand 1 1 1000 9 64 0 test 8 10 45.0 0.3 89
+./AlphaTree rand 1 1 1000 9 64 0 test 8 10 45.0 0.3 101
+

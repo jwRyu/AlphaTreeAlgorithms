@@ -67,6 +67,12 @@ int memthod = 0;
 
 extern _uint64 *qrecord;
 
+struct qstat
+{
+	_uint32 moves;
+	_uint8 flag;
+};
+
 template<class Imgidx, class Pixel>
 class AlphaNode
 {
@@ -78,6 +84,8 @@ public:
 	Pixel minPix;
 	Pixel maxPix;
 
+	Imgidx edgeidx;
+	
 	Imgidx parentidx;
 	Imgidx rootidx;
 
@@ -2283,6 +2291,9 @@ private:
 
 		dimg = (double*)Malloc((size_t)dimgsize * sizeof(double));
 
+		qstat *qp = new qstat[nredges];
+		Imgidx qpidx = 0;
+		
 		if(sizeof(Pixel) == 1 && channel == 1)
 		{
 			dhist = (Imgidx*)Calloc(numlevels * sizeof(Imgidx));
@@ -2317,11 +2328,14 @@ private:
 			while (queue->get_minlev() <= current_level) //flood all levels below current_level
 			{
 				p = queue->top();
+				qp[qpidx].moves = queue->top_moves();
 				if (isVisited[p])
 				{
 					queue->pop();
+					qp[qpidx].flag = 1;
 					continue;
 				}
+				qpidx++;
 				isVisited[p] = 1;
 
 				isAv = isAvailable[p];
@@ -2379,7 +2393,7 @@ private:
 						goto FLOOD_END;
 				}
 			}
-			
+			//aa3
 			remove_redundant_node(prev_top, stack_top);
 
 			if (node[stack_top].area == imgsize)	// root node found...done
@@ -2407,6 +2421,39 @@ private:
 		//rootidx = (node[stack_top].area == imgsize) ? stack_top : iNode; //remove redundant root
 		node[stack_top].parentidx = ROOTIDX;
 
+		HQentry<Imgidx, double> *arr = queue->arr;
+		for(Imgidx i = 1;i < queue->cursize + 1;i++)
+		{
+			qp[qpidx].moves = arr[i].moves;
+			qp[qpidx].flag = 2;
+			qpidx++;
+		}
+
+		_uint64 arr_moves[3] = {0,};
+		_uint64 pop[3] = {0,};
+		for(Imgidx i = 0;i < qpidx;i++)
+		{
+			pop[qp[i].flag]++;
+			arr_moves[qp[i].flag] += qp[i].moves;
+		}
+		printf("---Heap Queue Stats (Normal, redundant, residual) ---\n");
+		printf("population: %d(%f) %d(%f) %d(%f)\n",
+		 (int)pop[0], (double)pop[0] / (double)nredges, 
+		 (int)pop[1], (double)pop[1] / (double)nredges, 
+		 (int)pop[2], (double)pop[2] / (double)nredges);
+		printf("moves: %d(%f) %d(%f) %d(%f)\n",
+		 (int)arr_moves[0], (double)arr_moves[0] / (double)pop[0], 
+		 (int)arr_moves[1], (double)arr_moves[1] / (double)pop[1], 
+		 (int)arr_moves[2], (double)arr_moves[2] / (double)pop[2]);
+		 double movesum = (double)(arr_moves[0] + arr_moves[1] + arr_moves[2]);
+		printf("P_move: %d(%f) %d(%f) %d(%f)\n",
+		 (int)arr_moves[0], (double)arr_moves[0] / (double)movesum, 
+		 (int)arr_moves[1], (double)arr_moves[1] / (double)movesum, 
+		 (int)arr_moves[2], (double)arr_moves[2] / (double)movesum);
+		
+
+		delete[] qp;
+
 		delete queue;
 		Free(dimg);
 		Free(isVisited);
@@ -2430,6 +2477,9 @@ private:
 		numlevels = max_level + 1;
 		double current_level;
 		double *dimg;
+
+		qstat *qp = new qstat[nredges];
+		Imgidx qpidx = 0;
 
 		dimg = (double*)Malloc((size_t)dimgsize * sizeof(double));
 
@@ -2468,11 +2518,14 @@ private:
 			while (queue->get_minlev() <= current_level) //flood all levels below current_level
 			{
 				p = queue->top();
+				qp[qpidx].moves = queue->top_moves();
 				if (isVisited[p])
 				{
 					queue->pop();
+					qp[qpidx].flag = 1;
 					continue;
 				}
+				qpidx++;
 				queue->start_pushes();
 				//printf("++visiting %d: stack_top[%d] at %f, area: %d\n", (int)p, (int)stack_top, log(node[stack_top].alpha), (int)node[stack_top].area);
 				isVisited[p] = 1;
@@ -2567,6 +2620,45 @@ private:
 	FLOOD_END:
 		//rootidx = (node[stack_top].area == imgsize) ? stack_top : iNode; //remove redundant root
 		node[stack_top].parentidx = ROOTIDX;
+
+		HQentry<Imgidx, double> *arr = queue->hqueue->arr;
+		for(Imgidx i = 1;i < queue->hqueue->cursize + 1;i++)
+		{
+			qp[qpidx].moves = arr[i].moves;
+			qp[qpidx].flag = 2;
+			qpidx++;
+		}
+		
+		arr = queue->list;
+		for(Imgidx i = 0;i <= queue->curSize_list;i++)
+		{
+			qp[qpidx].moves = arr[i].moves;
+			qp[qpidx].flag = 2;
+			qpidx++;
+		}
+		
+		_uint64 arr_moves[3] = {0,};
+		_uint64 pop[3] = {0,};
+		for(Imgidx i = 0;i < qpidx;i++)
+		{
+			pop[qp[i].flag]++;
+			arr_moves[qp[i].flag] += qp[i].moves;
+		}
+		printf("---Heap Queue Stats (Normal, redundant, residual) ---\n");
+		printf("population: %d(%f) %d(%f) %d(%f)\n",
+		 (int)pop[0], (double)pop[0] / (double)nredges, 
+		 (int)pop[1], (double)pop[1] / (double)nredges, 
+		 (int)pop[2], (double)pop[2] / (double)nredges);
+		printf("moves: %d(%f) %d(%f) %d(%f)\n",
+		 (int)arr_moves[0], (double)arr_moves[0] / (double)pop[0], 
+		 (int)arr_moves[1], (double)arr_moves[1] / (double)pop[1], 
+		 (int)arr_moves[2], (double)arr_moves[2] / (double)pop[2]);
+		 double movesum = (double)(arr_moves[0] + arr_moves[1] + arr_moves[2]);
+		printf("P_move: %d(%f) %d(%f) %d(%f)\n",
+		 (int)arr_moves[0], (double)arr_moves[0] / (double)movesum, 
+		 (int)arr_moves[1], (double)arr_moves[1] / (double)movesum, 
+		 (int)arr_moves[2], (double)arr_moves[2] / (double)movesum);
+		
 
 
 		//printf("HeapQueue time: %f\n", queue->qtime);

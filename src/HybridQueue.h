@@ -1237,6 +1237,7 @@ public:
 template<class Imgidx, class Pixel>//, class Qidx>
 class Cache_Quad_Heapqueue
 {
+public:
 	//MinList1<Imgidx> *list, *list_end, *head, *tail;
 	HQentry<Imgidx, Pixel> *list;
 	HeapQueue_naive_quad<Imgidx, Pixel> *hqueue;
@@ -1245,6 +1246,10 @@ class Cache_Quad_Heapqueue
 	Imgidx maxSize_queue, mask_field;
 	_int8 shamt, nbit;
 	int emptytop;
+
+	Imgidx num_cached;
+	Imgidx cache_overflow;
+	Imgidx sum_moves;
 
 #if TRACK_QUEUEING
 	Imgidx *in_size;
@@ -1274,6 +1279,10 @@ class Cache_Quad_Heapqueue
 		list++;
 		maxSize_list = listsize - 1;
 		curSize_list = -1;
+
+		num_cached = 0;
+		sum_moves = 0;
+		cache_overflow = 0;
 		//list = (MinList1<Imgidx>*)Malloc(listsize * sizeof(MinList1<Imgidx>));
 		//list_end = list + listsize;
 		//maxSize_list = listsize;
@@ -1297,7 +1306,6 @@ class Cache_Quad_Heapqueue
 //#endif
 		qtime = 0;//tmp
 	}
-public:
 
 	double qtime;//tmp
 
@@ -1314,6 +1322,7 @@ public:
 	inline Pixel get_minlev() { return list[0].alpha; }
 	inline Imgidx top() { return list[0].pidx; }
 	inline Pixel top_alpha() { return list[0].alpha; }
+	inline Pixel top_moves() { return list[0].moves; }
 	inline void push_1stitem(Imgidx idx, Pixel alpha)
 	{
 		list[0].pidx = idx;
@@ -1346,8 +1355,12 @@ public:
 		if(emptytop && alpha < list[0].alpha)
 		{
 			emptytop = 0;
+			
 			list[0].pidx = idx;
 			list[0].alpha = alpha;
+			list[0].moves = 0;
+			sum_moves++;
+			num_cached++;
 			return;
 		}
 
@@ -1360,19 +1373,32 @@ public:
 			if (curSize_list < maxSize_list) //spare room in the list
 			{
 				for (i = curSize_list; alpha < list[i].alpha; i--)
+				{
 					list[i + 1] = list[i];
+					sum_moves++;
+				}
 				list[i + 1].pidx = idx;
 				list[i + 1].alpha = alpha;
+				list[i + 1].alpha = 0;
+				sum_moves++;
+				num_cached++;
 				curSize_list++;
 			}
 			else if (alpha < list[curSize_list].alpha)// push to the full list
 			{
-				push_queue(list[curSize_list].pidx, list[curSize_list].alpha);
+				cache_overflow++;
+				push_queue(list[curSize_list].pidx, list[curSize_list].alpha, list[curSize_list].moves);
 
 				for (i = curSize_list - 1; alpha < list[i].alpha; i--)
+				{
 					list[i + 1] = list[i];
+					sum_moves++;
+				}
 				list[i + 1].pidx = idx;
 				list[i + 1].alpha = alpha;
+				list[i + 1].alpha = 0;
+				sum_moves++;
+				num_cached++;
 			}
 			else
 				push_queue(idx, alpha); // push to the queue
@@ -1383,9 +1409,9 @@ public:
 
 			//qtime += get_cpu_time() - tt; //tmp
 	}
-	inline void push_queue(Imgidx idx, Pixel alpha)
+	inline void push_queue(Imgidx idx, Pixel alpha, _uint32 moves = 0)
 	{
-		hqueue->push(idx, alpha);
+		hqueue->push(idx, alpha, moves);
 	}
 	inline Imgidx pop()
 	{
@@ -1413,13 +1439,17 @@ public:
 		{
 			list[0].pidx = hqueue->top();
 			list[0].alpha = hqueue->top_alpha();
+			list[0].moves = hqueue->top_moves();
 
 			pop_queue();
 		}
 		else
 		{
 			for (i = 0; i < curSize_list; i++)
+			{
 				list[i] = list[i + 1];
+				sum_moves++;
+			}
 			curSize_list--;
 		}
 
