@@ -16,7 +16,7 @@ OBJEXT      := o
 
 #-Wall -O3
 #Flags, Libraries and Includes
-CFLAGS      := -lstdc++fs -std=c++11 -fopenmp -Wall -g -O3 #std=gnu9 -pg -ggdb3 -lprofiler -lpthread
+CFLAGS      := -lstdc++fs -std=c++11 -fopenmp -Wall -g #-O3 #std=gnu9 -pg -ggdb3 -lprofiler -lpthread
 LIB         := -fopenmp
 INC         := -I /usr/local/include
 INCDEP      :=

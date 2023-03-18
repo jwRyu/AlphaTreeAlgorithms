@@ -670,7 +670,7 @@ int main(int argc, char **argv)
 	int imgidxstart = 0;
 	int thrstart = 0;
 
-	srand(time(NULL));
+	//srand(time(NULL));
 
 
 	//if(!randomimg)
@@ -764,18 +764,6 @@ int main(int argc, char **argv)
 					else if(bitdepth <= 16) Randomizedimage(img, height * width, bitdepth, 1);
 					else if(bitdepth <= 32) Randomizedimage(img32, height * width, bitdepth, 1);
 					else					Randomizedimage(img64, height * width, bitdepth, 1);
-
-					int queueprofile = 0;
-					if(queueprofile)
-					{
-						qrecord = 0;
-						if(bitdepth <= 8)		tree->BuildAlphaTree(img8, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse, input.fparam1, input.fparam2, input.iparam1);
-						else if(bitdepth <= 16) tree->BuildAlphaTree(img, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse, input.fparam1, input.fparam2, input.iparam1);
-						else if(bitdepth <= 32) tree->BuildAlphaTree(img32, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse, input.fparam1, input.fparam2, input.iparam1);
-						else					tree->BuildAlphaTree(img64, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse, input.fparam1, input.fparam2, input.iparam1);
-						delete tree;
-						tree = new AlphaTree;
-					}
 
 					t = get_cpu_time();
 					if(bitdepth <= 8)		tree->BuildAlphaTree(img8, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse, input.fparam1, input.fparam2, input.iparam1);

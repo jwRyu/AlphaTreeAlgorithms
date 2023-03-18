@@ -20,6 +20,8 @@ public:
 	Imgidx pidx;
 	Pixel alpha;
 	_uint32 moves;
+	_uint32 cache_moves;
+	
 
 	inline void operator=(const HQentry& item)
 	{
@@ -43,6 +45,8 @@ public:
 	_uint8 flags[7];
 	_int8 pushlistidx;
 
+	_uint64 numcmp;
+
 #if HEAPQ_STAT
 	ofstream f;
 	Imgidx popcnt;
@@ -53,7 +57,7 @@ public:
 		double qtime, timing;
 
 //	Pixel min_level;
-	HeapQueue(Imgidx maxsize_in) : maxsize(maxsize_in), cursize(0), qtime(0), timing(0)
+	HeapQueue(Imgidx maxsize_in) : maxsize(maxsize_in), numcmp(0), cursize(0), qtime(0), timing(0)
 	{
 		arr = new HQentry<Imgidx, Pixel>[maxsize + 1];
 		pushlistidx = 0;
@@ -79,6 +83,7 @@ public:
 		int minidx = -1;
 		for (int i = 0; i < pushlistidx; i++)
 		{
+			numcmp++;
 			if (flags[i] && (minidx < 0 || pushlist[i].alpha < pushlist[minidx].alpha))
 				minidx = i;
 		}
@@ -95,19 +100,20 @@ public:
 		{
 			pop();
 #if HEAPQ_DEBUG
-		cout << "find_minlev: no item in the list - new minlev is now " << arr[1].pidx << " at " << log(arr[1].alpha) << endl;
+		cout << "find_minlev: no item in the list - new minlev is now " << arr[1].pidx << " at " << log2(1 + arr[1].alpha) << " cursize: " << cursize << endl;
 #endif
 			return;
 		}
 		int minidx = minidx_pushlist();
+		numcmp++;
 		if (pushlist[minidx].alpha <= arr[1].alpha)
 		{
+#if HEAPQ_DEBUG
+			cout << "pop: " << arr[1].pidx << " at " << log2(1 + arr[1].alpha) << " cursize: " << cursize << endl;
+#endif
 			arr[1].moves = pushlist[minidx].moves + 1;
 			arr[1].alpha = pushlist[minidx].alpha;
 			arr[1].pidx = pushlist[minidx].pidx;
-	#if HEAPQ_DEBUG
-			//cout << "push " << arr[1].pidx << " at " << arr[1].alpha << endl;
-	#endif
 		}
 		else
 		{
@@ -122,7 +128,7 @@ public:
 			push_run(pushlist[minidx].pidx, pushlist[minidx].alpha, pushlist[minidx].moves);
 		}
 #if HEAPQ_DEBUG
-		cout << "find_minlev: new minlev is now " << arr[1].pidx << " at " << log(arr[1].alpha) << endl;
+		//cout << "find_minlev: new minlev is now " << arr[1].pidx << " at " << log2(1 + arr[1].alpha) << endl;
 #endif
 //		min_level = arr[1].alpha;
 		pushlistidx = 0;
@@ -133,6 +139,7 @@ public:
 	}
 
 	inline Pixel get_minlev() { return arr[1].alpha; }
+	inline Pixel top_alpha() { return arr[1].alpha; }
 
 	inline Imgidx top() { return arr[1].pidx; }
 	inline Imgidx top_moves() { return arr[1].moves; }
@@ -159,7 +166,7 @@ public:
 		_uint32 curmove;
 
 #if HEAPQ_DEBUG
-		cout << "pop: " << arr[1].pidx << " at " << log(arr[1].alpha) << endl;
+		cout << "pop: " << arr[1].pidx << " at " << log2(1 + arr[1].alpha) << " cursize: " << cursize << endl;
 #endif
 		// 		ulong val_out = queue->array[1];
 		// 		ulong current = 1, moved;
@@ -182,11 +189,14 @@ public:
 			next1 = next0 + 1;
 			if (next0 > cursize)
 				break;
+				
+			numcmp++;
 			if (next1 <= cursize && arr[next1].alpha < arr[next0].alpha)
 				next = next1;
 			else
 				next = next0;
 
+			numcmp++;
 			if (curalpha < arr[next].alpha)
 				break;
 
@@ -217,7 +227,7 @@ public:
 		pushlist[pushlistidx++].alpha = alpha;
 		//qtime += get_wall_time() - tt; //tmp
 #if HEAPQ_DEBUG
-		cout << "push: " << pidx << " at " << log(alpha) << endl;
+		//cout << "push: " << pidx << " at " << log2(1 + alpha) << endl;
 #endif
 	}
 
@@ -241,8 +251,10 @@ public:
 	//		pidx = pidx;
 
 		next = current >> 1;
+		numcmp++;
 		while (next && (arr[next].alpha > alpha))
 		{
+			numcmp++;
 			arr[current] = arr[next];
 			current = next;
 			next = next >> 1;
@@ -252,7 +264,7 @@ public:
 		arr[current].alpha = alpha;
 		arr[current].moves = moves + 1;
 #if HEAPQ_DEBUG
-		//cout << "pushrun: " << pidx << " at " << alpha << endl;
+		cout << "pushrun: " << pidx << " at " << log2(1 + arr[1].alpha) << " cursize: " << cursize << endl;
 #endif
 
 // 		if (current == 1)
@@ -335,7 +347,7 @@ public:
 		Pixel curalpha;
 
 #if HEAPQ_DEBUG
-		cout << "pop: " << arr[1].pidx << " at " << arr[1].alpha << endl;
+		cout << "pop: " << arr[1].pidx << " at " << arr[1].alpha << " cursize: " << cursize << endl;
 #endif
 		// 		ulong val_out = queue->array[1];
 		// 		ulong current = 1, moved;
@@ -414,7 +426,7 @@ public:
 		arr[current].pidx = pidx;
 		arr[current].alpha = alpha;
 #if HEAPQ_DEBUG
-		cout << "pushrun: " << pidx << " at " << alpha << endl;
+		cout << "pushrun: " << pidx << " at " << alpha << " cursize: " << cursize << endl;
 #endif
 
 // 		if (current == 1)
@@ -474,6 +486,7 @@ public:
 	inline Imgidx top() { return arr[1].pidx; }
 	inline Pixel top_alpha() {return arr[1].alpha;}
 	inline _uint32 top_moves() { return arr[1].moves; }
+	inline _uint32 top_cache_moves() { return arr[1].cache_moves; }
 //	{
 //		 Pixel ret = arr[1].alpha;
 //		 return ret;

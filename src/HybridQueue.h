@@ -1323,10 +1323,13 @@ public:
 	inline Imgidx top() { return list[0].pidx; }
 	inline Pixel top_alpha() { return list[0].alpha; }
 	inline Pixel top_moves() { return list[0].moves; }
+	inline Pixel top_cache_moves () { return list[0].cache_moves; }
 	inline void push_1stitem(Imgidx idx, Pixel alpha)
 	{
 		list[0].pidx = idx;
 		list[0].alpha = alpha;
+		list[0].moves = 0;
+		list[0].cache_moves = 0;
 		curSize_list++;
 	}
 
@@ -1359,6 +1362,7 @@ public:
 			list[0].pidx = idx;
 			list[0].alpha = alpha;
 			list[0].moves = 0;
+			list[0].cache_moves = 0;
 			sum_moves++;
 			num_cached++;
 			return;
@@ -1375,11 +1379,13 @@ public:
 				for (i = curSize_list; alpha < list[i].alpha; i--)
 				{
 					list[i + 1] = list[i];
+					list[i + 1].cache_moves++;
 					sum_moves++;
 				}
 				list[i + 1].pidx = idx;
 				list[i + 1].alpha = alpha;
-				list[i + 1].alpha = 0;
+				list[i + 1].moves = 0;
+				list[i + 1].cache_moves = 0;
 				sum_moves++;
 				num_cached++;
 				curSize_list++;
@@ -1387,16 +1393,20 @@ public:
 			else if (alpha < list[curSize_list].alpha)// push to the full list
 			{
 				cache_overflow++;
+				list[curSize_list].moves++;
+				list[curSize_list].cache_moves++;
 				push_queue(list[curSize_list].pidx, list[curSize_list].alpha, list[curSize_list].moves);
 
 				for (i = curSize_list - 1; alpha < list[i].alpha; i--)
 				{
 					list[i + 1] = list[i];
+					list[i + 1].cache_moves++;
 					sum_moves++;
 				}
 				list[i + 1].pidx = idx;
 				list[i + 1].alpha = alpha;
-				list[i + 1].alpha = 0;
+				list[i + 1].moves = 0;
+				list[i + 1].cache_moves = 0;
 				sum_moves++;
 				num_cached++;
 			}
@@ -1439,7 +1449,8 @@ public:
 		{
 			list[0].pidx = hqueue->top();
 			list[0].alpha = hqueue->top_alpha();
-			list[0].moves = hqueue->top_moves();
+			list[0].moves = hqueue->top_moves() + 1;
+			list[0].cache_moves = hqueue->top_moves() + 1;
 
 			pop_queue();
 		}
@@ -1448,6 +1459,7 @@ public:
 			for (i = 0; i < curSize_list; i++)
 			{
 				list[i] = list[i + 1];
+				list[i].cache_moves++;
 				sum_moves++;
 			}
 			curSize_list--;

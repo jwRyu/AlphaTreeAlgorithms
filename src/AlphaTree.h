@@ -65,11 +65,17 @@ using namespace pmt;
 int nummv = 0, numedge = 0;
 int memthod = 0;
 
+double alpha_root = DBL_MAX;
+
 extern _uint64 *qrecord;
 
+template<class Imgidx>
 struct qstat
 {
+	Imgidx pidx;
+	double alpha;
 	_uint32 moves;
+	_uint32 cache_moves;
 	_uint8 flag;
 };
 
@@ -2291,7 +2297,7 @@ private:
 
 		dimg = (double*)Malloc((size_t)dimgsize * sizeof(double));
 
-		qstat *qp = new qstat[nredges];
+		qstat<Imgidx> *qp = new qstat<Imgidx>[2 * nredges];
 		Imgidx qpidx = 0;
 		
 		if(sizeof(Pixel) == 1 && channel == 1)
@@ -2328,31 +2334,33 @@ private:
 			while (queue->get_minlev() <= current_level) //flood all levels below current_level
 			{
 				p = queue->top();
-				qp[qpidx].moves = queue->top_moves();
+				qp[qpidx].pidx = p;
+				qp[qpidx].alpha = queue->top_alpha();
+				qp[qpidx++].moves = queue->top_moves();
+
 				if (isVisited[p])
 				{
 					queue->pop();
-					qp[qpidx].flag = 1;
+					qp[qpidx - 1].flag = 1;
 					continue;
 				}
-				qpidx++;
 				isVisited[p] = 1;
-
+				
 				isAv = isAvailable[p];
 				if (connectivity == 4)
 				{
 					q = p << 1;
-					if(is_available(isAv, 0) && !isVisited[p + width])	queue->push(p + width, dimg[q]);
-					if(is_available(isAv, 1) && !isVisited[p + 1])			queue->push(p + 1, dimg[q + 1]);
-					if(is_available(isAv, 2) && !isVisited[p - 1])			queue->push(p - 1, dimg[q - 1]);
-					if(is_available(isAv, 3) && !isVisited[p - width])	queue->push(p - width, dimg[q - (width << 1)]);
+					if(is_available(isAv, 0) && !isVisited[p + width] && dimg[q] <= alpha_root)					queue->push(p + width, dimg[q]);
+					if(is_available(isAv, 1) && !isVisited[p + 1] && dimg[q + 1] <= alpha_root)					queue->push(p + 1, dimg[q + 1]);
+					if(is_available(isAv, 2) && !isVisited[p - 1] && dimg[q - 1] <= alpha_root)					queue->push(p - 1, dimg[q - 1]);
+					if(is_available(isAv, 3) && !isVisited[p - width] && dimg[q - (width << 1)] <= alpha_root)	queue->push(p - width, dimg[q - (width << 1)]);
 				}
 				else if (connectivity == 8)
 				{
 					Imgidx width4 = width << 2;
 					q = p << 2;
 					if(is_available(isAv, 0) && !isVisited[p + width]) 		 queue->push(p + width, 		dimg[q]);
-					if(is_available(isAv, 1) && !isVisited[p + width + 1]) queue->push(p + width + 1, dimg[q + 1]);
+					if(is_available(isAv, 1) && !isVisited[p + width + 1]) queue->push(p + width + 1, dimg[q + 1]);				
 					if(is_available(isAv, 2) && !isVisited[p + 1]) 		 		 queue->push(p + 1, 				dimg[q + 2]);
 					if(is_available(isAv, 3) && !isVisited[p - width + 1]) queue->push(p - width + 1, dimg[q + 3]);
 					if(is_available(isAv, 4) && !isVisited[p - width]) 		 queue->push(p - width, 		dimg[q - width4]);
@@ -2419,23 +2427,42 @@ private:
 		}
 	FLOOD_END:
 		//rootidx = (node[stack_top].area == imgsize) ? stack_top : iNode; //remove redundant root
+
+		//for(stack_top = parentAry[0];node[stack_top].area < imgsize;stack_top = node[stack_top].parentidx)
+		//	;
 		node[stack_top].parentidx = ROOTIDX;
+		rootidx = stack_top;
+
+		print_tree();
+		
+		printf("root = %d\n", (int)rootidx);
 
 		HQentry<Imgidx, double> *arr = queue->arr;
 		for(Imgidx i = 1;i < queue->cursize + 1;i++)
 		{
+			qp[qpidx].pidx = arr[i].pidx;
+			qp[qpidx].alpha = arr[i].alpha;
 			qp[qpidx].moves = arr[i].moves;
 			qp[qpidx].flag = 2;
 			qpidx++;
 		}
 
 		_uint64 arr_moves[3] = {0,};
+		_uint64 arr_cache_moves[3] = {0,};
 		_uint64 pop[3] = {0,};
+		int cntcnt = 0;
 		for(Imgidx i = 0;i < qpidx;i++)
 		{
+			printf("Q item[%d]: pidx=%d, alpha=%f, flag=%d, moves=%d, caching=%d\n", (int)i, (int)qp[i].pidx, log2(1+qp[i].alpha), qp[i].flag, qp[i].moves, qp[i].cache_moves);
+			if(qp[i].alpha >= node[rootidx].alpha)
+				{qp[i].flag = 2; cntcnt++;};
 			pop[qp[i].flag]++;
-			arr_moves[qp[i].flag] += qp[i].moves;
+			arr_moves[qp[i].flag] += (qp[i].moves - qp[i].cache_moves);
+			arr_cache_moves[qp[i].flag] += qp[i].cache_moves;
 		}
+
+		printf("# redundant -> residual: %d \n", cntcnt);
+
 		printf("---Heap Queue Stats (Normal, redundant, residual) ---\n");
 		printf("population: %d(%f) %d(%f) %d(%f)\n",
 		 (int)pop[0], (double)pop[0] / (double)nredges, 
@@ -2450,6 +2477,21 @@ private:
 		 (int)arr_moves[0], (double)arr_moves[0] / (double)movesum, 
 		 (int)arr_moves[1], (double)arr_moves[1] / (double)movesum, 
 		 (int)arr_moves[2], (double)arr_moves[2] / (double)movesum);
+		
+
+
+		printf("cache_moves: %d(%f) %d(%f) %d(%f)\n",
+		 (int)arr_cache_moves[0], (double)arr_cache_moves[0] / (double)pop[0], 
+		 (int)arr_cache_moves[1], (double)arr_cache_moves[1] / (double)pop[1], 
+		 (int)arr_cache_moves[2], (double)arr_cache_moves[2] / (double)pop[2]);
+		 movesum = (double)(arr_cache_moves[0] + arr_cache_moves[1] + arr_cache_moves[2]);
+		printf("P_move: %d(%f) %d(%f) %d(%f)\n",
+		 (int)arr_cache_moves[0], (double)arr_cache_moves[0] / (double)movesum, 
+		 (int)arr_moves[1], (double)arr_cache_moves[1] / (double)movesum, 
+		 (int)arr_cache_moves[2], (double)arr_cache_moves[2] / (double)movesum);
+
+
+		printf("Number of total a-value comparisons:%d\n", (int)queue->numcmp);
 		
 
 		delete[] qp;
@@ -2478,7 +2520,7 @@ private:
 		double current_level;
 		double *dimg;
 
-		qstat *qp = new qstat[nredges];
+		qstat<Imgidx> *qp = new qstat<Imgidx>[nredges];
 		Imgidx qpidx = 0;
 
 		dimg = (double*)Malloc((size_t)dimgsize * sizeof(double));
