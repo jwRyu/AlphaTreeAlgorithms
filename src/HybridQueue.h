@@ -331,6 +331,7 @@ public:
 template<class Imgidx, class Pixel>
 class HierarHeapQueue
 {
+public:
 	HeapQueue_naive_quad<Imgidx, Pixel> **hqueue;
 	HQentry<Imgidx, Pixel> **storage;
 	Imgidx *storage_cursize;
@@ -343,7 +344,13 @@ class HierarHeapQueue
 	Imgidx maxSize_queue, mask_field;
 	int8 shamt, nbit;
 
-public:
+	uint32 cursize;
+
+	uint64 numcmp;
+	uint64 discarded;
+	uint64 tranferred;
+	uint64 num_level_search;
+
 	#if TRACK_QUEUEING
 		Imgidx *in_size;
 		ofstream f;
@@ -351,7 +358,8 @@ public:
 		Imgidx numqueue;
 	#endif
 
-	HierarHeapQueue(Imgidx *dhist, Imgidx numlevels_in, Imgidx size, double a_in, int listsize, int connectivity, double r)
+	HierarHeapQueue(Imgidx *dhist, Imgidx numlevels_in, Imgidx size, double a_in, int listsize, int connectivity, double r):
+	 cursize(0), numcmp(0), discarded(0), tranferred(0), num_level_search(0)
 	{
 		#if TRACK_QUEUEING
 				f.open("../../groupmeeting/next/queuelog.dat", std::ofstream::out);
@@ -421,6 +429,42 @@ public:
 
 	inline Imgidx top() { return hqueue[queue_minlev]->top(); }
 	inline Pixel top_alpha() { return hqueue[queue_minlev]->top_alpha(); }
+	inline Imgidx is_empty() { return cursize == 0;}
+
+	inline uint32 top_moves() { return hqueue[queue_minlev]->top_moves(); }
+	inline uint32 top_cache_moves() { return hqueue[queue_minlev]->top_cache_moves(); }
+	uint32 get_numcmp()
+	{
+		uint64 np = this->numcmp;
+		
+		for(int i = 0;i < curthr;i++)
+		{
+			np += hqueue[i]->numcmp;
+		}
+
+		return np;
+	}
+
+	uint32 get_storage_pop()
+	{
+		uint32 cnt = 0;
+		for(int i = curthr;i < numlevels;i++)
+		{
+			cnt += storage_cursize[i];
+		}
+		return cnt;
+	}
+
+	uint32 get_hqueue_pop()
+	{
+		uint32 cnt = 0;
+		for(int i = 0;i < curthr;i++)
+		{
+			cnt += hqueue[i]->cursize;
+		}
+		return cnt;
+	}
+
 	inline void push_1stitem(Imgidx idx, Pixel alpha)
 	{
 		push_queue(idx, alpha);
@@ -454,16 +498,18 @@ public:
 
 	void push_queue(Imgidx idx, Pixel alpha)
 	{
-
+		cursize++;
 	#if TRACK_QUEUEING
 		numqueue++;
 	#endif
 		int level = (int)(a * log2(1 + (double)alpha));
 
 		//hidx = (int)(log2(1 + pow((double)dimg[dimgidx++],a)));
+		numcmp++;
 		if(level < queue_minlev)
 			queue_minlev = level;
 
+		numcmp++;
 		if(level < curthr)
 			hqueue[level]->push(idx, alpha);
 		else
@@ -471,6 +517,8 @@ public:
 			Imgidx cur = storage_cursize[level]++;
 			storage[level][cur].pidx = idx;
 			storage[level][cur].alpha = alpha;
+			storage[level][cur].moves = 0;
+			storage[level][cur].cache_moves = 0;
 		}
 	}
 
@@ -538,7 +586,15 @@ public:
 			for(Imgidx p = 0;p < cur;p++)
 			{
 				if(!isVisited[store[p].pidx])
-					pQ->push(store[p].pidx, store[p].alpha);
+				{
+					tranferred++;
+					pQ->push(store[p].pidx, store[p].alpha, 1, 0);
+				}
+				else
+				{
+					discarded++;
+					cursize--;
+				}
 			}
 
 			Free(storage[queue_minlev]);
@@ -550,13 +606,20 @@ public:
 
 	void pop_queue(uint8* isVisited)
 	{
+		if(cursize == 0)
+			return;
+		cursize--;
+		if(cursize == 0)
+			return;
 		hqueue[queue_minlev]->pop();
+		
 
-		if(!hqueue[queue_minlev]->get_cursize())
+		if(cursize && !hqueue[queue_minlev]->get_cursize())
 		{
 			do
 			{
 				queue_minlev++;
+				num_level_search++;
 			}while(queue_minlev < numlevels && !check_queue_level(isVisited));
 		}
 	}
@@ -566,6 +629,7 @@ public:
 template<class Imgidx, class Pixel>
 class HierarHeapQueue_cache
 {
+public:
 	HQentry<Imgidx, Pixel> *list;
 	HeapQueue_naive_quad<Imgidx, Pixel> **hqueue;
 	HQentry<Imgidx, Pixel> **storage;
@@ -582,6 +646,15 @@ class HierarHeapQueue_cache
 	int emptytop;
 
 	Imgidx totalsize;
+
+
+	uint64 numcmp;
+	int cache_overflow;
+
+	int64 cursize;
+	uint64 discarded;
+	uint64 tranferred;
+	uint64 num_level_search;
 
 public:
 #if PROFILE
@@ -609,6 +682,12 @@ public:
 		/*		cnt = 0;//tmp*/
 		//Imgidx i;
 		totalsize = size;
+		numcmp = 0;
+		cache_overflow = 0;
+		cursize = 0;
+		discarded = 0;
+		tranferred = 0;
+		num_level_search = 0;
 
 #if PROFILE
 		t0 = get_cpu_time();
@@ -725,10 +804,50 @@ public:
 	inline Pixel get_minlev() { return list[0].alpha; }
 	inline Imgidx top() { return list[0].pidx; }
 	inline Pixel top_alpha() { return list[0].alpha; }
+	inline uint32 top_moves() { return list[0].moves;}
+	inline uint32 top_cache_moves() { return list[0].cache_moves;}
+	inline uint32 top_pure_cache() { return list[0].pure_cache;}
+	inline Imgidx is_empty() { return cursize == 0;}
+	
+	uint32 get_numcmp()
+	{
+		uint64 np = this->numcmp;
+		
+		for(int i = 0;i < curthr;i++)
+		{
+			np += hqueue[i]->numcmp;
+		}
+
+		return np;
+	}
+
+	uint32 get_storage_pop()
+	{
+		uint32 cnt = 0;
+		for(int i = curthr;i < numlevels;i++)
+		{
+			cnt += storage_cursize[i];
+		}
+		return cnt;
+	}
+
+	uint32 get_hqueue_pop()
+	{
+		uint32 cnt = 0;
+		for(int i = 0;i < curthr;i++)
+		{
+			cnt += hqueue[i]->cursize;
+		}
+		return cnt;
+	}
+
 	inline void push_1stitem(Imgidx idx, Pixel alpha)
 	{
 		list[0].pidx = idx;
 		list[0].alpha = alpha;
+		list[0].moves = 0;
+		list[0].cache_moves = 0;
+		list[0].pure_cache = 1;
 		curSize_list++;
 
 		#if TRACK_QUEUEING
@@ -757,6 +876,7 @@ public:
 		numproc++;
 		f << '0' << '\n' << idx << endl << alpha << endl;
 #endif
+		cursize++;
 
 		if(emptytop && alpha < list[0].alpha)
 		{
@@ -766,6 +886,9 @@ public:
 			emptytop = 0;
 			list[0].pidx = idx;
 			list[0].alpha = alpha;
+			list[0].moves = 0;
+			list[0].cache_moves = 0;
+			list[0].pure_cache = 1;
 			return;
 		}
 
@@ -774,8 +897,9 @@ public:
 		// 		if (cnt == 786)//tmp
 		// 			idx = idx;
 
-		bool push2list = (queue_minlev < curthr) ?  alpha < hqueue[queue_minlev]->top_alpha()
-																						 :  (int)(a * log2(1 + (double)alpha)) < queue_minlev;
+		bool push2list = (queue_minlev < curthr) ? 
+		alpha < hqueue[queue_minlev]->top_alpha()
+		 :  (int)(a * log2(1 + (double)alpha)) < queue_minlev;
 
 		if (push2list)
 		{
@@ -787,9 +911,15 @@ public:
 			{
 				int i;
 				for (i = curSize_list; alpha < list[i].alpha; i--)
+				{
 					list[i + 1] = list[i];
+					list[i + 1].cache_moves++;
+				}
 				list[i + 1].pidx = idx;
 				list[i + 1].alpha = alpha;
+				list[i + 1].moves = 0;
+				list[i + 1].cache_moves = 0;
+				list[i + 1].pure_cache = 1;
 				curSize_list++;
 			}
 			else if (alpha < list[curSize_list].alpha)// push to the full list
@@ -798,16 +928,23 @@ public:
 				num_cache_ovfl++;
 				t2 = get_cpu_time();
 #endif
-				push_queue(list[curSize_list].pidx, list[curSize_list].alpha);
+				push_queue(list[curSize_list].pidx, list[curSize_list].alpha,
+				list[curSize_list].moves, list[curSize_list].cache_moves);
 
 #if PROFILE
 				tq = get_cpu_time() - t2;
 #endif
 				int i;
 				for (i = curSize_list - 1; alpha < list[i].alpha; i--)
+				{
 					list[i + 1] = list[i];
+					list[i + 1].cache_moves++;
+				}
 				list[i + 1].pidx = idx;
 				list[i + 1].alpha = alpha;
+				list[i + 1].moves = 0;
+				list[i + 1].cache_moves = 0;
+				list[i + 1].pure_cache = 1;
 			}
 			else
 			{
@@ -850,7 +987,7 @@ public:
 			//qtime += get_cpu_time() - tt; //tmp
 	}
 
-	void push_queue(Imgidx idx, Pixel alpha)
+	void push_queue(Imgidx idx, Pixel alpha, uint32 moves = 0, uint32 cache_moves = 0)
 	{
 
 	#if TRACK_QUEUEING
@@ -867,7 +1004,7 @@ public:
 #if PROFILE
 			num_hq++;
 #endif
-			hqueue[level]->push(idx, alpha);
+			hqueue[level]->push(idx, alpha, moves, cache_moves);
 		}
 		else
 		{
@@ -877,6 +1014,8 @@ public:
 			Imgidx cur = storage_cursize[level]++;
 			storage[level][cur].pidx = idx;
 			storage[level][cur].alpha = alpha;
+			storage[level][cur].moves = moves;
+			storage[level][cur].cache_moves = cache_moves;
 		}
 	}
 
@@ -908,6 +1047,10 @@ public:
 		// 		if (cnt == 776)//tmp
 		// 			cnt = cnt;
 
+		cursize--;
+		if(cursize <= 0)
+			return ret;
+
 #if QUEUE_DEBUG
 		printf("pop: %d at %.2f\n", (int)list[0].pidx, log2((double)list[0].alpha));
 		//cout << "pop: " << list[0].pidx << " at " << log2((double)list[0].alpha) << endl;
@@ -927,13 +1070,19 @@ public:
 				queue_minlev++;
 			list[0].pidx = hqueue[queue_minlev]->top();
 			list[0].alpha = hqueue[queue_minlev]->top_alpha();
+			list[0].moves = hqueue[queue_minlev]->top_moves() + 2;
+			list[0].cache_moves = hqueue[queue_minlev]->top_cache_moves();
+			list[0].pure_cache = 0;
 
 			pop_queue(isVisited);
 		}
 		else
 		{
 			for (i = 0; i < curSize_list; i++)
+			{
 				list[i] = list[i + 1];
+				list[i].cache_moves++;
+			}
 			curSize_list--;
 		}
 
@@ -983,7 +1132,15 @@ public:
 			for(Imgidx p = 0;p < cur;p++)
 			{
 				if(!isVisited[store[p].pidx])
-					pQ->push(store[p].pidx, store[p].alpha);
+				{
+					tranferred++;
+					pQ->push(store[p].pidx, store[p].alpha, 1, 0);
+				}
+				else
+				{
+					discarded++;
+					cursize--;
+				}
 			}
 #if PROFILE
 			num_conv += cur;
@@ -1011,11 +1168,12 @@ public:
 		tqueue += get_cpu_time() - t1;
 #endif
 
-		if(!hqueue[queue_minlev]->get_cursize())
+		if(cursize && !hqueue[queue_minlev]->get_cursize())
 		{
 			do
 			{
 				queue_minlev++;
+				num_level_search++;
 			}while(queue_minlev < numlevels && !check_queue_level(isVisited));
 		}
 	}

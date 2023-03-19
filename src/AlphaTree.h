@@ -3172,6 +3172,7 @@ FLOOD_END:
 		return ret;
 	}
 
+	//aa4
 	void Flood_HierarHeapQueue(Pixel* img, double a = 12.0, double r = 0.5, int listsize = 12)
 	{
 	  	HierarHeapQueue<Imgidx, Pixel>* queue;
@@ -3218,6 +3219,9 @@ FLOOD_END:
 		pNode->parentidx = stack_top;
 		current_level = (double)max_level;
 
+		qstat<Imgidx> *qp = new qstat<Imgidx>[2 * nredges];
+		Imgidx qpidx = 0;
+
 		bool firstpixel = 1;
 		p = x0;
 		Imgidx prev_top = stack_top;
@@ -3227,9 +3231,17 @@ FLOOD_END:
 			{
 				if(!firstpixel)
 				{
+					qp[qpidx].pidx = queue->top();
+					qp[qpidx].alpha = queue->top_alpha();
+					qp[qpidx].flag = 0;
+					qp[qpidx].cache_moves = queue->top_cache_moves();
+					qp[qpidx++].moves = queue->top_moves();
 					p = queue->pop(isVisited);
 					if (isVisited[p])
+					{
+						qp[qpidx - 1].flag = 1;
 						continue;
+					}
 				}
 				else
 					firstpixel = 0;
@@ -3337,13 +3349,81 @@ FLOOD_END:
 				break;
 	  }
 FLOOD_END:
-	  rootidx = (node[stack_top].area == imgsize) ? stack_top : iNode; //remove redundant root
-	  node[rootidx].parentidx = ROOTIDX;
+		rootidx = (node[stack_top].area == imgsize) ? stack_top : iNode; //remove redundant root
+		node[rootidx].parentidx = ROOTIDX;
 
-	  delete queue;
-	  Free(dimg);
-	  Free(isVisited);
-	  Free(isAvailable);
+		int cnt = 0;
+		while(!queue->is_empty())
+		{
+			cnt++;
+			qp[qpidx].pidx = queue->top();
+			qp[qpidx].alpha = queue->top_alpha();
+			qp[qpidx].flag = 0;
+			qp[qpidx].cache_moves = queue->top_cache_moves();
+			qp[qpidx++].moves = queue->top_moves();
+			p = queue->pop(isVisited);
+		}
+
+		uint64 arr_moves[3] = {0,};
+		uint64 arr_cache_moves[3] = {0,};
+		uint64 pop[3] = {0,};
+		int cntcnt = 0;
+		for(Imgidx i = 0;i < qpidx;i++)
+		{			
+			//if(qp[i].alpha >= node[rootidx].alpha)
+			if(qp[i].flag == 1 && qp[i].alpha >= node[rootidx].alpha)
+				{qp[i].flag = 2; cntcnt++;};
+			//printf("Q item[%d]: pidx=%d, alpha=%f, flag=%d, moves=%d, caching=%d\n", (int)i, (int)qp[i].pidx, log2(1+qp[i].alpha), qp[i].flag, qp[i].moves, qp[i].cache_moves);
+			
+			pop[qp[i].flag]++;
+			arr_moves[qp[i].flag] += (qp[i].moves - qp[i].cache_moves);
+			arr_cache_moves[qp[i].flag] += qp[i].cache_moves;
+		}
+
+		printf("# redundant -> residual: %d \n", cntcnt);
+
+		printf("---Heap Queue Stats (Normal, redundant, residual, notpushed) ---\n");
+		printf("population: %d(%f) %d(%f) %d(%f) %d(%f)\n",
+		 (int)pop[0], (double)pop[0] / (double)(nredges + 1), 
+		 (int)pop[1], (double)pop[1] / (double)(nredges + 1), 
+		 (int)pop[2], (double)pop[2] / (double)(nredges + 1), 
+		 (int)(nredges + 1 - pop[0] - pop[1] - pop[2]), (double)(nredges + 1 - pop[0] - pop[1] - pop[2]) / (double)(nredges + 1));
+		printf("moves per pop: %d(%f) %d(%f) %d(%f)\n",
+		 (int)arr_moves[0], (double)arr_moves[0] / (double)pop[0], 
+		 (int)arr_moves[1], (double)arr_moves[1] / (double)pop[1], 
+		 (int)arr_moves[2], (double)arr_moves[2] / (double)pop[2]);
+		 double movesum = (double)(arr_moves[0] + arr_moves[1] + arr_moves[2]);
+		printf("P_move: %d(%f) %d(%f) %d(%f)\n",
+		 (int)arr_moves[0], (double)arr_moves[0] / (double)movesum, 
+		 (int)arr_moves[1], (double)arr_moves[1] / (double)movesum, 
+		 (int)arr_moves[2], (double)arr_moves[2] / (double)movesum);
+		
+
+/*
+		printf("cache_moves: %d(%f) %d(%f) %d(%f)\n",
+		 (int)arr_cache_moves[0], (double)arr_cache_moves[0] / (double)pop[0], 
+		 (int)arr_cache_moves[1], (double)arr_cache_moves[1] / (double)pop[1], 
+		 (int)arr_cache_moves[2], (double)arr_cache_moves[2] / (double)pop[2]);
+		 movesum = (double)(arr_cache_moves[0] + arr_cache_moves[1] + arr_cache_moves[2]);
+		printf("cache_P_move: %d(%f) %d(%f) %d(%f)\n",
+		 (int)arr_cache_moves[0], (double)arr_cache_moves[0] / (double)movesum, 
+		 (int)arr_moves[1], (double)arr_cache_moves[1] / (double)movesum, 
+		 (int)arr_cache_moves[2], (double)arr_cache_moves[2] / (double)movesum);
+*/
+
+		printf("Number of total a-value comparisons:%f\n", (double)queue->get_numcmp());
+		printf("Number of non-empty level searches:%f\n", (double)queue->num_level_search);
+		double popsum = (double)queue->get_numcmp() + (double)queue->get_storage_pop();
+		printf("residual hqueue %d vs storage %d (%f:%f)\n", 
+		(int)queue->get_numcmp(), (int)queue->get_storage_pop(),
+		(double)queue->get_numcmp() / popsum, (double)queue->get_storage_pop() / popsum);
+		
+		delete[] qp;
+
+		delete queue;
+		Free(dimg);
+		Free(isVisited);
+		Free(isAvailable);
 	}
 
 	void Flood_HierarHeapQueue_Cache(Pixel* img, double a = 12.0, double r = 0.5, int listsize = 12)
@@ -3393,23 +3473,32 @@ FLOOD_END:
 		current_level = (double)max_level;
 		x0 = 0; /*arbitrary starting point*/
 
+		qstat<Imgidx> *qp = new qstat<Imgidx>[2 * nredges];
+		Imgidx qpidx = 0;
 
 		Imgidx prev_top = stack_top;
-		queue->push_1stitem(x0, (Pixel)current_level);
+		queue->push_1stitem(x0, max_level);
 		while (1) //flooding
 		{
 			while ((double)queue->top_alpha() <= (double)current_level) //flood all levels below current_level
 			{
 				p = queue->top();
+				qp[qpidx].pidx = queue->top();
+				qp[qpidx].alpha = queue->top_alpha();
+				qp[qpidx].flag = 0;
+				qp[qpidx].cache_moves = queue->top_cache_moves();
+				qp[qpidx].pure_cache = queue->top_pure_cache();
+				qp[qpidx++].moves = queue->top_moves();
 
 				if (isVisited[p])
 				{
 					queue->pop(isVisited);
-							//queue->mark(1);
+					qp[qpidx - 1].flag = 1;
 					continue;
 				}
 				//printf("++visiting %d: stack_top[%d] at %.3f, area: %d curSize: %d\n", (int)p, (int)stack_top, log2((double)(node[stack_top].alpha)), (int)node[stack_top].area, (int)curSize);
 				queue->start_pushes();
+
 				//queue->mark(0);
 				isVisited[p] = 1;
 
@@ -3464,15 +3553,15 @@ FLOOD_END:
 				else
 				{
 					if (current_level > 0)
-						{
-							Pixel pix_val = img[p];
-							iNode = NewAlphaNode();
-							node[iNode].set(1, 0, (double)pix_val, pix_val, pix_val, pix_type);
-							node[stack_top].add(node + iNode, pix_type);
-							node[iNode].parentidx = stack_top;
-							node[iNode].rootidx = ROOTIDX;
-							parentAry[p] = iNode;
-						}
+					{
+						Pixel pix_val = img[p];
+						iNode = NewAlphaNode();
+						node[iNode].set(1, 0, (double)pix_val, pix_val, pix_val, pix_type);
+						node[stack_top].add(node + iNode, pix_type);
+						node[iNode].parentidx = stack_top;
+						node[iNode].rootidx = ROOTIDX;
+						parentAry[p] = iNode;
+					}
 					else
 					connectPix2Node(p, img[p], stack_top);
 					if(node[stack_top].area == imgsize)
@@ -3506,7 +3595,7 @@ FLOOD_END:
 			}
 			else //go to existing node
 			{
-			node[iNode].add(node + stack_top, pix_type);
+				node[iNode].add(node + stack_top, pix_type);
 			}
 			prev_top = stack_top;
 			stack_top = iNode;
@@ -3515,13 +3604,108 @@ FLOOD_END:
 				break;
 	  }
 FLOOD_END:
-	  rootidx = (node[stack_top].area == imgsize) ? stack_top : iNode; //remove redundant root
-	  node[rootidx].parentidx = ROOTIDX;
+		rootidx = (node[stack_top].area == imgsize) ? stack_top : iNode; //remove redundant root
+		node[rootidx].parentidx = ROOTIDX;
 
-	  delete queue;
-	  Free(dimg);
-	  Free(isVisited);
-	  Free(isAvailable);
+		//while(!queue->is_empty())
+		while(0)
+		{
+			qp[qpidx].pidx = queue->top();
+			qp[qpidx].alpha = queue->top_alpha();
+			qp[qpidx].flag = 0;
+			qp[qpidx].cache_moves = queue->top_cache_moves();
+			qp[qpidx++].moves = queue->top_moves();
+			p = queue->pop(isVisited);
+		}
+
+		uint64 arr_moves[3] = {0,};
+		uint64 arr_cache_moves[3] = {0,};
+		uint64 pop[3] = {0,};
+		uint64 cache_pop[3] = {0,};
+		uint64 cache_only[3] = {0,};
+		uint64 cache_zeromove[3] = {0,};
+		int cntcnt = 0;
+		for(Imgidx i = 0;i < qpidx;i++)
+		{
+			qp[i].moves -= qp[i].cache_moves;
+
+			//if(qp[i].alpha >= node[rootidx].alpha)
+			if(qp[i].flag == 1 && (qp[i].alpha >= node[rootidx].alpha))
+				{qp[i].flag = 2; cntcnt++;};
+			//printf("Q item[%d]: pidx=%d, alpha=%f, flag=%d, moves=%d, caching=%d\n", (int)i, (int)qp[i].pidx, log2(1+qp[i].alpha), qp[i].flag, qp[i].moves, qp[i].cache_moves);
+			
+			pop[qp[i].flag]++;
+			arr_moves[qp[i].flag] += qp[i].moves;			
+			arr_cache_moves[qp[i].flag] += qp[i].cache_moves;
+			
+			if(qp[i].cache_moves || qp[i].pure_cache)
+			{
+				cache_pop[qp[i].flag]++;
+				if(qp[i].cache_moves == 0)
+					cache_zeromove[qp[i].flag]++;
+			}
+
+			if(qp[i].pure_cache)
+				cache_only[qp[i].flag]++;
+		}
+
+		printf("# redundant -> residual: %d \n", cntcnt);
+		printf("# cache overflow: %d \n", (int)queue->cache_overflow);
+
+		printf("---Heap Queue Stats (Normal, redundant, residual, notpushed) ---\n");
+		printf("population: %d(%f) %d(%f) %d(%f) %d(%f)\n",
+		 (int)pop[0], (double)pop[0] / (double)(nredges + 1), 
+		 (int)pop[1], (double)pop[1] / (double)(nredges + 1), 
+		 (int)pop[2], (double)pop[2] / (double)(nredges + 1), 
+		 (int)(nredges + 1 - pop[0] - pop[1] - pop[2]), (double)(nredges + 1 - pop[0] - pop[1] - pop[2]) / (double)(nredges + 1));
+		printf("moves per pop: %d(%f) %d(%f) %d(%f)\n",
+		 (int)arr_moves[0], (double)arr_moves[0] / (double)pop[0], 
+		 (int)arr_moves[1], (double)arr_moves[1] / (double)pop[1], 
+		 (int)arr_moves[2], (double)arr_moves[2] / (double)pop[2]);
+		 double movesum = (double)(arr_moves[0] + arr_moves[1] + arr_moves[2]);
+		printf("P_move: %d(%f) %d(%f) %d(%f)\n",
+		 (int)arr_moves[0], (double)arr_moves[0] / (double)movesum, 
+		 (int)arr_moves[1], (double)arr_moves[1] / (double)movesum, 
+		 (int)arr_moves[2], (double)arr_moves[2] / (double)movesum);
+		
+		uint64 cpop = cache_pop[0] + cache_pop[1] + cache_pop[2];		
+		printf("Cache population (%d of %d): %d(%f) %d(%f) %d(%f) \n", (int)cpop, (int)(nredges + 1),
+		 (int)cache_pop[0], (double)cache_pop[0] / (double)(cpop), 
+		 (int)cache_pop[1], (double)cache_pop[1] / (double)(cpop), 
+		 (int)cache_pop[2], (double)cache_pop[2] / (double)(cpop));
+
+		printf("cache_moves: %d(%f) %d(%f) %d(%f)\n",
+		 (int)arr_cache_moves[0], (double)arr_cache_moves[0] / (double)cache_pop[0], 
+		 (int)arr_cache_moves[1], (double)arr_cache_moves[1] / (double)cache_pop[1], 
+		 (int)arr_cache_moves[2], (double)arr_cache_moves[2] / (double)cache_pop[2]);
+		 printf("cache_no_moves: %d(%f) %d(%f) %d(%f)\n",
+		 (int)cache_zeromove[0], (double)cache_zeromove[0] / (double)cache_pop[0], 
+		 (int)cache_zeromove[1], (double)cache_zeromove[1] / (double)cache_pop[1], 
+		 (int)cache_zeromove[2], (double)cache_zeromove[2] / (double)cache_pop[2]);
+
+		 movesum = (double)(arr_cache_moves[0] + arr_cache_moves[1] + arr_cache_moves[2]);
+		printf("cache_P_move: %d(%f) %d(%f) %d(%f)\n",
+		 (int)arr_cache_moves[0], (double)arr_cache_moves[0] / (double)movesum, 
+		 (int)arr_cache_moves[1], (double)arr_cache_moves[1] / (double)movesum, 
+		 (int)arr_cache_moves[2], (double)arr_cache_moves[2] / (double)movesum);
+		printf("cache_only: %d(%f) %d(%f) %d(%f)\n",
+		 (int)cache_only[0], (double)cache_only[0] / (double)cache_pop[0], 
+		 (int)cache_only[1], (double)cache_only[1] / (double)cache_pop[1], 
+		 (int)cache_only[2], (double)cache_only[2] / (double)cache_pop[2]);
+
+		printf("Number of total a-value comparisons:%f\n", (double)queue->get_numcmp());
+		printf("Number of non-empty level searches:%f\n", (double)queue->num_level_search);
+		double popsum = (double)queue->get_numcmp() + (double)queue->get_storage_pop();
+		printf("residual hqueue %d vs storage %d (%f:%f)\n", 
+		(int)queue->get_numcmp(), (int)queue->get_storage_pop(),
+		(double)queue->get_numcmp() / popsum, (double)queue->get_storage_pop() / popsum);
+		
+		delete[] qp;
+
+		delete queue;
+		Free(dimg);
+		Free(isVisited);
+		Free(isAvailable);
 	}
 
 	void Flood_HierarHeapQueue_Cache_histeq(Pixel* img, int listsize = 12, int a = 0)
