@@ -21,7 +21,7 @@ public:
 	Pixel alpha;
 	uint32 moves;
 	uint32 cache_moves;
-	
+	uint8 pure_cache;
 
 	inline void operator=(const HQentry& item)
 	{
@@ -29,6 +29,7 @@ public:
 		this->alpha = item.alpha;
 		this->moves = item.moves + 1;
 		this->cache_moves = item.cache_moves;
+		this->pure_cache = item.pure_cache;
 	}
 };
 

@@ -17,6 +17,7 @@ class HierarQueue//: public PriorityQueue<Imgidx>
 public://tmp
 	Imgidx *queue;
 	Imgidx *bottom, *cur;
+	uint32 *moves;
 	int32 numlevel;
 #if HQUEUE_DEBUG
 	Imgidx *cnt;
@@ -25,6 +26,9 @@ public://tmp
 
 	int64 qsize;
 	int64 min_level, max_level;
+	uint64 numcmp;
+	uint64 num_level_search;
+	
 
 	void print()
 	{
@@ -40,12 +44,15 @@ public://tmp
 		}
 	}
 
-	HierarQueue(uint64 qsize_in, int32 numlevels)
+	inline uint8 is_empty(){return min_level == numlevel;}
+
+	HierarQueue(uint64 qsize_in, int32 numlevels): numcmp(0), num_level_search(0)
 	{
 		//tmp
 		queue = (Imgidx*)Malloc((size_t)qsize_in * sizeof(Imgidx));
 		bottom = (Imgidx*)Malloc((size_t)(numlevels + 1) * sizeof(Imgidx));
 		cur = (Imgidx*)Malloc((size_t)(numlevels + 1) * sizeof(Imgidx));
+		moves = (uint32*)Calloc((size_t)(qsize_in) * sizeof(uint32));
 
 	#if HQUEUE_DEBUG
 		cnt = (Imgidx*)Calloc((size_t)(numlevels) * sizeof(Imgidx));
@@ -55,7 +62,7 @@ public://tmp
 		max_level = 0;
 
 		qsize = qsize_in;
-		min_level = numlevels - 1;
+		min_level = numlevels;
 
 		bottom[numlevels] = 0;
 		cur[numlevels] = 1;
@@ -64,14 +71,14 @@ public://tmp
 #endif
 	}
 
-
-	HierarQueue(uint64 qsize_in)
+	HierarQueue(uint64 qsize_in): numcmp(0), num_level_search(0)
 	{
 		int32 numlevels = (int32)1 << 20;
 		//tmp
 		queue = (Imgidx*)Malloc((size_t)qsize_in * sizeof(Imgidx));
 		bottom = (Imgidx*)Malloc(((size_t)numlevels + 1) * sizeof(Imgidx));
 		cur = (Imgidx*)Malloc(((size_t)numlevels + 1) * sizeof(Imgidx));
+		moves = (uint32*)Calloc((size_t)(qsize_in) * sizeof(uint32));
 
 	#if HQUEUE_DEBUG
 		cnt = (Imgidx*)Calloc((size_t)(numlevels) * sizeof(Imgidx));
@@ -81,7 +88,7 @@ public://tmp
 		max_level = 0;
 
 		qsize = qsize_in;
-		min_level = numlevels - 1;
+		min_level = numlevels;
 
 		bottom[numlevels] = 0;
 		cur[numlevels] = 1;
@@ -145,12 +152,13 @@ public://tmp
 		return sum_hist;
 	}
 
-	HierarQueue(uint64 qsize_in, Imgidx *dhist, int32 numlevels)
+	HierarQueue(uint64 qsize_in, Imgidx *dhist, int32 numlevels): numcmp(0), num_level_search(0)
 	{
 		//tmp
 		queue = (Imgidx*)Malloc((size_t)qsize_in * sizeof(Imgidx));
 		bottom = (Imgidx*)Malloc((size_t)(numlevels + 1) * sizeof(Imgidx));
 		cur = (Imgidx*)Malloc((size_t)(numlevels + 1) * sizeof(Imgidx));
+		moves = (uint32*)Calloc((size_t)(qsize_in) * sizeof(uint32));
 
 #if HQUEUE_DEBUG
 		cnt = (Imgidx*)Calloc((size_t)(numlevels) * sizeof(Imgidx));
@@ -178,8 +186,7 @@ public://tmp
 		cur[numlevels] = 1;
 	}
 
-
-	HierarQueue(Imgidx *dhist, int32 numlevels)
+	HierarQueue(Imgidx *dhist, int32 numlevels): numcmp(0), num_level_search(0)
 	{
 		uint64 dsum = 0;
 		max_level = 0;
@@ -197,6 +204,7 @@ public://tmp
 		queue = (Imgidx*)Malloc((size_t)(dsum + 1) * sizeof(Imgidx));
 		bottom = (Imgidx*)Malloc((size_t)(numlevels + 1) * sizeof(Imgidx));
 		cur = (Imgidx*)Malloc((size_t)(numlevels + 1) * sizeof(Imgidx));
+		moves = (uint32*)Calloc((size_t)(dsum + 1) * sizeof(uint32));
 
 #if HQUEUE_DEBUG
 		cnt = (Imgidx*)Calloc((size_t)(numlevels) * sizeof(Imgidx));
@@ -217,13 +225,14 @@ public://tmp
 		cur[numlevels] = 1;
 	}
 
-	HierarQueue(int32 numlevels, Imgidx binsize)
+	HierarQueue(int32 numlevels, Imgidx binsize): numcmp(0), num_level_search(0)
 	{
 		qsize = numlevels * binsize;
 		//tmp
 		queue = (Imgidx*)Malloc((size_t)qsize * sizeof(Imgidx));
 		bottom = (Imgidx*)Malloc((size_t)(numlevels + 1) * sizeof(Imgidx));
 		cur = (Imgidx*)Malloc((size_t)(numlevels + 1) * sizeof(Imgidx));
+		moves = (uint32*)Calloc((size_t)(qsize) * sizeof(uint32));
 #if HQUEUE_DEBUG
 		cnt = (Imgidx*)Calloc((size_t)(numlevels) * sizeof(Imgidx));
 #endif
@@ -251,7 +260,7 @@ public://tmp
 		Free(cnt);
 		Free(curmax);
 #endif
-
+		Free(moves);
 		Free(queue);
 		Free(bottom);
 		Free(cur);
@@ -285,7 +294,7 @@ public://tmp
 		//		curmax[level] = cur[level];
 		//#endif
 
-
+		numcmp++;
 		if (level < min_level)
 		{
 #if HQUEUE_DEBUG
@@ -297,6 +306,13 @@ public://tmp
 		else
 			return 0;
 		//min_level = min(level, min_level);
+	}
+
+	inline int8 push(Imgidx pidx, int64 level, uint32 mv)
+	{
+		moves[cur[level]] = mv;
+
+		return push(pidx, level);
 	}
 
 //pop operated as stack for the classic alpha tree implementation (i.e. non-hypergraph)... but in max tree it has to be changed.
@@ -316,6 +332,8 @@ public://tmp
 //#endif
 //	return queue[--cur[min_level]];
 //}
+	inline uint32 top_moves(){return moves[bottom[min_level]];}
+
 	inline Imgidx top()
 	{
 		return queue[bottom[min_level]];
@@ -324,10 +342,17 @@ public://tmp
 	{
 		return min_level;
 	}
+	inline int64 top_alpha()
+	{
+		return min_level;
+	}
 	inline void find_minlev()
 	{
 		while (bottom[min_level] == cur[min_level])
+		{
 			min_level++;
+			num_level_search++;
+		}
 	}
 };
 
