@@ -13,6 +13,7 @@ using namespace std;
 template<class Imgidx, class Trieidx>
 class Trie
 {
+public:
 	Imgidx minidx;
 	Trieidx **trie;
 	//Imgidx *levelsize;
@@ -20,9 +21,12 @@ class Trie
 	int8 shamt, numlevels;
 	//delayed non-leaf node push
 
-#if TRIE_DEBUG
+	uint64 num_level_search;
+	uint64 numcmp;
+
+	uint32 *moves;
+
 	Imgidx cursize;
-#endif
 
 
 	// 	//tmptmptmp
@@ -31,13 +35,12 @@ class Trie
 
 		//int32 curSize;//tmp
 public:
-	Trie(Imgidx triesize_in)
+	Trie(Imgidx triesize_in): num_level_search(0), numcmp(0)
 	{
-#if TRIE_DEBUG
 		cursize = 0;
-#endif
 		//curSize = 0;//tmp
 		triesize = triesize_in;
+		moves = (uint32*)Calloc(triesize * sizeof(uint32));
 		Imgidx size;
 		shamt = 2;
 		for (int8 nbyte = sizeof(Trieidx); nbyte; nbyte >>= 1)
@@ -69,6 +72,7 @@ public:
 	}
 	~Trie()
 	{
+		Free(moves);
 		for (int16 i = 0; i < numlevels; i++)
 			Free(trie[i]);
 		Free(trie);
@@ -79,14 +83,16 @@ public:
 	inline Imgidx top() { return minidx; }
 	inline Imgidx get_minlev() { return minidx >> 1; }
 	inline Imgidx min_incidence() { return minidx & 1; }
+	inline uint32 top_moves() { return moves[minidx]; }
+	inline uint8 is_empty() {return cursize == 0;}
 	inline int8 push(Imgidx in, int8 incidence)
 	{
-		//curSize++; //tmp
+		cursize++; 
 		//tmp
 /*		f << '0' << '\n' << in << endl;*/
 		return push((in << 1) + incidence);
 	}
-	inline int8 push(Imgidx in)
+	inline int8 push(Imgidx in, uint32 mv = 0)
 	{
 		Imgidx n = in, s_in, shamt1;
 		Trieidx *p;
@@ -96,13 +102,15 @@ public:
 		cout << "Push " << in << endl;
 #endif
 
-		//		curSize++; //tmp
+		cursize++; //tmp
+		moves[n] = mv;
 				//tmp
 		/*		f << '0' << '\n' << in << endl;*/
 
 				//n = (in << 1) + incidence;
 		s_in = n >> shamt;
 
+		numcmp++;
 		if (n < minidx)
 		{
 			minidx = n;
@@ -123,7 +131,6 @@ public:
 			s_in >>= shamt;
 		}
 #if TRIE_DEBUG
-		cursize++;
 		cout << "Push returns " << (int)ret << endl;
 #endif
 
@@ -135,7 +142,9 @@ public:
 		Trieidx *p, tmp;
 		int16 lvl;
 
-		//curSize--;//tmp
+		cursize--;//tmp
+		if(cursize == 0)
+			return;
 // 		//tmp
 // 		f << '1' << '\n' << (minidx>>1) << endl;
 
@@ -156,7 +165,7 @@ public:
 			*p = *p & (~((Trieidx)1 << shamt1));
 		}
 		for (tmp = *p >> shamt1; !(tmp & 1); tmp >>= 1)
-			shamt1++;
+			{shamt1++; num_level_search++;}
 		minidx = (minidx & ~mask_field) | shamt1;
 		while (lvl)
 		{
@@ -165,7 +174,7 @@ public:
 			s_idx = minidx;
 			minidx <<= shamt;
 			for (shamt1 = 0; !(tmp & 1); shamt1++)
-				tmp >>= 1;
+				{tmp >>= 1;  num_level_search++;}
 			minidx |= shamt1;
 		}
 #if TRIE_DEBUG

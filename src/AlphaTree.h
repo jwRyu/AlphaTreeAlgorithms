@@ -37,6 +37,7 @@ using namespace pmt;
 #define	PIXEL_FLOAT			16
 #define	PIXEL_DOUBLE		32
 
+//aa0
 //algcode
 #define UNIONFIND							0//p1
 #define FLOOD_HIERARQUEUE					1//p1,2
@@ -291,13 +292,14 @@ public:
 			return;
 		}
 
+		//aa1
 		switch (algorithm)
 		{
 			case(UNIONFIND):							Unionfind(img);													break;
 			case(FLOOD_HIERARQUEUE):					Flood_HierarQueue(img, (HierarQueue<Imgidx>*)0, tse);			break;
 			case(FLOOD_HIERARQUEUE_CACHE):				Flood_HierarQueue_Cache(img, iparam1);							break;
-			case(FLOOD_TRIE):							Flood_Trie(img,(Trie<Imgidx, trieidx>*)0);						break;
-			case(FLOOD_TRIE_CACHE):						Flood_Trie(img,(Trie_Cache<Imgidx, trieidx>*)0);				break;
+			case(FLOOD_TRIE):							Flood_Trie(img);												break;
+			case(FLOOD_TRIE_CACHE):						Flood_Trie_Cache(img);											break;
 			case(FLOOD_HEAPQUEUE): 						Flood_HeapQueue(img);											break;
 			case(FLOOD_HEAPQUEUE_CACHE):				Flood_HeapQueue_Cache(img, iparam1);							break;
 			case(FLOOD_HIERARQUEUE_HYPERGRAPH):			Flood_HierarQueue_Hypergraph(img);								break;
@@ -2100,7 +2102,6 @@ private:
 		}
 	}
 
-	//aa1
 	template <class Queue>
 	void Flood_HierarQueue(Pixel* img, Queue* queue, int tse)
 	{
@@ -2287,15 +2288,15 @@ private:
 		rootidx = (node[stack_top].area == imgsize) ? stack_top : iNode; //remove redundant root
 		node[rootidx].parentidx = ROOTIDX;
 
-
-		while(queue->is_empty())
+		//HierarQueue
+		while(!queue->is_empty())
 		{			
 			qp[qpidx].pidx = queue->top();
 			qp[qpidx].alpha = queue->top_alpha();
 			//qp[qpidx].cache_moves = queue->top_cache_moves();
 			qp[qpidx].flag = 2;
 			qpidx++;
-			p = queue->pop();
+			queue->pop();
 		}
 
 		//uint64 arr_moves[3] = {0,};
@@ -2438,12 +2439,6 @@ private:
 
 				isVisited[p] = 1;
 				isAv = isAvailable[p];
-
-				//if(p == 13)
-				{
-				//	int aa = 1;
-				//	aa = aa * 10;
-				}
 
 
 				if (connectivity == 4)
@@ -2804,6 +2799,7 @@ private:
 		uint64 pop[3] = {0,};
 		uint64 cache_pop[3] = {0,};
 		uint64 cache_only[3] = {0,};
+		uint64 cache_zeromove[3] = {0,};
 		int cntcnt = 0;
 		for(Imgidx i = 0;i < qpidx;i++)
 		{
@@ -2815,15 +2811,18 @@ private:
 			//printf("Q item[%d]: pidx=%d, alpha=%f, flag=%d, moves=%d, caching=%d\n", (int)i, (int)qp[i].pidx, log2(1+qp[i].alpha), qp[i].flag, qp[i].moves, qp[i].cache_moves);
 			
 			pop[qp[i].flag]++;
-			arr_moves[qp[i].flag] += qp[i].moves;
+			arr_moves[qp[i].flag] += qp[i].moves;			
+			arr_cache_moves[qp[i].flag] += qp[i].cache_moves;
 			
-			if(qp[i].cache_moves)
+			if(qp[i].cache_moves || qp[i].moves == 0)
 			{
-				arr_cache_moves[qp[i].flag] += qp[i].cache_moves;
 				cache_pop[qp[i].flag]++;
-				if(qp[i].moves == 0)
-					cache_only[qp[i].flag]++;
+				if(qp[i].cache_moves == 0)
+					cache_zeromove[qp[i].flag]++;
 			}
+
+			if(qp[i].moves == 0)
+				cache_only[qp[i].flag]++;
 		}
 
 		printf("# redundant -> residual: %d \n", cntcnt);
@@ -2856,7 +2855,12 @@ private:
 		 (int)arr_cache_moves[0], (double)arr_cache_moves[0] / (double)cache_pop[0], 
 		 (int)arr_cache_moves[1], (double)arr_cache_moves[1] / (double)cache_pop[1], 
 		 (int)arr_cache_moves[2], (double)arr_cache_moves[2] / (double)cache_pop[2]);
-		 movesum = (double)(arr_cache_moves[0] + arr_cache_moves[1] + arr_cache_moves[2]);
+		 printf("cache_no_moves: %d(%f) %d(%f) %d(%f)\n",
+		 (int)cache_zeromove[0], (double)cache_zeromove[0] / (double)cache_pop[0], 
+		 (int)cache_zeromove[1], (double)cache_zeromove[1] / (double)cache_pop[1], 
+		 (int)cache_zeromove[2], (double)cache_zeromove[2] / (double)cache_pop[2]);
+
+		movesum = (double)(arr_cache_moves[0] + arr_cache_moves[1] + arr_cache_moves[2]);
 		printf("cache_P_move: %d(%f) %d(%f) %d(%f)\n",
 		 (int)arr_cache_moves[0], (double)arr_cache_moves[0] / (double)movesum, 
 		 (int)arr_cache_moves[1], (double)arr_cache_moves[1] / (double)movesum, 
@@ -2877,7 +2881,6 @@ private:
 		Free(isAvailable);
 	}
 
-	//aa3
 	void Flood_HierarQueue_Cache(Pixel* img, int listsize)
 	{
 		//if(sizeof(Pixel) > 2 || channel > 1)
@@ -3043,8 +3046,9 @@ FLOOD_END:
 		rootidx = (node[stack_top].area == imgsize) ? stack_top : iNode; //remove redundant root
 		node[rootidx].parentidx = ROOTIDX;
 
+		//HierarQueue Cache
 		HierarQueue<Imgidx> *hqueue = queue->hqueue;
-		while(hqueue->is_empty())
+		while(!hqueue->is_empty())
 		{			
 			qp[qpidx].pidx = hqueue->top();
 			qp[qpidx].alpha = hqueue->top_alpha();
@@ -3072,6 +3076,7 @@ FLOOD_END:
 		uint64 pop[3] = {0,};
 		uint64 cache_pop[3] = {0,};
 		uint64 cache_only[3] = {0,};
+		uint64 cache_zeromove[3] = {0,};
 		int cntcnt = 0;
 		for(Imgidx i = 0;i < qpidx;i++)
 		{
@@ -3085,13 +3090,17 @@ FLOOD_END:
 			pop[qp[i].flag]++;
 			arr_moves[qp[i].flag] += qp[i].moves;
 			
-			if(qp[i].cache_moves)
+			arr_cache_moves[qp[i].flag] += qp[i].cache_moves;
+
+			if(qp[i].cache_moves || qp[i].pure_cache)
 			{
-				arr_cache_moves[qp[i].flag] += qp[i].cache_moves;
 				cache_pop[qp[i].flag]++;
-				if(qp[i].pure_cache)
-					cache_only[qp[i].flag]++;
+				if(qp[i].cache_moves == 0)
+					cache_zeromove[qp[i].flag]++;
 			}
+
+			if(qp[i].pure_cache)
+				cache_only[qp[i].flag]++;
 		}
 
 		printf("# redundant -> residual: %d \n", cntcnt);
@@ -3124,6 +3133,11 @@ FLOOD_END:
 		 (int)arr_cache_moves[0], (double)arr_cache_moves[0] / (double)cache_pop[0], 
 		 (int)arr_cache_moves[1], (double)arr_cache_moves[1] / (double)cache_pop[1], 
 		 (int)arr_cache_moves[2], (double)arr_cache_moves[2] / (double)cache_pop[2]);
+		 printf("cache_no_moves: %d(%f) %d(%f) %d(%f)\n",
+		 (int)cache_zeromove[0], (double)cache_zeromove[0] / (double)cache_pop[0], 
+		 (int)cache_zeromove[1], (double)cache_zeromove[1] / (double)cache_pop[1], 
+		 (int)cache_zeromove[2], (double)cache_zeromove[2] / (double)cache_pop[2]);
+
 		 movesum = (double)(arr_cache_moves[0] + arr_cache_moves[1] + arr_cache_moves[2]);
 		printf("cache_P_move: %d(%f) %d(%f) %d(%f)\n",
 		 (int)arr_cache_moves[0], (double)arr_cache_moves[0] / (double)movesum, 
@@ -7912,8 +7926,8 @@ FLOOD_END:
 		}
 	}
 
-	template<class Queue>
-	void Flood_Trie(Pixel* img, Queue *queue)
+	//aa2
+	void Flood_Trie(Pixel* img)
 	{
 		Imgidx imgsize, dimgsize, nredges;
 		Imgidx current_rank = 0, next_rank = 0;
@@ -7944,7 +7958,7 @@ FLOOD_END:
 
 		set_isAvailable(isAvailable);
 
-		queue = new Queue(nredges);
+		Trie<Imgidx, trieidx> *queue = new Trie<Imgidx, trieidx>(nredges);
 
 		omp_set_num_threads(1);
 		Index* rank2rankitem = (Index*)Calloc(nredges * sizeof(Index));
@@ -7971,6 +7985,222 @@ FLOOD_END:
 		current_rank = queue->top();
 		node[0].connect_to_parent(&node_in[current_rank], current_rank + imgsize, pix_type);
 		prev_top = current_rank;
+
+		qstat<Imgidx> *qp = new qstat<Imgidx>[2 * nredges];
+		Imgidx qpidx = 0;
+
+		while (1)
+		{
+			while (1)
+			{
+				top_rank = queue->top();
+				pRank = rankitem + rank2rankitem[top_rank];
+				
+				if (isVisited[pRank->get_pidx0(connectivity)])
+				{
+					if (isVisited[pRank->get_pidx1(width,connectivity)])
+						break;
+					p = pRank->get_pidx1(width,connectivity);
+				}
+				else
+					p = pRank->get_pidx0(connectivity);
+
+				isVisited[p] = 1;
+				isAv = isAvailable[p];
+				if (connectivity == 4)
+				{
+					q = p << 1;
+					if(is_available(isAv, 0) && !isVisited[p + width])	queue->push(rank[q]);
+					if(is_available(isAv, 1) && !isVisited[p + 1])			queue->push(rank[q + 1]);
+					if(is_available(isAv, 2) && !isVisited[p - 1])			queue->push(rank[q - 1]);
+					if(is_available(isAv, 3) && !isVisited[p - width])	queue->push(rank[q - (width << 1)]);
+				}
+				else if (connectivity == 8)
+				{
+					Imgidx width4 = width << 2;
+					q = p << 2;
+					if(is_available(isAv, 0) && !isVisited[p + width]) 		 queue->push(rank[q]);// printf("0:pushing %d \n",(int)rank[q]);}
+					if(is_available(isAv, 1) && !isVisited[p + width + 1]) queue->push(rank[q + 1]);// printf("1:pushing %d \n",(int)rank[q+1]);}
+					if(is_available(isAv, 2) && !isVisited[p + 1]) 		 		 queue->push(rank[q + 2]);// printf("2:pushing %d \n",(int)rank[q+2]);}
+					if(is_available(isAv, 3) && !isVisited[p - width + 1]) queue->push(rank[q + 3]);// printf("3:pushing %d \n",(int)rank[q+3]);}
+					if(is_available(isAv, 4) && !isVisited[p - width]) 		 queue->push(rank[q - width4]);// printf("4:pushing %d \n",(int)rank[q-width4]);}
+					if(is_available(isAv, 5) && !isVisited[p - width - 1]) queue->push(rank[q - width4 - 3]);// printf("5:pushing %d \n",(int)rank[q-width4-3]);}
+					if(is_available(isAv, 6) && !isVisited[p - 1]) 				 queue->push(rank[q - 2]);//  printf("6:pushing %d \n",(int)rank[q-2]);}
+					if(is_available(isAv, 7) && !isVisited[p + width - 1]) queue->push(rank[q + width4 - 1]);// printf("7:pushing %d \n",(int)rank[q+width4-1]);}
+				}
+				else
+				{
+					//?
+				}
+				//else later
+
+				next_rank = queue->top();
+				node[p].connect_to_parent(&node_in[next_rank], next_rank + imgsize, pix_type);
+				if (current_rank == next_rank)
+					break;
+				current_rank = next_rank;
+			}
+
+			qp[qpidx].pidx = queue->top();
+			qp[qpidx].flag = 0;
+			qpidx++;
+
+			queue->pop();
+			next_rank = queue->top();
+
+			//remove redundant node
+			if(node_in[prev_top].parentidx == current_rank + imgsize && node_in[prev_top].area == node_in[current_rank].area)
+			{
+				current_rank = prev_top;
+				qp[qpidx - 1].flag = 1;
+			}
+
+			node_in[current_rank].connect_to_parent(&node_in[next_rank], next_rank + imgsize, pix_type);
+			if (node_in[next_rank].area == imgsize)
+				break;
+
+			prev_top = current_rank;
+			current_rank = next_rank;
+		}
+
+		rootidx = (node_in[current_rank].area == imgsize) ? current_rank + imgsize : next_rank + imgsize;
+		node[rootidx].parentidx = ROOTIDX;
+
+		//Trie
+		while(!queue->is_empty())
+		{			
+			top_rank = queue->top();
+			qp[qpidx].pidx = top_rank;
+			//qp[qpidx].alpha = rankitem + rank2rankitem[pRank];
+			//qp[qpidx].cache_moves = queue->top_cache_moves();
+			qp[qpidx].flag = 2;
+			qpidx++;
+			queue->pop();
+		}
+
+		//uint64 arr_moves[3] = {0,};
+		//uint64 arr_cache_moves[3] = {0,};
+		uint64 pop[3] = {0,};
+		int cntcnt = 0;
+		for(Imgidx i = 0;i < qpidx;i++)
+		{
+			//if(qp[i].alpha >= node[rootidx].alpha)
+			if(qp[i].flag == 1 && (qp[i].pidx >= rootidx))
+				{qp[i].flag = 2; cntcnt++;};
+			//printf("Q item[%d]: pidx=%d, alpha=%f, flag=%d, moves=%d, caching=%d\n", (int)i, (int)qp[i].pidx, log2(1+qp[i].alpha), qp[i].flag, qp[i].moves, qp[i].cache_moves);
+			
+			pop[qp[i].flag]++;
+			//arr_moves[qp[i].flag] += (qp[i].moves - qp[i].cache_moves);
+			//arr_cache_moves[qp[i].flag] += qp[i].cache_moves;
+		}
+
+		printf("# redundant -> residual: %d \n", cntcnt);
+
+		printf("---Queue Stats (Normal, redundant, residual, notpushed) ---\n");
+		printf("population: %d(%f) %d(%f) %d(%f) %d(%f)\n",
+		 (int)pop[0], (double)pop[0] / (double)(nredges + 1), 
+		 (int)pop[1], (double)pop[1] / (double)(nredges + 1), 
+		 (int)pop[2], (double)pop[2] / (double)(nredges + 1), 
+		 (int)(nredges + 1 - pop[0] - pop[1] - pop[2]), (double)(nredges + 1 - pop[0] - pop[1] - pop[2]) / (double)(nredges + 1));
+		/*
+		printf("moves per pop: %d(%f) %d(%f) %d(%f)\n",
+		 (int)arr_moves[0], (double)arr_moves[0] / (double)pop[0], 
+		 (int)arr_moves[1], (double)arr_moves[1] / (double)pop[1], 
+		 (int)arr_moves[2], (double)arr_moves[2] / (double)pop[2]);
+		 double movesum = (double)(arr_moves[0] + arr_moves[1] + arr_moves[2]);
+		printf("P_move: %d(%f) %d(%f) %d(%f)\n",
+		 (int)arr_moves[0], (double)arr_moves[0] / (double)movesum, 
+		 (int)arr_moves[1], (double)arr_moves[1] / (double)movesum, 
+		 (int)arr_moves[2], (double)arr_moves[2] / (double)movesum);
+		
+
+
+		printf("cache_moves: %d(%f) %d(%f) %d(%f)\n",
+		 (int)arr_cache_moves[0], (double)arr_cache_moves[0] / (double)pop[0], 
+		 (int)arr_cache_moves[1], (double)arr_cache_moves[1] / (double)pop[1], 
+		 (int)arr_cache_moves[2], (double)arr_cache_moves[2] / (double)pop[2]);
+		 movesum = (double)(arr_cache_moves[0] + arr_cache_moves[1] + arr_cache_moves[2]);
+		printf("cache_P_move: %d(%f) %d(%f) %d(%f)\n",
+		 (int)arr_cache_moves[0], (double)arr_cache_moves[0] / (double)movesum, 
+		 (int)arr_moves[1], (double)arr_cache_moves[1] / (double)movesum, 
+		 (int)arr_cache_moves[2], (double)arr_cache_moves[2] / (double)movesum);
+*/
+
+		printf("Number of total a-value comparisons:%f\n", (double)queue->numcmp);
+		printf("Number of non-empty level searches:%f\n", (double)queue->num_level_search);
+		
+		delete[] qp;
+
+		delete queue;
+		Free(rank2rankitem);
+		Free(rank);
+		Free(rankitem);
+		Free(isVisited);
+		Free(isAvailable);
+	}
+
+	//aa3
+	void Flood_Trie_Cache(Pixel* img)
+	{
+		Imgidx imgsize, dimgsize, nredges;
+		Imgidx current_rank = 0, next_rank = 0;
+		RankItem<Imgidx, double> *rankitem, *pRank;
+		//AlphaNode<Imgidx, Pixel> *pNode;
+		Pixel maxpixval;
+		Imgidx *rank, top_rank;
+		int8 nbits;
+		//Imgidx *dhist;
+		Imgidx prev_top = 0;
+		uint8 *isVisited, /**isVisited_edges,*/ *isAvailable, isAv;
+		Imgidx p, q;
+		imgsize = width * height;
+		nredges = width * (height - 1) + (width - 1) * height + ((connectivity == 8) ? ((width - 1) * (height - 1) * 2) : 0);
+		dimgsize = (connectivity >> 1) * width * height;
+		maxSize = imgsize + nredges;
+		num_node = maxSize;
+		num_node_in = nredges;
+		nbits = ((sizeof(Pixel) << 3) - 1);
+		maxpixval = ~(1 << nbits);
+		rankitem = (RankItem<Imgidx, double>*)Malloc(nredges * sizeof(RankItem<Imgidx, double>));
+		parentAry = 0;
+		rank = (Imgidx*)Malloc((size_t)dimgsize * sizeof(Imgidx));
+		node = (AlphaNode<Imgidx, Pixel>*)Malloc((size_t)maxSize * sizeof(AlphaNode<Imgidx, Pixel>));
+		node_in = node + imgsize;
+		isVisited = (uint8*)Calloc((size_t)((imgsize)));
+		isAvailable = (uint8*)Malloc((size_t)(imgsize));
+
+		set_isAvailable(isAvailable);
+
+		Trie_Cache<Imgidx, trieidx> *queue = new Trie_Cache<Imgidx, trieidx> (nredges);
+
+		omp_set_num_threads(1);
+		Index* rank2rankitem = (Index*)Calloc(nredges * sizeof(Index));
+		compute_difference_and_sort(rank, rankitem, img, nredges, rank2rankitem);
+		//compute_dimg(rank, rankitem, img);
+
+
+		initialize_node1(img, rankitem, maxpixval, rank2rankitem);
+
+		//manually visit the first pixel
+		isVisited[0] = 1;
+		if(connectivity == 4)
+		{
+			queue->push(rank[0]);
+			queue->push(rank[1]);
+		}
+		else if(connectivity == 8)
+		{
+			queue->push(rank[0]);
+			queue->push(rank[1]);
+			queue->push(rank[2]);
+		}
+		//else later
+		current_rank = queue->top();
+		node[0].connect_to_parent(&node_in[current_rank], current_rank + imgsize, pix_type);
+		prev_top = current_rank;
+
+		qstat<Imgidx> *qp = new qstat<Imgidx>[2 * nredges];
+		Imgidx qpidx = 0;
 
 		while (1)
 		{
@@ -8023,12 +8253,22 @@ FLOOD_END:
 				current_rank = next_rank;
 			}
 
+			qp[qpidx].pidx = queue->top();
+			qp[qpidx].moves = queue->top_moves();
+			qp[qpidx].cache_moves = queue->top_cache_moves();
+			qp[qpidx].pure_cache = queue->top_pure_cache();
+			qp[qpidx].flag = 0;
+			qpidx++;
+
 			queue->pop();
 			next_rank = queue->top();
 
 			//remove redundant node
 			if(node_in[prev_top].parentidx == current_rank + imgsize && node_in[prev_top].area == node_in[current_rank].area)
+			{
 				current_rank = prev_top;
+				qp[qpidx - 1].flag = 1;
+			}
 
 			node_in[current_rank].connect_to_parent(&node_in[next_rank], next_rank + imgsize, pix_type);
 			if (node_in[next_rank].area == imgsize)
@@ -8041,6 +8281,113 @@ FLOOD_END:
 		rootidx = (node_in[current_rank].area == imgsize) ? current_rank + imgsize : next_rank + imgsize;
 		node[rootidx].parentidx = ROOTIDX;
 
+		//Trie
+		Trie<Imgidx, trieidx> *tq = queue->trie;
+		while(!tq->is_empty())
+		{			
+			top_rank = tq->top();
+			qp[qpidx].pidx = top_rank;
+			qp[qpidx].moves = 2;
+			qp[qpidx].cache_moves = tq->top_moves();
+			qp[qpidx].flag = 2;
+			qpidx++;
+			tq->pop();
+		}
+		HQentry<Imgidx, trieidx> *list = queue->lextra;
+		for(Imgidx i = 0;i <= queue->curSize_list;i++)
+		{
+			qp[qpidx].pidx = list[i].pidx;
+			qp[qpidx].moves = list[i].moves;
+			qp[qpidx].cache_moves = list[i].cache_moves;
+			qp[qpidx].pure_cache = list[i].pure_cache;
+			qp[qpidx].flag = 2;
+			qpidx++;
+		}
+
+		uint64 arr_moves[3] = {0,};
+		uint64 arr_cache_moves[3] = {0,};
+		uint64 pop[3] = {0,};
+		uint64 cache_pop[3] = {0,};
+		uint64 cache_only[3] = {0,};
+		uint64 cache_zeromove[3] = {0,};
+		int cntcnt = 0;
+		for(Imgidx i = 0;i < qpidx;i++)
+		{
+			//qp[i].moves -= qp[i].cache_moves;
+
+			//if(qp[i].alpha >= node[rootidx].alpha)
+			if(qp[i].flag == 1 && (qp[i].pidx >= rootidx))
+				{qp[i].flag = 2; cntcnt++;};
+			//printf("Q item[%d]: pidx=%d, alpha=%f, flag=%d, moves=%d, caching=%d\n", (int)i, (int)qp[i].pidx, log2(1+qp[i].alpha), qp[i].flag, qp[i].moves, qp[i].cache_moves);
+			
+			pop[qp[i].flag]++;
+			arr_moves[qp[i].flag] += qp[i].moves;			
+			arr_cache_moves[qp[i].flag] += qp[i].cache_moves;
+			
+			if(qp[i].cache_moves || qp[i].pure_cache)
+			{
+				cache_pop[qp[i].flag]++;
+				if(qp[i].cache_moves == 0)
+					cache_zeromove[qp[i].flag]++;
+			}
+
+			if(qp[i].pure_cache)
+				cache_only[qp[i].flag]++;
+		}
+
+		printf("# redundant -> residual: %d \n", cntcnt);
+		printf("# cache overflow: %d \n", (int)queue->cache_overflow);
+
+		printf("---Queue Stats (Normal, redundant, residual, notpushed) ---\n");
+		printf("population: %d(%f) %d(%f) %d(%f) %d(%f)\n",
+		 (int)pop[0], (double)pop[0] / (double)(nredges + 1), 
+		 (int)pop[1], (double)pop[1] / (double)(nredges + 1), 
+		 (int)pop[2], (double)pop[2] / (double)(nredges + 1), 
+		 (int)(nredges + 1 - pop[0] - pop[1] - pop[2]), (double)(nredges + 1 - pop[0] - pop[1] - pop[2]) / (double)(nredges + 1));
+		
+		printf("moves per pop: %d(%f) %d(%f) %d(%f)\n",
+		 (int)arr_moves[0], (double)arr_moves[0] / (double)pop[0], 
+		 (int)arr_moves[1], (double)arr_moves[1] / (double)pop[1], 
+		 (int)arr_moves[2], (double)arr_moves[2] / (double)pop[2]);
+		 double movesum = (double)(arr_moves[0] + arr_moves[1] + arr_moves[2]);
+		printf("P_move: %d(%f) %d(%f) %d(%f)\n",
+		 (int)arr_moves[0], (double)arr_moves[0] / (double)movesum, 
+		 (int)arr_moves[1], (double)arr_moves[1] / (double)movesum, 
+		 (int)arr_moves[2], (double)arr_moves[2] / (double)movesum);
+		
+		uint64 cpop = cache_pop[0] + cache_pop[1] + cache_pop[2];		
+		printf("Cache population (%d of %d): %d(%f) %d(%f) %d(%f) \n", (int)cpop, (int)(nredges + 1),
+		 (int)cache_pop[0], (double)cache_pop[0] / (double)(cpop), 
+		 (int)cache_pop[1], (double)cache_pop[1] / (double)(cpop), 
+		 (int)cache_pop[2], (double)cache_pop[2] / (double)(cpop));
+
+		printf("cache_moves: %d(%f) %d(%f) %d(%f)\n",
+		 (int)arr_cache_moves[0], (double)arr_cache_moves[0] / (double)cache_pop[0], 
+		 (int)arr_cache_moves[1], (double)arr_cache_moves[1] / (double)cache_pop[1], 
+		 (int)arr_cache_moves[2], (double)arr_cache_moves[2] / (double)cache_pop[2]);
+		 printf("cache_no_moves: %d(%f) %d(%f) %d(%f)\n",
+		 (int)cache_zeromove[0], (double)cache_zeromove[0] / (double)cache_pop[0], 
+		 (int)cache_zeromove[1], (double)cache_zeromove[1] / (double)cache_pop[1], 
+		 (int)cache_zeromove[2], (double)cache_zeromove[2] / (double)cache_pop[2]);
+
+		 movesum = (double)(arr_cache_moves[0] + arr_cache_moves[1] + arr_cache_moves[2]);
+		printf("cache_P_move: %d(%f) %d(%f) %d(%f)\n",
+		 (int)arr_cache_moves[0], (double)arr_cache_moves[0] / (double)movesum, 
+		 (int)arr_cache_moves[1], (double)arr_cache_moves[1] / (double)movesum, 
+		 (int)arr_cache_moves[2], (double)arr_cache_moves[2] / (double)movesum);
+		printf("cache_only: %d(%f) %d(%f) %d(%f)\n",
+		 (int)cache_only[0], (double)cache_only[0] / (double)cache_pop[0], 
+		 (int)cache_only[1], (double)cache_only[1] / (double)cache_pop[1], 
+		 (int)cache_only[2], (double)cache_only[2] / (double)cache_pop[2]);
+
+
+
+		printf("Number of total a-value comparisons:%f\n", (double)queue->numcmp);
+		printf("Number of non-empty level searches:%f\n", (double)tq->num_level_search);
+		
+		delete[] qp;
+
+
 		delete queue;
 		Free(rank2rankitem);
 		Free(rank);
@@ -8048,6 +8395,7 @@ FLOOD_END:
 		Free(isVisited);
 		Free(isAvailable);
 	}
+
 
 	//the name is misleading. It doesn't find levelroot but the highest node below nodeidx.
 	inline Imgidx get_level_root(Imgidx p, Imgidx nodeidx)

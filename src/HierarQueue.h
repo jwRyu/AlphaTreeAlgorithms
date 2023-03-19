@@ -28,6 +28,7 @@ public://tmp
 	int64 min_level, max_level;
 	uint64 numcmp;
 	uint64 num_level_search;
+	uint64 cursize;
 	
 
 	void print()
@@ -44,9 +45,9 @@ public://tmp
 		}
 	}
 
-	inline uint8 is_empty(){return min_level == numlevel;}
+	inline uint8 is_empty(){return cursize == 0;}
 
-	HierarQueue(uint64 qsize_in, int32 numlevels): numcmp(0), num_level_search(0)
+	HierarQueue(uint64 qsize_in, int32 numlevels): numcmp(0), num_level_search(0), cursize(0)
 	{
 		//tmp
 		queue = (Imgidx*)Malloc((size_t)qsize_in * sizeof(Imgidx));
@@ -71,7 +72,7 @@ public://tmp
 #endif
 	}
 
-	HierarQueue(uint64 qsize_in): numcmp(0), num_level_search(0)
+	HierarQueue(uint64 qsize_in): numcmp(0), num_level_search(0), cursize(0)
 	{
 		int32 numlevels = (int32)1 << 20;
 		//tmp
@@ -102,6 +103,7 @@ public://tmp
 		for (int32 i = 0; i < numlevel; i++)
 			cur[i] = bottom[i];
 		min_level = numlevel;
+		cursize = 0;
 	}
 
 	Imgidx set_queue(Imgidx *dhist)
@@ -121,6 +123,7 @@ public://tmp
 				sum_hist += dhist[i];
 			}
 		}
+		cursize = 0;
 		return sum_hist;
 	}
 
@@ -152,7 +155,7 @@ public://tmp
 		return sum_hist;
 	}
 
-	HierarQueue(uint64 qsize_in, Imgidx *dhist, int32 numlevels): numcmp(0), num_level_search(0)
+	HierarQueue(uint64 qsize_in, Imgidx *dhist, int32 numlevels): numcmp(0), num_level_search(0), cursize(0)
 	{
 		//tmp
 		queue = (Imgidx*)Malloc((size_t)qsize_in * sizeof(Imgidx));
@@ -186,7 +189,7 @@ public://tmp
 		cur[numlevels] = 1;
 	}
 
-	HierarQueue(Imgidx *dhist, int32 numlevels): numcmp(0), num_level_search(0)
+	HierarQueue(Imgidx *dhist, int32 numlevels): numcmp(0), num_level_search(0), cursize(0)
 	{
 		uint64 dsum = 0;
 		max_level = 0;
@@ -225,7 +228,7 @@ public://tmp
 		cur[numlevels] = 1;
 	}
 
-	HierarQueue(int32 numlevels, Imgidx binsize): numcmp(0), num_level_search(0)
+	HierarQueue(int32 numlevels, Imgidx binsize): numcmp(0), num_level_search(0), cursize(0)
 	{
 		qsize = numlevels * binsize;
 		//tmp
@@ -294,6 +297,7 @@ public://tmp
 		//		curmax[level] = cur[level];
 		//#endif
 
+		cursize++;
 		numcmp++;
 		if (level < min_level)
 		{
@@ -321,6 +325,7 @@ public://tmp
 #if HQUEUE_DEBUG
 		//cout << "  pop " << queue[bottom[min_level]] << " at " << min_level << " bottom[" << min_level << "] = " << bottom[min_level]+1 << "(minlev= " << min_level << ")" << endl;
 #endif
+		cursize--;
 		return queue[bottom[min_level]++];
 		//return queue[bottom[min_level]++]; //alternative implementation
 	}

@@ -2446,14 +2446,18 @@ public:
 template<class Imgidx, class Trieidx>//, class Qidx>
 class Trie_Cache
 {
+public:
 	//MinList1<Imgidx> *list, *list_end, *head, *tail;
 	Imgidx *list;
+	HQentry<Imgidx, Trieidx> *lextra;
 	Trie<Imgidx, Trieidx> *trie;
 	Imgidx minidx_queue;
 	int16 curSize_list, maxSize_list;
 	Imgidx maxSize_queue, mask_field;
 	int8 shamt, nbit;
 
+	uint64 numcmp;
+	int cache_overflow;
 
 #if TRACK_QUEUEING
 	Imgidx *in_size;
@@ -2478,6 +2482,8 @@ class Trie_Cache
 		//trie = (Trie<Imgidx, int64>*)Malloc(size * sizeof(Trie<Imgidx, int64>*));
 		trie = new Trie<Imgidx, int64>(size);
 		list = (Imgidx*)Malloc((listsize + 1) * sizeof(Imgidx));
+		lextra = (HQentry<Imgidx, Trieidx>*)Calloc((listsize + 1) * sizeof(HQentry<Imgidx, Trieidx>));
+		
 		list[0] = 0;
 		list++;
 		maxSize_list = listsize - 1;
@@ -2486,8 +2492,8 @@ class Trie_Cache
 		//list_end = list + listsize;
 		//maxSize_list = listsize;
 		//head = tail = 0;
-
-
+		numcmp = 0;	
+		cache_overflow = 0;
 		//		for (i = 0; i < size; i++)
 		//			queue[i] = -1;
 		//		queue[size] = 0;
@@ -2516,6 +2522,10 @@ public:
 
 	inline Imgidx get_minlev() { return list[0]; }
 	inline Imgidx top() { return list[0]; }
+	inline uint32 top_moves() { return lextra[0].moves;}
+	inline uint32 top_cache_moves() { return lextra[0].cache_moves;}
+	inline uint32 top_pure_cache() { return lextra[0].pure_cache;}
+	inline uint64 get_numcmp() { return numcmp + trie->numcmp; }
 	inline void push(Imgidx idx)
 	{
 		//MinList1<Imgidx> *p, *q;
@@ -2535,17 +2545,35 @@ public:
 			if (curSize_list < maxSize_list) //spare room in the list
 			{
 				for (i = curSize_list; idx < list[i]; i--)
+				{
 					list[i + 1] = list[i];
+					lextra[i + 1] = lextra[i];
+					lextra[i + 1].cache_moves++;
+					lextra[i + 1].moves--;
+				}
 				list[i + 1] = idx;
+				lextra[i + 1].alpha = idx;
+				lextra[i + 1].moves = 0;
+				lextra[i + 1].cache_moves = 0;
+				lextra[i + 1].pure_cache = 1;
 				curSize_list++;
 			}
 			else if (idx < list[curSize_list])// push to the full list
 			{
-				push_queue(list[curSize_list]);
+				push_queue(list[curSize_list], lextra[curSize_list].cache_moves);
 
 				for (i = curSize_list - 1; idx < list[i]; i--)
+				{
 					list[i + 1] = list[i];
+					lextra[i + 1] = lextra[i];
+					lextra[i + 1].cache_moves++;
+					lextra[i + 1].moves--;
+				}
 				list[i + 1] = idx;
+				lextra[i + 1].alpha = idx;
+				lextra[i + 1].moves = 0;
+				lextra[i + 1].cache_moves = 0;
+				lextra[i + 1].pure_cache = 1;
 			}
 			else
 				push_queue(idx); // push to the queue
@@ -2553,9 +2581,9 @@ public:
 		else
 			push_queue(idx); // push to the queue
 	}
-	inline void push_queue(Imgidx idx)
+	inline void push_queue(Imgidx idx, uint32 moves = 0)
 	{
-		trie->push(idx);
+		trie->push(idx, moves);
 	}
 	inline void pop()
 	{
@@ -2575,13 +2603,22 @@ public:
 		if (curSize_list == 0)
 		{
 			list[0] = trie->top();
+			lextra[0].moves = 2;
+			lextra[0].cache_moves = trie->top_moves();
+			lextra[0].pure_cache = 0;
+			lextra[0].alpha = list[0];
 
 			pop_queue();
 		}
 		else
 		{
 			for (i = 0; i < curSize_list; i++)
+			{
 				list[i] = list[i + 1];
+				lextra[i] = lextra[i + 1];
+				lextra[i].cache_moves++;
+				lextra[i].moves--;
+			}
 			curSize_list--;
 		}
 
