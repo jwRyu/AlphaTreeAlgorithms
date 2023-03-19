@@ -19,8 +19,8 @@ public:
 	~HQentry() {}
 	Imgidx pidx;
 	Pixel alpha;
-	_uint32 moves;
-	_uint32 cache_moves;
+	uint32 moves;
+	uint32 cache_moves;
 	
 
 	inline void operator=(const HQentry& item)
@@ -28,6 +28,7 @@ public:
 		this->pidx = item.pidx;
 		this->alpha = item.alpha;
 		this->moves = item.moves + 1;
+		this->cache_moves = item.cache_moves;
 	}
 };
 
@@ -42,10 +43,10 @@ public:
 	Pixel pop_level;
 	Pixel max_level;
 	HQentry<Imgidx, Pixel> pushlist[7];//Connectivity - 1
-	_uint8 flags[7];
-	_int8 pushlistidx;
+	uint8 flags[7];
+	int8 pushlistidx;
 
-	_uint64 numcmp;
+	uint64 numcmp;
 
 #if HEAPQ_STAT
 	ofstream f;
@@ -77,6 +78,18 @@ public:
 		f.close();
 #endif
 	}
+
+	void printQ()
+	{
+		printf("Q content: ");
+		for(int i = 1;i <= cursize;i++)
+		{
+			printf("%d(%f) ", (int)arr[i].pidx, (double)log2(1 + arr[i].alpha));
+		}
+		printf("\n");
+	}
+
+	inline uint8 is_empty(){return cursize < 1;}
 
 	inline int minidx_pushlist()
 	{
@@ -143,6 +156,7 @@ public:
 
 	inline Imgidx top() { return arr[1].pidx; }
 	inline Imgidx top_moves() { return arr[1].moves; }
+	inline uint32 top_cache_moves() { return arr[1].cache_moves; }
 
 	//inline Imgidx pop()
 	//{
@@ -163,7 +177,7 @@ public:
 		Imgidx current = 1, next, next0, next1, curidx;
 		Pixel curalpha;
 
-		_uint32 curmove;
+		uint32 curmove;
 
 #if HEAPQ_DEBUG
 		cout << "pop: " << arr[1].pidx << " at " << log2(1 + arr[1].alpha) << " cursize: " << cursize << endl;
@@ -219,7 +233,7 @@ public:
 		return outval;
 	}
 
-	inline void push(Imgidx pidx, Pixel alpha, _uint32 moves = 0)
+	inline void push(Imgidx pidx, Pixel alpha, uint32 moves = 0)
 	{
 		//double tt = get_wall_time(); //tmp
 		pushlist[pushlistidx].moves = moves;
@@ -236,7 +250,7 @@ public:
 // 		push_run(pidx, (Pixel)pidx);
 // 	}
 
-	inline void push_run(Imgidx pidx, Pixel alpha, _uint32 moves = 0)
+	inline void push_run(Imgidx pidx, Pixel alpha, uint32 moves = 0)
 	{
 		Imgidx current, next;
 
@@ -263,6 +277,7 @@ public:
 		arr[current].pidx = pidx;
 		arr[current].alpha = alpha;
 		arr[current].moves = moves + 1;
+		arr[current].cache_moves = 0;
 #if HEAPQ_DEBUG
 		cout << "pushrun: " << pidx << " at " << log2(1 + arr[1].alpha) << " cursize: " << cursize << endl;
 #endif
@@ -282,7 +297,7 @@ class HeapQueue_naive
 	HQentry<Imgidx, Pixel> *arr;
 	Pixel pop_level;
 	//HQentry<Imgidx, Pixel> pushlist[7];//Connectivity - 1
-	//_int8 pushlistidx;
+	//int8 pushlistidx;
 
 #if HEAPQ_STAT
 	ofstream f;
@@ -441,12 +456,14 @@ template<class Imgidx, class Pixel>
 class HeapQueue_naive_quad
 {
 public:
+	uint64 numcmp;
 	Imgidx cursize;
+	Imgidx cursize_max;
 	Imgidx maxsize;
 	HQentry<Imgidx, Pixel> *arr;
 	Pixel pop_level;
 	//HQentry<Imgidx, Pixel> pushlist[7];//Connectivity - 1
-	//_int8 pushlistidx;
+	//int8 pushlistidx;
 
 #if HEAPQ_STAT
 	ofstream f;
@@ -456,10 +473,10 @@ public:
 	double qtime; //tmp
 //	Pixel min_level;
 	inline Imgidx get_cursize(){return cursize;}
-	HeapQueue_naive_quad(Imgidx maxsize_in) : cursize(0), maxsize(maxsize_in), qtime(0)
+	HeapQueue_naive_quad(Imgidx maxsize_in) : numcmp(0), cursize(0), cursize_max(0), maxsize(maxsize_in), qtime(0)
 	{
 		//arr = new HQentry<Imgidx, Pixel>[maxsize + 2];
-		arr = (HQentry<Imgidx, Pixel>*)Malloc(sizeof(HQentry<Imgidx, Pixel>) * (maxsize + 2));
+		arr = (HQentry<Imgidx, Pixel>*)Calloc(sizeof(HQentry<Imgidx, Pixel>) * (maxsize + 2));
 #if HEAPQ_STAT
 		this->f.open("D:/RUG/2019/TTMA_ISMM/qstat.dat", ofstream::out);
 		popcnt = 0;
@@ -485,8 +502,8 @@ public:
 	inline Pixel get_minlev() { return arr[1].alpha; }
 	inline Imgidx top() { return arr[1].pidx; }
 	inline Pixel top_alpha() {return arr[1].alpha;}
-	inline _uint32 top_moves() { return arr[1].moves; }
-	inline _uint32 top_cache_moves() { return arr[1].cache_moves; }
+	inline uint32 top_moves() { return arr[1].moves; }
+	inline uint32 top_cache_moves() { return arr[1].cache_moves; }
 //	{
 //		 Pixel ret = arr[1].alpha;
 //		 return ret;
@@ -499,7 +516,7 @@ public:
 		Imgidx outval = arr[1].pidx;
 		Imgidx current = 1, next, next0, curidx;
 		Pixel curalpha;
-		_uint32 curmove;
+		uint32 curmove, curcachemove;
 
 #if HEAPQ_DEBUG
 		cout << "pop: " << arr[1].pidx << " at " << arr[1].alpha << endl;
@@ -512,6 +529,7 @@ public:
 		curidx = arr[cursize].pidx;
 		curalpha = arr[cursize].alpha;
 		curmove = arr[cursize].moves;
+		curcachemove = arr[cursize].cache_moves;
 //		if (curidx < 0)
 	//		curidx = curidx;
 		cursize--;
@@ -528,22 +546,23 @@ public:
 			//next1 = next0 + 1;
 			if(next0 + 3 <= cursize)
 			{
-				if (arr[next0 + 1].alpha < arr[next].alpha)	next = next0 + 1;
-				if (arr[next0 + 2].alpha < arr[next].alpha)	next = next0 + 2;
-				if (arr[next0 + 3].alpha < arr[next].alpha)	next = next0 + 3;
+				if (arr[next0 + 1].alpha < arr[next].alpha)	{next = next0 + 1; numcmp++;}
+				if (arr[next0 + 2].alpha < arr[next].alpha)	{next = next0 + 2; numcmp++;}
+				if (arr[next0 + 3].alpha < arr[next].alpha)	{next = next0 + 3; numcmp++;}
 			}
 			else
 			{
 				if (next0 > cursize)	break;
 				if (next0 == cursize)			    	goto MIN_NEXT_FOUND;
-				if (arr[next0 + 1].alpha < arr[next].alpha)	next = next0 + 1;
+				if (arr[next0 + 1].alpha < arr[next].alpha)	{next = next0 + 1; numcmp++;}
 				if (next0 + 1 == cursize)				goto MIN_NEXT_FOUND;
-				if (arr[next0 + 2].alpha < arr[next].alpha)	next = next0 + 2;
+				if (arr[next0 + 2].alpha < arr[next].alpha)	{next = next0 + 2; numcmp++;}
 				if (next0 + 2 == cursize)				goto MIN_NEXT_FOUND;
-				if (arr[next0 + 3].alpha < arr[next].alpha)	next = next0 + 3;
+				if (arr[next0 + 3].alpha < arr[next].alpha)	{next = next0 + 3; numcmp++;}
 			}
 
 MIN_NEXT_FOUND:
+			numcmp++;
 			if (curalpha < arr[next].alpha)
 				break;
 
@@ -553,6 +572,7 @@ MIN_NEXT_FOUND:
 		arr[current].alpha = curalpha;
 		arr[current].pidx = curidx;
 		arr[current].moves = curmove + 1;
+		arr[current].cache_moves = curcachemove;
 //
 // 		if (cursize)
 // 			min_level = arr[1].alpha;
@@ -570,7 +590,7 @@ MIN_NEXT_FOUND:
 // 		push_run(pidx, (Pixel)pidx);
 // 	}
 
-	inline void push(Imgidx pidx, Pixel alpha, _uint32 moves = 0)
+	inline void push(Imgidx pidx, Pixel alpha, uint32 moves = 0, uint32 cache_moves = 0)
 	{
 		//double tt = get_wall_time(); //tmp
 
@@ -581,14 +601,19 @@ MIN_NEXT_FOUND:
 #endif
 		//		value val_cur = tree[pixpos].gval;
 		cursize++;
+		if(cursize > cursize_max) 
+			cursize_max = cursize;
+
 		current = cursize;
 
 	//	if (pidx < 0)
 	//		pidx = pidx;
 
 		next = (current + 2) >> 2;
+		numcmp++;
 		while (next && (arr[next].alpha > alpha))
 		{
+			numcmp++;
 			arr[current] = arr[next];
 			current = next;
 			next = (next + 2) >> 2;
@@ -596,7 +621,8 @@ MIN_NEXT_FOUND:
 
 		arr[current].pidx = pidx;
 		arr[current].alpha = alpha;
-		arr[current].moves = moves + 1;
+		arr[current].moves = moves;
+		arr[current].cache_moves = cache_moves;
 #if HEAPQ_DEBUG
 		cout << "push: " << pidx << " at " << alpha << " at slot[" << current << "]" << endl;
 #endif

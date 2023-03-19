@@ -27,14 +27,14 @@
 #define _min(a,b) (((a)>(b))?(b):(a))
 #define _clip(x,a,b) _min(_max(x,a),b)
 
-typedef u_int8_t _uint8;
-typedef u_int16_t _uint16;
-typedef u_int32_t _uint32;
-typedef u_int64_t _uint64;
-typedef int8_t _int8;
-typedef int16_t _int16;
-typedef int32_t _int32;
-typedef int64_t _int64;
+typedef u_int8_t uint8;
+typedef u_int16_t uint16;
+typedef u_int32_t uint32;
+typedef u_int64_t uint64;
+typedef int8_t int8;
+typedef int16_t int16;
+typedef int32_t int32;
+typedef int64_t int64;
 
 
-typedef _int64 trieidx;
+typedef int64 trieidx;

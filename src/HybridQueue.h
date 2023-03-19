@@ -35,19 +35,19 @@ class HierarHeapQueue_HEQ
 	HQentry<Imgidx, Pixel> **storage;
 	Imgidx *storage_cursize;
 	Imgidx *qsizes;
-	_uint32 *histeqmap;
+	uint32 *histeqmap;
 
 	Imgidx thr_hqueue, curthr, numlevels;
 	double a;
 	Imgidx queue_minlev;
 
-	_int16 curSize_list, maxSize_list;
+	int16 curSize_list, maxSize_list;
 	Imgidx maxSize_queue, mask_field;
-	_int8 shamt, nbit;
+	int8 shamt, nbit;
 	int emptytop;
 
 public:
-	void initHQ(Imgidx *dhist, _uint32* histeqmap_in, Imgidx numlevels_in, Imgidx size, double a_in, int listsize)
+	void initHQ(Imgidx *dhist, uint32* histeqmap_in, Imgidx numlevels_in, Imgidx size, double a_in, int listsize)
 	{
 		/*		cnt = 0;//tmp*/
 		//Imgidx i;
@@ -87,11 +87,11 @@ public:
 		for(int level = thr_hqueue;level < numlevels;level++)
 			storage[level] = (HQentry<Imgidx, Pixel>*)Malloc(qsizes[level] * sizeof(HQentry<Imgidx, Pixel>));
 	}
-	HierarHeapQueue_HEQ(Imgidx *dhist, _uint32 *histeqmap_in, Imgidx numlevels_in, double a_in, Imgidx size)
+	HierarHeapQueue_HEQ(Imgidx *dhist, uint32 *histeqmap_in, Imgidx numlevels_in, double a_in, Imgidx size)
 	{
 		initHQ(dhist, histeqmap_in, numlevels_in, size, a_in, 12);
 	}
-	HierarHeapQueue_HEQ(Imgidx *dhist, _uint32 *histeqmap_in, Imgidx numlevels_in, Imgidx size, double a_in, int listsize)
+	HierarHeapQueue_HEQ(Imgidx *dhist, uint32 *histeqmap_in, Imgidx numlevels_in, Imgidx size, double a_in, int listsize)
 	{
 		initHQ(dhist, histeqmap_in, numlevels_in, size, a_in, listsize);
 	}
@@ -123,7 +123,7 @@ public:
 		curSize_list++;
 	}
 
-	inline void end_pushes(_uint8 *isVisited)
+	inline void end_pushes(uint8 *isVisited)
 	{
 		if(emptytop)
 			pop(isVisited);
@@ -216,12 +216,12 @@ public:
 		}
 	}
 
-	Imgidx pop(_uint8 *isVisited)
+	Imgidx pop(uint8 *isVisited)
 	{
 		Imgidx ret = top();
 		//double tt = get_cpu_time(); //tmp
 
-		_int8 i;
+		int8 i;
 		//Imgidx idx;
 		// 		cnt++;//tmp
 		// 		if (cnt == 776)//tmp
@@ -279,7 +279,7 @@ public:
 		return ret;
 	}
 
-	int check_queue_level(_uint8 *isVisited)
+	int check_queue_level(uint8 *isVisited)
 	{
 		if(queue_minlev < curthr)
 			return hqueue[queue_minlev]->get_cursize();
@@ -314,7 +314,7 @@ public:
 		}
 	}
 
-	void pop_queue(_uint8 *isVisited)
+	void pop_queue(uint8 *isVisited)
 	{
 		hqueue[queue_minlev]->pop(); 
 
@@ -341,7 +341,7 @@ class HierarHeapQueue
 	Imgidx queue_minlev;
 
 	Imgidx maxSize_queue, mask_field;
-	_int8 shamt, nbit;
+	int8 shamt, nbit;
 
 public:
 	#if TRACK_QUEUEING
@@ -432,7 +432,7 @@ public:
 		#endif
 	}
 
-	inline void end_pushes(_uint8* isVisited)
+	inline void end_pushes(uint8* isVisited)
 	{
 		pop(isVisited);
 	}
@@ -491,7 +491,7 @@ public:
 	}
 	#endif
 
-	Imgidx pop(_uint8 *isVisited)
+	Imgidx pop(uint8 *isVisited)
 	{
 		Imgidx ret = top();
 		//double tt = get_cpu_time(); //tmp
@@ -514,7 +514,7 @@ public:
 		return ret;
 	}
 
-	int check_queue_level(_uint8* isVisited)
+	int check_queue_level(uint8* isVisited)
 	{
 		if(queue_minlev < curthr)
 			return hqueue[queue_minlev]->get_cursize();
@@ -548,7 +548,7 @@ public:
 		}
 	}
 
-	void pop_queue(_uint8* isVisited)
+	void pop_queue(uint8* isVisited)
 	{
 		hqueue[queue_minlev]->pop();
 
@@ -576,9 +576,9 @@ class HierarHeapQueue_cache
 	double a;
 	Imgidx queue_minlev;
 
-	_int16 curSize_list, maxSize_list;
+	int16 curSize_list, maxSize_list;
 	Imgidx maxSize_queue, mask_field;
-	_int8 shamt, nbit;
+	int8 shamt, nbit;
 	int emptytop;
 
 	Imgidx totalsize;
@@ -738,7 +738,7 @@ public:
 		#endif
 	}
 
-	inline void end_pushes(_uint8 *isVisited)
+	inline void end_pushes(uint8 *isVisited)
 	{
 		if(emptytop)
 			pop(isVisited);
@@ -897,12 +897,12 @@ public:
 	}
 	#endif
 
-	Imgidx pop(_uint8 *isVisited)
+	Imgidx pop(uint8 *isVisited)
 	{
 		Imgidx ret = top();
 		//double tt = get_cpu_time(); //tmp
 
-		_int8 i;
+		int8 i;
 		//Imgidx idx;
 		// 		cnt++;//tmp
 		// 		if (cnt == 776)//tmp
@@ -956,7 +956,7 @@ public:
 		return ret;
 	}
 
-	int check_queue_level(_uint8 *isVisited)
+	int check_queue_level(uint8 *isVisited)
 	{
 		if(queue_minlev < curthr)
 			return hqueue[queue_minlev]->get_cursize();
@@ -999,7 +999,7 @@ public:
 		}
 	}
 
-	void pop_queue(_uint8 *isVisited)
+	void pop_queue(uint8 *isVisited)
 	{
 			
 #if PROFILE
@@ -1028,9 +1028,9 @@ class Cache_Heapqueue
 	HQentry<Imgidx, Pixel> *list;
 	HeapQueue_naive<Imgidx, Pixel> *hqueue;
 	Imgidx minidx_queue;
-	_int16 curSize_list, maxSize_list;
+	int16 curSize_list, maxSize_list;
 	Imgidx maxSize_queue, mask_field;
-	_int8 shamt, nbit;
+	int8 shamt, nbit;
 	int emptytop;
 
 #if TRACK_QUEUEING
@@ -1038,7 +1038,7 @@ class Cache_Heapqueue
 
 	ofstream f;
 #endif
-	//	_int32 cnt;
+	//	int32 cnt;
 	void initHQ(Imgidx size, size_t listsize)
 	{
 		/*		cnt = 0;//tmp*/
@@ -1046,14 +1046,14 @@ class Cache_Heapqueue
 		this->maxSize_queue = size;
 		/*		shamt = 2;*/
 		// 		nbit = sizeof(Qidx) * 8;
-		// 		for (_int8 nbyte = sizeof(Qidx); nbyte; nbyte >>= 1)
+		// 		for (int8 nbyte = sizeof(Qidx); nbyte; nbyte >>= 1)
 		// 			shamt++;
 		// 		mask_field = (1 << shamt) - 1;
 		// 		qsize = (size + mask_field) >> shamt;
 		//
 		// 		queue = (Qidx*)Malloc(qsize * sizeof(Qidx*));
-		//queue = (_int8*)Malloc((size + 1) * sizeof(_int8));
-		//trie = (Trie<Imgidx, _int64>*)Malloc(size * sizeof(Trie<Imgidx, _int64>*));
+		//queue = (int8*)Malloc((size + 1) * sizeof(int8));
+		//trie = (Trie<Imgidx, int64>*)Malloc(size * sizeof(Trie<Imgidx, int64>*));
 		hqueue = new HeapQueue_naive<Imgidx, Pixel>(size);
 		list = (HQentry<Imgidx, Pixel>*)Malloc((listsize + 1) * sizeof(HQentry<Imgidx, Pixel>));
 		list[0].pidx = 0;
@@ -1119,7 +1119,7 @@ public:
 		//double tt = get_cpu_time(); //tmp
 
 		//MinList1<Imgidx> *p, *q;
-		_int16 i;
+		int16 i;
 #if QUEUE_DEBUG
 		cout << "push: " << idx << " at " << (int)alpha << endl;
 #endif
@@ -1179,7 +1179,7 @@ public:
 		Imgidx ret = top();
 		//double tt = get_cpu_time(); //tmp
 
-		_int8 i;
+		int8 i;
 		//Imgidx idx;
 		// 		cnt++;//tmp
 		// 		if (cnt == 776)//tmp
@@ -1242,21 +1242,23 @@ public:
 	HQentry<Imgidx, Pixel> *list;
 	HeapQueue_naive_quad<Imgidx, Pixel> *hqueue;
 	Imgidx minidx_queue;
-	_int16 curSize_list, maxSize_list;
+	int16 curSize_list, maxSize_list;
 	Imgidx maxSize_queue, mask_field;
-	_int8 shamt, nbit;
+	int8 shamt, nbit;
 	int emptytop;
 
 	Imgidx num_cached;
 	Imgidx cache_overflow;
 	Imgidx sum_moves;
 
+	uint64 numcmp;
+
 #if TRACK_QUEUEING
 	Imgidx *in_size;
 
 	ofstream f;
 #endif
-	//	_int32 cnt;
+	//	int32 cnt;
 	void initHQ(Imgidx size, size_t listsize)
 	{
 		/*		cnt = 0;//tmp*/
@@ -1264,14 +1266,14 @@ public:
 		this->maxSize_queue = size;
 		/*		shamt = 2;*/
 		// 		nbit = sizeof(Qidx) * 8;
-		// 		for (_int8 nbyte = sizeof(Qidx); nbyte; nbyte >>= 1)
+		// 		for (int8 nbyte = sizeof(Qidx); nbyte; nbyte >>= 1)
 		// 			shamt++;
 		// 		mask_field = (1 << shamt) - 1;
 		// 		qsize = (size + mask_field) >> shamt;
 		//
 		// 		queue = (Qidx*)Malloc(qsize * sizeof(Qidx*));
-		//queue = (_int8*)Malloc((size + 1) * sizeof(_int8));
-		//trie = (Trie<Imgidx, _int64>*)Malloc(size * sizeof(Trie<Imgidx, _int64>*));
+		//queue = (int8*)Malloc((size + 1) * sizeof(int8));
+		//trie = (Trie<Imgidx, int64>*)Malloc(size * sizeof(Trie<Imgidx, int64>*));
 		hqueue = new HeapQueue_naive_quad<Imgidx, Pixel>(size);
 		list = (HQentry<Imgidx, Pixel>*)Malloc((listsize + 1) * sizeof(HQentry<Imgidx, Pixel>));
 		list[0].pidx = 0;
@@ -1309,9 +1311,9 @@ public:
 
 	double qtime;//tmp
 
-	Cache_Quad_Heapqueue(Imgidx size)
+	Cache_Quad_Heapqueue(Imgidx size): numcmp(0)
 	{
-		initHQ(size, 12);
+		initHQ(size, 50);
 	}
 	Cache_Quad_Heapqueue(Imgidx size, size_t listsize)
 	{
@@ -1324,6 +1326,9 @@ public:
 	inline Pixel top_alpha() { return list[0].alpha; }
 	inline Pixel top_moves() { return list[0].moves; }
 	inline Pixel top_cache_moves () { return list[0].cache_moves; }
+	inline uint64 get_numcmp(){return numcmp + hqueue->numcmp;}
+
+
 	inline void push_1stitem(Imgidx idx, Pixel alpha)
 	{
 		list[0].pidx = idx;
@@ -1344,7 +1349,7 @@ public:
 		//double tt = get_cpu_time(); //tmp
 
 		//MinList1<Imgidx> *p, *q;
-		_int16 i;
+		int16 i;
 #if QUEUE_DEBUG
 		cout << "push: " << idx << " at " << (int)alpha << endl;
 #endif
@@ -1394,8 +1399,7 @@ public:
 			{
 				cache_overflow++;
 				list[curSize_list].moves++;
-				list[curSize_list].cache_moves++;
-				push_queue(list[curSize_list].pidx, list[curSize_list].alpha, list[curSize_list].moves);
+				push_queue(list[curSize_list].pidx, list[curSize_list].alpha, list[curSize_list].moves, list[curSize_list].cache_moves);
 
 				for (i = curSize_list - 1; alpha < list[i].alpha; i--)
 				{
@@ -1419,16 +1423,16 @@ public:
 
 			//qtime += get_cpu_time() - tt; //tmp
 	}
-	inline void push_queue(Imgidx idx, Pixel alpha, _uint32 moves = 0)
+	inline void push_queue(Imgidx idx, Pixel alpha, uint32 moves = 0, uint32 cache_moves = 0)
 	{
-		hqueue->push(idx, alpha, moves);
+		hqueue->push(idx, alpha, moves, cache_moves);
 	}
 	inline Imgidx pop()
 	{
 		Imgidx ret = top();
 		//double tt = get_cpu_time(); //tmp
 
-		_int8 i;
+		int8 i;
 		//Imgidx idx;
 		// 		cnt++;//tmp
 		// 		if (cnt == 776)//tmp
@@ -1450,8 +1454,7 @@ public:
 			list[0].pidx = hqueue->top();
 			list[0].alpha = hqueue->top_alpha();
 			list[0].moves = hqueue->top_moves() + 1;
-			list[0].cache_moves = hqueue->top_moves() + 1;
-
+			list[0].cache_moves = hqueue->top_cache_moves();
 			pop_queue();
 		}
 		else
@@ -1497,10 +1500,10 @@ template<class Imgidx, class Pixel>//, class Qidx>
 class CirCache_Hierqueue
 {
 	//MinList1<Imgidx> *list, *list_end, *head, *tail;
-	HQentry<Imgidx, _int32> *list;
+	HQentry<Imgidx, int32> *list;
 	HierarQueue<Imgidx> *hqueue;
 	Imgidx minidx_queue;
-	_int16 curSize_list, maxSize_list, liststart, mask;
+	int16 curSize_list, maxSize_list, liststart, mask;
 	Imgidx maxSize_queue, mask_field;
 	int emptytop;
 
@@ -1509,9 +1512,9 @@ class CirCache_Hierqueue
 	ofstream f;
 #endif
 
-	//	_int32 cnt;
+	//	int32 cnt;
 	//void initHQ(Imgidx size, size_t listsize)
-	void initHQ(_uint64 qsize_in, Imgidx *dhist, _int32 numlevels, size_t listsize)
+	void initHQ(uint64 qsize_in, Imgidx *dhist, int32 numlevels, size_t listsize)
 	{
 		int shamt = 0;
 		for(int lsize = listsize;lsize;lsize>>=1)
@@ -1523,16 +1526,16 @@ class CirCache_Hierqueue
 		this->maxSize_queue = qsize_in;
 		/*		shamt = 2;*/
 		// 		nbit = sizeof(Qidx) * 8;
-		// 		for (_int8 nbyte = sizeof(Qidx); nbyte; nbyte >>= 1)
+		// 		for (int8 nbyte = sizeof(Qidx); nbyte; nbyte >>= 1)
 		// 			shamt++;
 		// 		mask_field = (1 << shamt) - 1;
 		// 		qsize = (size + mask_field) >> shamt;
 		//
 		// 		queue = (Qidx*)Malloc(qsize * sizeof(Qidx*));
-		//queue = (_int8*)Malloc((size + 1) * sizeof(_int8));
-		//trie = (Trie<Imgidx, _int64>*)Malloc(size * sizeof(Trie<Imgidx, _int64>*));
+		//queue = (int8*)Malloc((size + 1) * sizeof(int8));
+		//trie = (Trie<Imgidx, int64>*)Malloc(size * sizeof(Trie<Imgidx, int64>*));
 		hqueue = new HierarQueue<Imgidx>(qsize_in, dhist, numlevels);
-		list = (HQentry<Imgidx, _int32>*)Malloc(listsize * sizeof(HQentry<Imgidx, _int32>));
+		list = (HQentry<Imgidx, int32>*)Malloc(listsize * sizeof(HQentry<Imgidx, int32>));
 		maxSize_list = listsize;
 		curSize_list = 0;
 		liststart = 0;
@@ -1563,20 +1566,20 @@ public:
 
 	double qtime;//tmp
 
-	CirCache_Hierqueue(_uint64 qsize_in, Imgidx *dhist, _int32 numlevels)
+	CirCache_Hierqueue(uint64 qsize_in, Imgidx *dhist, int32 numlevels)
 	{
 		initHQ(qsize_in, dhist, numlevels, 16);
 	}
-	CirCache_Hierqueue(_uint64 qsize_in, Imgidx *dhist, _int32 numlevels, size_t listsize)
+	CirCache_Hierqueue(uint64 qsize_in, Imgidx *dhist, int32 numlevels, size_t listsize)
 	{
 		initHQ(qsize_in, dhist, numlevels, listsize);
 	}
 
 	inline void start_pushes() { emptytop = 1; }
-	inline _int32 get_minlev() { return list[liststart].alpha; }
+	inline int32 get_minlev() { return list[liststart].alpha; }
 	inline Imgidx top() { return list[liststart].pidx; }
-	inline _int32 top_alpha() { return list[liststart].alpha; }
-	inline void push_1stitem(Imgidx idx, _int32 alpha)
+	inline int32 top_alpha() { return list[liststart].alpha; }
+	inline void push_1stitem(Imgidx idx, int32 alpha)
 	{
 		list[0].pidx = idx;
 		list[0].alpha = alpha;
@@ -1589,12 +1592,12 @@ public:
 
 	}
 
-	inline void push(Imgidx idx, _int32 alpha)
+	inline void push(Imgidx idx, int32 alpha)
 	{
 		//double tt = get_cpu_time(); //tmp
 
 		//MinList1<Imgidx> *p, *q;
-		_int16 i, j, k;
+		int16 i, j, k;
 #if QUEUE_DEBUG
 		cout << "chierQ - push: " << idx << " at " << (int)alpha << endl;
 #endif
@@ -1617,7 +1620,7 @@ public:
 		//
 		// 		if (cnt == 786)//tmp
 		// 			idx = idx;
-		if ((_int64)alpha < hqueue->get_minlev())
+		if ((int64)alpha < hqueue->get_minlev())
 		{
 			if (curSize_list < maxSize_list) //spare room in the list
 			{
@@ -1659,7 +1662,7 @@ public:
 
 			//qtime += get_cpu_time() - tt; //tmp
 	}
-	inline void push_queue(Imgidx idx, _int32 alpha)
+	inline void push_queue(Imgidx idx, int32 alpha)
 	{
 		hqueue->push(idx, alpha);
 	}
@@ -1668,7 +1671,7 @@ public:
 		Imgidx ret = top();
 		//double tt = get_cpu_time(); //tmp
 
-		//_int8 i;
+		//int8 i;
 		//Imgidx idx;
 		// 		cnt++;//tmp
 		// 		if (cnt == 776)//tmp
@@ -1733,12 +1736,12 @@ template<class Imgidx, class Pixel>//, class Qidx>
 class HierarQueueCache
 {
 	//MinList1<Imgidx> *list, *list_end, *head, *tail;
-	HQentry<Imgidx, _int32> *list;
+	HQentry<Imgidx, int32> *list;
 	HierarQueue<Imgidx> *hqueue;
 	Imgidx minidx_queue;
-	_int16 curSize_list, maxSize_list;
+	int16 curSize_list, maxSize_list;
 	Imgidx maxSize_queue, mask_field;
-	_int8 shamt, nbit;
+	int8 shamt, nbit;
 	int emptytop;
 
 #if TRACK_QUEUEING
@@ -1747,25 +1750,25 @@ class HierarQueueCache
 	ofstream f;
 #endif
 
-	//	_int32 cnt;
+	//	int32 cnt;
 	//void initHQ(Imgidx size, size_t listsize)
-	void initHQ(_uint64 qsize_in, Imgidx *dhist, _int32 numlevels, size_t listsize = LISTSIZE_DEFAULT)
+	void initHQ(uint64 qsize_in, Imgidx *dhist, int32 numlevels, size_t listsize = LISTSIZE_DEFAULT)
 	{
 		/*		cnt = 0;//tmp*/
 		//Imgidx i;
 		this->maxSize_queue = qsize_in;
 		/*		shamt = 2;*/
 		// 		nbit = sizeof(Qidx) * 8;
-		// 		for (_int8 nbyte = sizeof(Qidx); nbyte; nbyte >>= 1)
+		// 		for (int8 nbyte = sizeof(Qidx); nbyte; nbyte >>= 1)
 		// 			shamt++;
 		// 		mask_field = (1 << shamt) - 1;
 		// 		qsize = (size + mask_field) >> shamt;
 		//
 		// 		queue = (Qidx*)Malloc(qsize * sizeof(Qidx*));
-		//queue = (_int8*)Malloc((size + 1) * sizeof(_int8));
-		//trie = (Trie<Imgidx, _int64>*)Malloc(size * sizeof(Trie<Imgidx, _int64>*));
+		//queue = (int8*)Malloc((size + 1) * sizeof(int8));
+		//trie = (Trie<Imgidx, int64>*)Malloc(size * sizeof(Trie<Imgidx, int64>*));
 		hqueue = new HierarQueue<Imgidx>(qsize_in, dhist, numlevels);
-		list = (HQentry<Imgidx, _int32>*)Malloc((listsize + 1) * sizeof(HQentry<Imgidx, _int32>));
+		list = (HQentry<Imgidx, int32>*)Malloc((listsize + 1) * sizeof(HQentry<Imgidx, int32>));
 		list[0].pidx = 0;
 		list[0].alpha = 0;
 		list++;
@@ -1798,20 +1801,20 @@ public:
 
 	double qtime;//tmp
 
-	HierarQueueCache(_uint64 qsize_in, Imgidx *dhist, _int32 numlevels)
+	HierarQueueCache(uint64 qsize_in, Imgidx *dhist, int32 numlevels)
 	{
 		initHQ(qsize_in, dhist, numlevels, 12);
 	}
-	HierarQueueCache(_uint64 qsize_in, Imgidx *dhist, _int32 numlevels, size_t listsize)
+	HierarQueueCache(uint64 qsize_in, Imgidx *dhist, int32 numlevels, size_t listsize)
 	{
 		initHQ(qsize_in, dhist, numlevels, listsize);
 	}
 
 	inline void start_pushes() { emptytop = 1; }
-	inline _int32 get_minlev() { return list[0].alpha; }
+	inline int32 get_minlev() { return list[0].alpha; }
 	inline Imgidx top() { return list[0].pidx; }
-	inline _int32 top_alpha() { return list[0].alpha; }
-	inline void push_1stitem(Imgidx idx, _int32 alpha)
+	inline int32 top_alpha() { return list[0].alpha; }
+	inline void push_1stitem(Imgidx idx, int32 alpha)
 	{
 		list[0].pidx = idx;
 		list[0].alpha = alpha;
@@ -1824,12 +1827,12 @@ public:
 
 	}
 
-	inline void push(Imgidx idx, _int32 alpha)
+	inline void push(Imgidx idx, int32 alpha)
 	{
 		//double tt = get_cpu_time(); //tmp
 
 		//MinList1<Imgidx> *p, *q;
-		_int16 i;
+		int16 i;
 #if QUEUE_DEBUG
 //		cout << "chierQ - push: " << idx << " at " << (int)alpha << endl;
 #endif
@@ -1852,7 +1855,7 @@ public:
 		//
 		// 		if (cnt == 786)//tmp
 		// 			idx = idx;
-		if ((_int64)alpha < hqueue->get_minlev())
+		if ((int64)alpha < hqueue->get_minlev())
 		{
 			if (curSize_list < maxSize_list) //spare room in the list
 			{
@@ -1889,7 +1892,7 @@ public:
 
 			//qtime += get_cpu_time() - tt; //tmp
 	}
-	inline void push_queue(Imgidx idx, _int32 alpha)
+	inline void push_queue(Imgidx idx, int32 alpha)
 	{
 		hqueue->push(idx, alpha);
 	}
@@ -1898,7 +1901,7 @@ public:
 		Imgidx ret = top();
 		//double tt = get_cpu_time(); //tmp
 
-		_int8 i;
+		int8 i;
 		//Imgidx idx;
 		// 		cnt++;//tmp
 		// 		if (cnt == 776)//tmp
@@ -1961,12 +1964,12 @@ template<class Imgidx, class Pixel>//, class Qidx>
 class Cache_Hierqueue_l1
 {
 	//MinList1<Imgidx> *list, *list_end, *head, *tail;
-	HQentry<Imgidx, _int32> *list;
+	HQentry<Imgidx, int32> *list;
 	HQueue_l1idx<Imgidx> *hqueue;
 	Imgidx minidx_queue;
-	_int16 curSize_list, maxSize_list;
+	int16 curSize_list, maxSize_list;
 	Imgidx maxSize_queue, mask_field;
-	_int8 shamt, nbit;
+	int8 shamt, nbit;
 	int emptytop;
 
 #if TRACK_QUEUEING
@@ -1975,25 +1978,25 @@ class Cache_Hierqueue_l1
 	ofstream f;
 #endif
 
-	//	_int32 cnt;
+	//	int32 cnt;
 	//void initHQ(Imgidx size, size_t listsize)
-	void initHQ(_uint64 qsize_in, Imgidx *dhist, _int32 numlevels, size_t listsize)
+	void initHQ(uint64 qsize_in, Imgidx *dhist, int32 numlevels, size_t listsize)
 	{
 		/*		cnt = 0;//tmp*/
 		//Imgidx i;
 		this->maxSize_queue = qsize_in;
 		/*		shamt = 2;*/
 		// 		nbit = sizeof(Qidx) * 8;
-		// 		for (_int8 nbyte = sizeof(Qidx); nbyte; nbyte >>= 1)
+		// 		for (int8 nbyte = sizeof(Qidx); nbyte; nbyte >>= 1)
 		// 			shamt++;
 		// 		mask_field = (1 << shamt) - 1;
 		// 		qsize = (size + mask_field) >> shamt;
 		//
 		// 		queue = (Qidx*)Malloc(qsize * sizeof(Qidx*));
-		//queue = (_int8*)Malloc((size + 1) * sizeof(_int8));
-		//trie = (Trie<Imgidx, _int64>*)Malloc(size * sizeof(Trie<Imgidx, _int64>*));
+		//queue = (int8*)Malloc((size + 1) * sizeof(int8));
+		//trie = (Trie<Imgidx, int64>*)Malloc(size * sizeof(Trie<Imgidx, int64>*));
 		hqueue = new HQueue_l1idx<Imgidx>(qsize_in, dhist, numlevels);
-		list = (HQentry<Imgidx, _int32>*)Malloc((listsize + 1) * sizeof(HQentry<Imgidx, _int32>));
+		list = (HQentry<Imgidx, int32>*)Malloc((listsize + 1) * sizeof(HQentry<Imgidx, int32>));
 		list[0].pidx = 0;
 		list[0].alpha = 0;
 		list++;
@@ -2026,20 +2029,20 @@ public:
 
 	double qtime;//tmp
 
-	Cache_Hierqueue_l1(_uint64 qsize_in, Imgidx *dhist, _int32 numlevels)
+	Cache_Hierqueue_l1(uint64 qsize_in, Imgidx *dhist, int32 numlevels)
 	{
 		initHQ(qsize_in, dhist, numlevels, 12);
 	}
-	Cache_Hierqueue_l1(_uint64 qsize_in, Imgidx *dhist, _int32 numlevels, size_t listsize)
+	Cache_Hierqueue_l1(uint64 qsize_in, Imgidx *dhist, int32 numlevels, size_t listsize)
 	{
 		initHQ(qsize_in, dhist, numlevels, listsize);
 	}
 
 	inline void start_pushes() { emptytop = 1; }
-	inline _int32 get_minlev() { return list[0].alpha; }
+	inline int32 get_minlev() { return list[0].alpha; }
 	inline Imgidx top() { return list[0].pidx; }
-	inline _int32 top_alpha() { return list[0].alpha; }
-	inline void push_1stitem(Imgidx idx, _int32 alpha)
+	inline int32 top_alpha() { return list[0].alpha; }
+	inline void push_1stitem(Imgidx idx, int32 alpha)
 	{
 		list[0].pidx = idx;
 		list[0].alpha = alpha;
@@ -2052,12 +2055,12 @@ public:
 
 	}
 
-	inline void push(Imgidx idx, _int32 alpha)
+	inline void push(Imgidx idx, int32 alpha)
 	{
 		//double tt = get_cpu_time(); //tmp
 
 		//MinList1<Imgidx> *p, *q;
-		_int16 i;
+		int16 i;
 #if QUEUE_DEBUG
 		cout << "chierQ - push: " << idx << " at " << (int)alpha << endl;
 #endif
@@ -2080,7 +2083,7 @@ public:
 		//
 		// 		if (cnt == 786)//tmp
 		// 			idx = idx;
-		if ((_int64)alpha < hqueue->get_minlev())
+		if ((int64)alpha < hqueue->get_minlev())
 		{
 			if (curSize_list < maxSize_list) //spare room in the list
 			{
@@ -2108,7 +2111,7 @@ public:
 
 			//qtime += get_cpu_time() - tt; //tmp
 	}
-	inline void push_queue(Imgidx idx, _int32 alpha)
+	inline void push_queue(Imgidx idx, int32 alpha)
 	{
 		hqueue->push(idx, alpha);
 	}
@@ -2117,7 +2120,7 @@ public:
 		Imgidx ret = top();
 		//double tt = get_cpu_time(); //tmp
 
-		_int8 i;
+		int8 i;
 		//Imgidx idx;
 		// 		cnt++;//tmp
 		// 		if (cnt == 776)//tmp
@@ -2181,12 +2184,12 @@ template<class Imgidx, class Pixel>//, class Qidx>
 class Cache_Hierqueue_l2
 {
 	//MinList1<Imgidx> *list, *list_end, *head, *tail;
-	HQentry<Imgidx, _int32> *list;
+	HQentry<Imgidx, int32> *list;
 	HQueue_l2idx<Imgidx> *hqueue;
 	Imgidx minidx_queue;
-	_int16 curSize_list, maxSize_list;
+	int16 curSize_list, maxSize_list;
 	Imgidx maxSize_queue, mask_field;
-	_int8 shamt, nbit;
+	int8 shamt, nbit;
 	int emptytop;
 
 #if TRACK_QUEUEING
@@ -2195,25 +2198,25 @@ class Cache_Hierqueue_l2
 	ofstream f;
 #endif
 
-	//	_int32 cnt;
+	//	int32 cnt;
 	//void initHQ(Imgidx size, size_t listsize)
-	void initHQ(_uint64 qsize_in, Imgidx *dhist, _int32 numlevels, size_t listsize)
+	void initHQ(uint64 qsize_in, Imgidx *dhist, int32 numlevels, size_t listsize)
 	{
 		/*		cnt = 0;//tmp*/
 		//Imgidx i;
 		this->maxSize_queue = qsize_in;
 		/*		shamt = 2;*/
 		// 		nbit = sizeof(Qidx) * 8;
-		// 		for (_int8 nbyte = sizeof(Qidx); nbyte; nbyte >>= 1)
+		// 		for (int8 nbyte = sizeof(Qidx); nbyte; nbyte >>= 1)
 		// 			shamt++;
 		// 		mask_field = (1 << shamt) - 1;
 		// 		qsize = (size + mask_field) >> shamt;
 		//
 		// 		queue = (Qidx*)Malloc(qsize * sizeof(Qidx*));
-		//queue = (_int8*)Malloc((size + 1) * sizeof(_int8));
-		//trie = (Trie<Imgidx, _int64>*)Malloc(size * sizeof(Trie<Imgidx, _int64>*));
+		//queue = (int8*)Malloc((size + 1) * sizeof(int8));
+		//trie = (Trie<Imgidx, int64>*)Malloc(size * sizeof(Trie<Imgidx, int64>*));
 		hqueue = new HQueue_l2idx<Imgidx>(qsize_in, dhist, numlevels);
-		list = (HQentry<Imgidx, _int32>*)Malloc((listsize + 1) * sizeof(HQentry<Imgidx, _int32>));
+		list = (HQentry<Imgidx, int32>*)Malloc((listsize + 1) * sizeof(HQentry<Imgidx, int32>));
 		list[0].pidx = 0;
 		list[0].alpha = 0;
 		list++;
@@ -2246,20 +2249,20 @@ public:
 
 	double qtime;//tmp
 
-	Cache_Hierqueue_l2(_uint64 qsize_in, Imgidx *dhist, _int32 numlevels)
+	Cache_Hierqueue_l2(uint64 qsize_in, Imgidx *dhist, int32 numlevels)
 	{
 		initHQ(qsize_in, dhist, numlevels, 12);
 	}
-	Cache_Hierqueue_l2(_uint64 qsize_in, Imgidx *dhist, _int32 numlevels, size_t listsize)
+	Cache_Hierqueue_l2(uint64 qsize_in, Imgidx *dhist, int32 numlevels, size_t listsize)
 	{
 		initHQ(qsize_in, dhist, numlevels, listsize);
 	}
 
 	inline void start_pushes() { emptytop = 1; }
-	inline _int32 get_minlev() { return list[0].alpha; }
+	inline int32 get_minlev() { return list[0].alpha; }
 	inline Imgidx top() { return list[0].pidx; }
-	inline _int32 top_alpha() { return list[0].alpha; }
-	inline void push_1stitem(Imgidx idx, _int32 alpha)
+	inline int32 top_alpha() { return list[0].alpha; }
+	inline void push_1stitem(Imgidx idx, int32 alpha)
 	{
 		list[0].pidx = idx;
 		list[0].alpha = alpha;
@@ -2272,12 +2275,12 @@ public:
 
 	}
 
-	inline void push(Imgidx idx, _int32 alpha)
+	inline void push(Imgidx idx, int32 alpha)
 	{
 		//double tt = get_cpu_time(); //tmp
 
 		//MinList1<Imgidx> *p, *q;
-		_int16 i;
+		int16 i;
 #if QUEUE_DEBUG
 		cout << "chierQ - push: " << idx << " at " << (int)alpha << endl;
 #endif
@@ -2300,7 +2303,7 @@ public:
 		//
 		// 		if (cnt == 786)//tmp
 		// 			idx = idx;
-		if ((_int64)alpha < hqueue->get_minlev())
+		if ((int64)alpha < hqueue->get_minlev())
 		{
 			if (curSize_list < maxSize_list) //spare room in the list
 			{
@@ -2328,7 +2331,7 @@ public:
 
 			//qtime += get_cpu_time() - tt; //tmp
 	}
-	inline void push_queue(Imgidx idx, _int32 alpha)
+	inline void push_queue(Imgidx idx, int32 alpha)
 	{
 		hqueue->push(idx, alpha);
 	}
@@ -2337,7 +2340,7 @@ public:
 		Imgidx ret = top();
 		//double tt = get_cpu_time(); //tmp
 
-		_int8 i;
+		int8 i;
 		//Imgidx idx;
 		// 		cnt++;//tmp
 		// 		if (cnt == 776)//tmp
@@ -2404,9 +2407,9 @@ class Trie_Cache
 	Imgidx *list;
 	Trie<Imgidx, Trieidx> *trie;
 	Imgidx minidx_queue;
-	_int16 curSize_list, maxSize_list;
+	int16 curSize_list, maxSize_list;
 	Imgidx maxSize_queue, mask_field;
-	_int8 shamt, nbit;
+	int8 shamt, nbit;
 
 
 #if TRACK_QUEUEING
@@ -2414,7 +2417,7 @@ class Trie_Cache
 
 	ofstream f;
 #endif
-	//	_int32 cnt;
+	//	int32 cnt;
 	void initHQ(Imgidx size, size_t listsize)
 	{
 		/*		cnt = 0;//tmp*/
@@ -2422,15 +2425,15 @@ class Trie_Cache
 		this->maxSize_queue = size;
 		/*		shamt = 2;*/
 		// 		nbit = sizeof(Qidx) * 8;
-		// 		for (_int8 nbyte = sizeof(Qidx); nbyte; nbyte >>= 1)
+		// 		for (int8 nbyte = sizeof(Qidx); nbyte; nbyte >>= 1)
 		// 			shamt++;
 		// 		mask_field = (1 << shamt) - 1;
 		// 		qsize = (size + mask_field) >> shamt;
 		//
 		// 		queue = (Qidx*)Malloc(qsize * sizeof(Qidx*));
-		//queue = (_int8*)Malloc((size + 1) * sizeof(_int8));
-		//trie = (Trie<Imgidx, _int64>*)Malloc(size * sizeof(Trie<Imgidx, _int64>*));
-		trie = new Trie<Imgidx, _int64>(size);
+		//queue = (int8*)Malloc((size + 1) * sizeof(int8));
+		//trie = (Trie<Imgidx, int64>*)Malloc(size * sizeof(Trie<Imgidx, int64>*));
+		trie = new Trie<Imgidx, int64>(size);
 		list = (Imgidx*)Malloc((listsize + 1) * sizeof(Imgidx));
 		list[0] = 0;
 		list++;
@@ -2473,7 +2476,7 @@ public:
 	inline void push(Imgidx idx)
 	{
 		//MinList1<Imgidx> *p, *q;
-		_int16 i;
+		int16 i;
 
 #if TRACK_QUEUEING
 		//tmp
@@ -2513,7 +2516,7 @@ public:
 	}
 	inline void pop()
 	{
-		_int8 i;
+		int8 i;
 		//Imgidx idx;
 		// 		cnt++;//tmp
 		// 		if (cnt == 776)//tmp
@@ -2551,7 +2554,7 @@ public:
 		// 			;
 	}
 
-	// 	_int8 checklist()//tmp
+	// 	int8 checklist()//tmp
 	// 	{
 	// 		MinList<Imgidx> *p;
 	// 		if (head)
@@ -2595,9 +2598,9 @@ class HybridQueue_HQueue_Rank
 	Imgidx *list;
 	HQueue_l1idx_rank<Imgidx> *queue;
 	Imgidx minidx_queue;
-	_int16 curSize_list, maxSize_list;
+	int16 curSize_list, maxSize_list;
 	Imgidx maxSize_queue, mask_field;
-	_int8 shamt, nbit;
+	int8 shamt, nbit;
 
 
 #if TRACK_QUEUEING
@@ -2605,7 +2608,7 @@ class HybridQueue_HQueue_Rank
 
 	ofstream f;
 #endif
-	//	_int32 cnt;
+	//	int32 cnt;
 	void initHQ(Imgidx size, size_t listsize)
 	{
 		/*		cnt = 0;//tmp*/
@@ -2613,14 +2616,14 @@ class HybridQueue_HQueue_Rank
 		this->maxSize_queue = size;
 		/*		shamt = 2;*/
 		// 		nbit = sizeof(Qidx) * 8;
-		// 		for (_int8 nbyte = sizeof(Qidx); nbyte; nbyte >>= 1)
+		// 		for (int8 nbyte = sizeof(Qidx); nbyte; nbyte >>= 1)
 		// 			shamt++;
 		// 		mask_field = (1 << shamt) - 1;
 		// 		qsize = (size + mask_field) >> shamt;
 		//
 		// 		queue = (Qidx*)Malloc(qsize * sizeof(Qidx*));
-		//queue = (_int8*)Malloc((size + 1) * sizeof(_int8));
-		//trie = (Trie<Imgidx, _int64>*)Malloc(size * sizeof(Trie<Imgidx, _int64>*));
+		//queue = (int8*)Malloc((size + 1) * sizeof(int8));
+		//trie = (Trie<Imgidx, int64>*)Malloc(size * sizeof(Trie<Imgidx, int64>*));
 		queue = new HQueue_l1idx_rank<Imgidx>(size);
 		list = (Imgidx*)Malloc((listsize + 1) * sizeof(Imgidx));
 		list[0] = 0;
@@ -2667,7 +2670,7 @@ public:
 	inline void push(Imgidx idx)
 	{
 		//MinList1<Imgidx> *p, *q;
-		_int16 i;
+		int16 i;
 
 #if TRACK_QUEUEING
 		//tmp
@@ -2707,7 +2710,7 @@ public:
 	}
 	inline void pop()
 	{
-		_int8 i;
+		int8 i;
 		Imgidx idx;
 		// 		cnt++;//tmp
 		// 		if (cnt == 776)//tmp
@@ -2745,7 +2748,7 @@ public:
 		// 			;
 	}
 
-	// 	_int8 checklist()//tmp
+	// 	int8 checklist()//tmp
 	// 	{
 	// 		MinList<Imgidx> *p;
 	// 		if (head)
@@ -2789,11 +2792,11 @@ class HybridQueue_HQueue_Rank1
 	Imgidx *list;
 	HQueue_l1idx_rank<Imgidx> *queue;
 	Imgidx minidx_queue;
-	_int16 curSize_list, maxSize_list;
+	int16 curSize_list, maxSize_list;
 	Imgidx maxSize_queue, mask_field;
-	_int8 shamt, nbit;
+	int8 shamt, nbit;
 
-	_int16 l0, mask;
+	int16 l0, mask;
 
 
 #if TRACK_QUEUEING
@@ -2801,7 +2804,7 @@ class HybridQueue_HQueue_Rank1
 
 	ofstream f;
 #endif
-	//	_int32 cnt;
+	//	int32 cnt;
 	void initHQ(Imgidx size, size_t listsize)
 	{
 		/*		cnt = 0;//tmp*/
@@ -2809,14 +2812,14 @@ class HybridQueue_HQueue_Rank1
 		this->maxSize_queue = size;
 		/*		shamt = 2;*/
 		// 		nbit = sizeof(Qidx) * 8;
-		// 		for (_int8 nbyte = sizeof(Qidx); nbyte; nbyte >>= 1)
+		// 		for (int8 nbyte = sizeof(Qidx); nbyte; nbyte >>= 1)
 		// 			shamt++;
 		// 		mask_field = (1 << shamt) - 1;
 		// 		qsize = (size + mask_field) >> shamt;
 		//
 		// 		queue = (Qidx*)Malloc(qsize * sizeof(Qidx*));
-		//queue = (_int8*)Malloc((size + 1) * sizeof(_int8));
-		//trie = (Trie<Imgidx, _int64>*)Malloc(size * sizeof(Trie<Imgidx, _int64>*));
+		//queue = (int8*)Malloc((size + 1) * sizeof(int8));
+		//trie = (Trie<Imgidx, int64>*)Malloc(size * sizeof(Trie<Imgidx, int64>*));
 		queue = new HQueue_l1idx_rank<Imgidx>(size);
 
 		if (listsize > 256)
@@ -2883,7 +2886,7 @@ public:
 	inline void push(Imgidx idx)
 	{
 		//MinList1<Imgidx> *p, *q;
-		_int16 i, j, lm;
+		int16 i, j, lm;
 
 #if TRACK_QUEUEING
 		//tmp
@@ -2987,7 +2990,7 @@ public:
 		// 			;
 	}
 
-	// 	_int8 checklist()//tmp
+	// 	int8 checklist()//tmp
 	// 	{
 	// 		MinList<Imgidx> *p;
 	// 		if (head)
@@ -3032,9 +3035,9 @@ public:
 // 	HeapQueue_rank *heapqueue;				//prior queue
 // 	HQueue_l1idx_rank<Imgidx> *hierarqueue; //secondary queue
 // 	Imgidx minidx_hierarqueue, maxidx_heapqueue;
-// //	_int16 curSize_list, maxSize_list; heapqueue->cursize
+// //	int16 curSize_list, maxSize_list; heapqueue->cursize
 // 	Imgidx maxSize_queue, mask_field;
-// 	_int8 shamt, nbit;
+// 	int8 shamt, nbit;
 //
 //
 // #if TRACK_QUEUEING
@@ -3042,7 +3045,7 @@ public:
 //
 // 	ofstream f;
 // #endif
-// 	//	_int32 cnt;
+// 	//	int32 cnt;
 // 	void initHQ(Imgidx size, size_t heapsize)
 // 	{
 // 		/*		cnt = 0;//tmp*/
@@ -3050,14 +3053,14 @@ public:
 // 		this->maxSize_queue = size;
 // 		/*		shamt = 2;*/
 // 		// 		nbit = sizeof(Qidx) * 8;
-// 		// 		for (_int8 nbyte = sizeof(Qidx); nbyte; nbyte >>= 1)
+// 		// 		for (int8 nbyte = sizeof(Qidx); nbyte; nbyte >>= 1)
 // 		// 			shamt++;
 // 		// 		mask_field = (1 << shamt) - 1;
 // 		// 		qsize = (size + mask_field) >> shamt;
 // 		//
 // 		// 		queue = (Qidx*)Malloc(qsize * sizeof(Qidx*));
-// 		//queue = (_int8*)Malloc((size + 1) * sizeof(_int8));
-// 		//trie = (Trie<Imgidx, _int64>*)Malloc(size * sizeof(Trie<Imgidx, _int64>*));
+// 		//queue = (int8*)Malloc((size + 1) * sizeof(int8));
+// 		//trie = (Trie<Imgidx, int64>*)Malloc(size * sizeof(Trie<Imgidx, int64>*));
 // 		hierarqueue = new HQueue_l1idx_rank<Imgidx>(size);
 // 		heapqueue = new HeapQueue_rank<Imgidx>(heapsize);
 // 		maxidx_heapqueue = 0;
@@ -3141,7 +3144,7 @@ public:
 // 	}
 // 	inline void pop()
 // 	{
-// 		_int8 i;
+// 		int8 i;
 // 		Imgidx idx;
 // 		// 		cnt++;//tmp
 // 		// 		if (cnt == 776)//tmp
@@ -3179,7 +3182,7 @@ public:
 // 		// 			;
 // 	}
 //
-// 	// 	_int8 checklist()//tmp
+// 	// 	int8 checklist()//tmp
 // 	// 	{
 // 	// 		MinList<Imgidx> *p;
 // 	// 		if (head)
@@ -3223,37 +3226,37 @@ class HybridQueue_HQueue
 {
 	//MinList1<Imgidx> *list, *list_end, *head, *tail;
 	Imgidx *list;
-	_int64 *levels;
+	int64 *levels;
 	HQueue_l1idx<Imgidx> *queue;
 	Imgidx minidx_queue;
-	_int16 curSize_list, maxSize_list;
+	int16 curSize_list, maxSize_list;
 	Imgidx maxSize_queue, mask_field;
-	_int8 minlevnotfixed;
+	int8 minlevnotfixed;
 
 #if TRACK_QUEUEING
 	Imgidx *in_size;
 
 	ofstream f;
 #endif
-	//	_int32 cnt;
-	void initHQ(_uint64 qsize_in, Imgidx *dhist, _int32 numlevels, size_t listsize)
+	//	int32 cnt;
+	void initHQ(uint64 qsize_in, Imgidx *dhist, int32 numlevels, size_t listsize)
 	{
 		/*		cnt = 0;//tmp*/
 		Imgidx i;
 		this->maxSize_queue = qsize_in;
 		/*		shamt = 2;*/
 		// 		nbit = sizeof(Qidx) * 8;
-		// 		for (_int8 nbyte = sizeof(Qidx); nbyte; nbyte >>= 1)
+		// 		for (int8 nbyte = sizeof(Qidx); nbyte; nbyte >>= 1)
 		// 			shamt++;
 		// 		mask_field = (1 << shamt) - 1;
 		// 		qsize = (size + mask_field) >> shamt;
 		//
 		// 		queue = (Qidx*)Malloc(qsize * sizeof(Qidx*));
-		//queue = (_int8*)Malloc((size + 1) * sizeof(_int8));
-		//trie = (Trie<Imgidx, _int64>*)Malloc(size * sizeof(Trie<Imgidx, _int64>*));
+		//queue = (int8*)Malloc((size + 1) * sizeof(int8));
+		//trie = (Trie<Imgidx, int64>*)Malloc(size * sizeof(Trie<Imgidx, int64>*));
 		queue = new HQueue_l1idx<Imgidx>(qsize_in, dhist, numlevels);
 		list = (Imgidx*)Malloc((listsize) * sizeof(Imgidx));
-		levels = (_int64*)Malloc((listsize + 1) * sizeof(_int64));
+		levels = (int64*)Malloc((listsize + 1) * sizeof(int64));
 		levels[0] = 0;
 		levels++;
 		maxSize_list = listsize - 1;
@@ -3281,26 +3284,26 @@ class HybridQueue_HQueue
 #endif
 	}
 public:
-	HybridQueue_HQueue(_uint64 qsize_in, Imgidx *dhist, _int32 numlevels)
+	HybridQueue_HQueue(uint64 qsize_in, Imgidx *dhist, int32 numlevels)
 	{
 		initHQ(qsize_in, dhist, numlevels, LISTSIZE_DEFAULT);
 	}
-	HybridQueue_HQueue(_uint64 qsize_in, Imgidx *dhist, _int32 numlevels, size_t listsize)
+	HybridQueue_HQueue(uint64 qsize_in, Imgidx *dhist, int32 numlevels, size_t listsize)
 	{
 		initHQ(qsize_in, dhist, numlevels, listsize);
 	}
 	inline Imgidx top(){return list[0];}
-	inline _int64 get_minlev() { return levels[0]; }
+	inline int64 get_minlev() { return levels[0]; }
 	inline void find_minlev()
 	{
 //		if (minlevnotfixed)
 			queue->find_minlev();
 
 	}
-	inline void push(Imgidx idx, _int64 level)
+	inline void push(Imgidx idx, int64 level)
 	{
 		//MinList1<Imgidx> *p, *q;
-		_int16 i;
+		int16 i;
 
 //		cout << "- pushing " << (int)idx << " at level " << (int)level << endl;
 
@@ -3354,7 +3357,7 @@ public:
 		else
 			push_queue(idx, level); // push to the queue
 	}
-	inline void push_queue(Imgidx idx, _int64 level)
+	inline void push_queue(Imgidx idx, int64 level)
 	{
 		if (queue->push(idx, level))
 			minlevnotfixed = 0;
@@ -3385,7 +3388,7 @@ public:
 		}
 		else
 		{
-			for (_int8 i = 0; i < curSize_list; i++)
+			for (int8 i = 0; i < curSize_list; i++)
 			{
 				list[i] = list[i + 1];
 				levels[i] = levels[i + 1];
@@ -3407,7 +3410,7 @@ public:
 		// 			;
 	}
 
-	// 	_int8 checklist()//tmp
+	// 	int8 checklist()//tmp
 	// 	{
 	// 		MinList<Imgidx> *p;
 	// 		if (head)

@@ -40,90 +40,90 @@ using namespace std;
 //#define INPUTIMG_FNAME	"../image/Moonrep_20000x20000.pgm"
 
 
-_uint64 *qrecord;
+uint64 *qrecord;
 
 
 
 #if DEBUG
 void* buf;
-_uint64 bufsize;
-void save_buf(void* src, _uint64 size)
+uint64 bufsize;
+void save_buf(void* src, uint64 size)
 {
 	memcpy(buf, src, size);
 	bufsize = size;
 }
-_uint8 isChanged(void *src)
+uint8 isChanged(void *src)
 {
-	_uint64 i;
+	uint64 i;
 	for (i = 0; i < bufsize; i++)
 	{
-		if (((_uint8*)buf)[i] != ((_uint8*)src)[i])
+		if (((uint8*)buf)[i] != ((uint8*)src)[i])
 			return 1;
 	}
 	return 0;
 }
 #endif
 
-void RandomizedHDRimage(_uint64* hdrimg, _uint8* ldrimg, _int64 imgsize)
+void RandomizedHDRimage(uint64* hdrimg, uint8* ldrimg, int64 imgsize)
 {
-	_uint64 pix;
+	uint64 pix;
 
-	for (_int64 i = 0; i < imgsize; i++)
+	for (int64 i = 0; i < imgsize; i++)
 	{
-		pix = ((_uint64)ldrimg[i]) << 56;
+		pix = ((uint64)ldrimg[i]) << 56;
 		//pix = ((uint64)(rand() & 0xff) << 56); //tmp!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		pix |= ((_uint64)(rand() & 0xff) << 48);
-		pix |= ((_uint64)(rand() & 0xff) << 40);
-		pix |= ((_uint64)(rand() & 0xff) << 32);
-		pix |= ((_uint64)(rand() & 0xff) << 24);
-		pix |= ((_uint64)(rand() & 0xff) << 16);
-		pix |= ((_uint64)(rand() & 0xff) << 8);
-		pix |= ((_uint64)(rand() & 0xff));
+		pix |= ((uint64)(rand() & 0xff) << 48);
+		pix |= ((uint64)(rand() & 0xff) << 40);
+		pix |= ((uint64)(rand() & 0xff) << 32);
+		pix |= ((uint64)(rand() & 0xff) << 24);
+		pix |= ((uint64)(rand() & 0xff) << 16);
+		pix |= ((uint64)(rand() & 0xff) << 8);
+		pix |= ((uint64)(rand() & 0xff));
 		hdrimg[i] = pix;
 	}
 }
 
-void RandomizedHDRimage(_uint64* hdrimg, _int64 imgsize)
+void RandomizedHDRimage(uint64* hdrimg, int64 imgsize)
 {
-	_uint64 pix;
+	uint64 pix;
 
-	for (_int64 i = 0; i < imgsize; i++)
+	for (int64 i = 0; i < imgsize; i++)
 	{
-		//pix = ((_uint64)ldrimg[i]) << 56;
-		pix = ((_uint64)(rand() & 0xff) << 56); //tmp!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		pix |= ((_uint64)(rand() & 0xff) << 48);
-		pix |= ((_uint64)(rand() & 0xff) << 40);
-		pix |= ((_uint64)(rand() & 0xff) << 32);
-		pix |= ((_uint64)(rand() & 0xff) << 24);
-		pix |= ((_uint64)(rand() & 0xff) << 16);
-		pix |= ((_uint64)(rand() & 0xff) << 8);
-		pix |= ((_uint64)(rand() & 0xff));
+		//pix = ((uint64)ldrimg[i]) << 56;
+		pix = ((uint64)(rand() & 0xff) << 56); //tmp!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		pix |= ((uint64)(rand() & 0xff) << 48);
+		pix |= ((uint64)(rand() & 0xff) << 40);
+		pix |= ((uint64)(rand() & 0xff) << 32);
+		pix |= ((uint64)(rand() & 0xff) << 24);
+		pix |= ((uint64)(rand() & 0xff) << 16);
+		pix |= ((uint64)(rand() & 0xff) << 8);
+		pix |= ((uint64)(rand() & 0xff));
 /*
 		pix1 = pix;
-		pix = ((_uint64)(rand() & 0xff) << 56); //tmp!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		pix |= ((_uint64)(rand() & 0xff) << 48);
-		pix |= ((_uint64)(rand() & 0xff) << 40);
-		pix |= ((_uint64)(rand() & 0xff) << 32);
-		pix |= ((_uint64)(rand() & 0xff) << 24);
-		pix |= ((_uint64)(rand() & 0xff) << 16);
-		pix |= ((_uint64)(rand() & 0xff) << 8);
-		pix |= ((_uint64)(rand() & 0xff));
+		pix = ((uint64)(rand() & 0xff) << 56); //tmp!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		pix |= ((uint64)(rand() & 0xff) << 48);
+		pix |= ((uint64)(rand() & 0xff) << 40);
+		pix |= ((uint64)(rand() & 0xff) << 32);
+		pix |= ((uint64)(rand() & 0xff) << 24);
+		pix |= ((uint64)(rand() & 0xff) << 16);
+		pix |= ((uint64)(rand() & 0xff) << 8);
+		pix |= ((uint64)(rand() & 0xff));
 		pix = pix >> 1 + pix1 >> 1;
 */
 		hdrimg[i] = pix;
 	}
 }
 
-void RandomizedHDRimage(_uint32* hdrimg, _uint8* ldrimg, _int64 imgsize)
+void RandomizedHDRimage(uint32* hdrimg, uint8* ldrimg, int64 imgsize)
 {
-	_uint32 pix;
+	uint32 pix;
 
-	for (_int64 i = 0; i < imgsize; i++)
+	for (int64 i = 0; i < imgsize; i++)
 	{
-		pix = ((_uint64)ldrimg[i]) << 24;
-		pix |= ((_uint64)(rand() & 0xff) << 16);
-		pix |= ((_uint64)(rand() & 0xff) << 8);
-		pix |= ((_uint64)(rand() & 0xff));
+		pix = ((uint64)ldrimg[i]) << 24;
+		pix |= ((uint64)(rand() & 0xff) << 16);
+		pix |= ((uint64)(rand() & 0xff) << 8);
+		pix |= ((uint64)(rand() & 0xff));
 		hdrimg[i] = pix;
 	}
 }
@@ -137,85 +137,85 @@ void DeleteAlphaTree(AlphaTree* tree)
 }*/
 
 
-void Randomizedimage(_uint8*& img, _int64 imgsize, int bit_depth, int ch)
+void Randomizedimage(uint8*& img, int64 imgsize, int bit_depth, int ch)
 {
-	_uint64 pix;
+	uint64 pix;
 	int shamt = 8 - bit_depth;
 
-	if(img == 0) img = new _uint8[imgsize];
+	if(img == 0) img = new uint8[imgsize];
 
-	for (_int64 i = 0; i < imgsize * ch; i++)
+	for (int64 i = 0; i < imgsize * ch; i++)
 	{
-		pix = ((_uint8)(rand() & 0xff));
+		pix = ((uint8)(rand() & 0xff));
 
 		img[i] = pix >> shamt;
 	}
 }
 
-void Randomizedimage(_uint16*& img, _int64 imgsize, int bit_depth, int ch)
+void Randomizedimage(uint16*& img, int64 imgsize, int bit_depth, int ch)
 {
-	_uint64 pix;
+	uint64 pix;
 	int shamt = 16 - bit_depth;
 
-	if(img == 0) img = new _uint16[imgsize];
+	if(img == 0) img = new uint16[imgsize];
 
-	for (_int64 i = 0; i < imgsize * ch; i++)
+	for (int64 i = 0; i < imgsize * ch; i++)
 	{
-		pix = ((_uint64)(rand() & 0xff) << 8);
-		pix |= ((_uint64)(rand() & 0xff));
+		pix = ((uint64)(rand() & 0xff) << 8);
+		pix |= ((uint64)(rand() & 0xff));
 
 		img[i] = pix >> shamt;
 	}
 }
 
-void Randomizedimage(_uint32*& img, _int64 imgsize, int bit_depth, int ch)
+void Randomizedimage(uint32*& img, int64 imgsize, int bit_depth, int ch)
 {
-	_uint64 pix;
+	uint64 pix;
 	int shamt = 32 - bit_depth;
 
-	if(img == 0) img = new _uint32[imgsize];
+	if(img == 0) img = new uint32[imgsize];
 
-	for (_int64 i = 0; i < imgsize * ch; i++)
+	for (int64 i = 0; i < imgsize * ch; i++)
 	{
-		pix = ((_uint64)(rand() & 0xff) << 24);
-		pix |= ((_uint64)(rand() & 0xff) << 16);
-		pix |= ((_uint64)(rand() & 0xff) << 8);
-		pix |= ((_uint64)(rand() & 0xff));
+		pix = ((uint64)(rand() & 0xff) << 24);
+		pix |= ((uint64)(rand() & 0xff) << 16);
+		pix |= ((uint64)(rand() & 0xff) << 8);
+		pix |= ((uint64)(rand() & 0xff));
 
 		img[i] = pix >> shamt;
 	}
 }
 
-void Randomizedimage(_uint64*& img, _int64 imgsize, int bit_depth, int ch)
+void Randomizedimage(uint64*& img, int64 imgsize, int bit_depth, int ch)
 {
-	_uint64 pix;
+	uint64 pix;
 	int shamt = 64 - bit_depth;
 
-	if(img == 0) img = new _uint64[imgsize];
+	if(img == 0) img = new uint64[imgsize];
 
-	for (_int64 i = 0; i < imgsize * ch; i++)
+	for (int64 i = 0; i < imgsize * ch; i++)
 	{
-		//pix = ((_uint64)ldrimg[i]) << 56;
-		pix = ((_uint64)(rand() & 0xff) << 56); //tmp!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		pix |= ((_uint64)(rand() & 0xff) << 48);
-		pix |= ((_uint64)(rand() & 0xff) << 40);
-		pix |= ((_uint64)(rand() & 0xff) << 32);
-		pix |= ((_uint64)(rand() & 0xff) << 24);
-		pix |= ((_uint64)(rand() & 0xff) << 16);
-		pix |= ((_uint64)(rand() & 0xff) << 8);
-		pix |= ((_uint64)(rand() & 0xff));
+		//pix = ((uint64)ldrimg[i]) << 56;
+		pix = ((uint64)(rand() & 0xff) << 56); //tmp!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		pix |= ((uint64)(rand() & 0xff) << 48);
+		pix |= ((uint64)(rand() & 0xff) << 40);
+		pix |= ((uint64)(rand() & 0xff) << 32);
+		pix |= ((uint64)(rand() & 0xff) << 24);
+		pix |= ((uint64)(rand() & 0xff) << 16);
+		pix |= ((uint64)(rand() & 0xff) << 8);
+		pix |= ((uint64)(rand() & 0xff));
 
 		img[i] = pix >> shamt;
 	}
 }
 
-void imageblur(_uint64** img, int height, int width, int nch)
+void imageblur(uint64** img, int height, int width, int nch)
 {
 	int pidx = 0;
 	int up,down,left,right, num_neighbor;
 	double pixsum;
 
-	_uint64* blurimg = new _uint64[height * width * nch];
+	uint64* blurimg = new uint64[height * width * nch];
 
 	for(int ch = 0;ch < nch;ch++)
 	{
@@ -237,24 +237,24 @@ void imageblur(_uint64** img, int height, int width, int nch)
 				if(down) pixsum += (*img)[pidx+width+offset];
 				pixsum += (double)(*img)[pidx+offset] * 2.0;
 
-				blurimg[pidx+offset] = (_uint64)(pixsum / (2.0 + num_neighbor));
+				blurimg[pidx+offset] = (uint64)(pixsum / (2.0 + num_neighbor));
 				pidx++;
 			}
 		}
 	}
 
-	_uint64 *tmp = *img;
+	uint64 *tmp = *img;
 	*img = blurimg;
 	delete[] tmp;
 }
 
-void imageblur(_uint32** img, int height, int width, int nch)
+void imageblur(uint32** img, int height, int width, int nch)
 {
 	int pidx = 0;
 	int up,down,left,right, num_neighbor;
 	double pixsum;
 
-	_uint32* blurimg = new _uint32[height * width * nch];
+	uint32* blurimg = new uint32[height * width * nch];
 
 	for(int ch = 0;ch < nch;ch++)
 	{
@@ -276,24 +276,24 @@ void imageblur(_uint32** img, int height, int width, int nch)
 				if(down) pixsum += (*img)[pidx+width+offset];
 				pixsum += (double)(*img)[pidx+offset] * 2.0;
 
-				blurimg[pidx+offset] = (_uint32)(pixsum / (2.0 + num_neighbor));
+				blurimg[pidx+offset] = (uint32)(pixsum / (2.0 + num_neighbor));
 				pidx++;
 			}
 		}
 	}
 
-	_uint32 *tmp = *img;
+	uint32 *tmp = *img;
 	*img = blurimg;
 	delete[] tmp;
 }
 
-void imageblur(_uint16** img, int height, int width, int nch)
+void imageblur(uint16** img, int height, int width, int nch)
 {
 	int pidx = 0;
 	int up,down,left,right, num_neighbor;
 	double pixsum;
 
-	_uint16* blurimg = new _uint16[height * width * nch];
+	uint16* blurimg = new uint16[height * width * nch];
 
 	for(int ch = 0;ch < nch;ch++)
 	{
@@ -315,24 +315,24 @@ void imageblur(_uint16** img, int height, int width, int nch)
 				if(down) pixsum += (*img)[pidx+width+offset];
 				pixsum += (double)(*img)[pidx+offset] * 2.0;
 
-				blurimg[pidx+offset] = (_uint16)(pixsum / (2.0 + num_neighbor));
+				blurimg[pidx+offset] = (uint16)(pixsum / (2.0 + num_neighbor));
 				pidx++;
 			}
 		}
 	}
 
-	_uint16 *tmp = *img;
+	uint16 *tmp = *img;
 	*img = blurimg;
 	delete[] tmp;
 }
 
-void imageblur(_uint8** img, int height, int width, int nch)
+void imageblur(uint8** img, int height, int width, int nch)
 {
 	int pidx = 0;
 	int up,down,left,right, num_neighbor;
 	double pixsum;
 
-	_uint8* blurimg = new _uint8[height * width * nch];
+	uint8* blurimg = new uint8[height * width * nch];
 
 	for(int ch = 0;ch < nch;ch++)
 	{
@@ -354,13 +354,13 @@ void imageblur(_uint8** img, int height, int width, int nch)
 				if(down) pixsum += (*img)[pidx+width+offset];
 				pixsum += (double)(*img)[pidx+offset] * 2.0;
 
-				blurimg[pidx+offset] = (_uint8)(pixsum / (2.0 + num_neighbor));
+				blurimg[pidx+offset] = (uint8)(pixsum / (2.0 + num_neighbor));
 				pidx++;
 			}
 		}
 	}
 
-	_uint8 *tmp = *img;
+	uint8 *tmp = *img;
 	*img = blurimg;
 	delete[] tmp;
 }
@@ -513,25 +513,25 @@ bool is_par(int alg)
 	}
 }
 
-_uint64 rand64()
+uint64 rand64()
 {
-	_uint64 ret, num;
+	uint64 ret, num;
 	ret = 0;
-	num = (_uint64)(rand()%256) << 56;
+	num = (uint64)(rand()%256) << 56;
 	ret |= num;
-	num = (_uint64)(rand()%256) << 48;
+	num = (uint64)(rand()%256) << 48;
 	ret |= num;
-	num = (_uint64)(rand()%256) << 40;
+	num = (uint64)(rand()%256) << 40;
 	ret |= num;
-	num = (_uint64)(rand()%256) << 32;
+	num = (uint64)(rand()%256) << 32;
 	ret |= num;
-	num = (_uint64)(rand()%256) << 24;
+	num = (uint64)(rand()%256) << 24;
 	ret |= num;
-	num = (_uint64)(rand()%256) << 16;
+	num = (uint64)(rand()%256) << 16;
 	ret |= num;
-	num = (_uint64)(rand()%256) << 8;
+	num = (uint64)(rand()%256) << 8;
 	ret |= num;
-	num = (_uint64)(rand()%256);
+	num = (uint64)(rand()%256);
 	ret |= num;
 
 	return ret;
@@ -546,7 +546,7 @@ void adjust_bitdepth(Pixel *img, int imgsize, int bitdepth)
 		img[i] = img[i] >> shamt;
 }
 
-void adjust_bitdepth(_uint8 *img8, _uint16 *img, int imgsize, int bitdepth)
+void adjust_bitdepth(uint8 *img8, uint16 *img, int imgsize, int bitdepth)
 {
 	if(bitdepth == 8)
 	{
@@ -709,8 +709,8 @@ int main(int argc, char **argv)
 	for(int imgidx = imgidxstart;imgidx < numimg;imgidx++)
 	{
 		int height, width;
-		_uint16 *img;
-		_uint8 *img8 = 0;
+		uint16 *img;
+		uint8 *img8 = 0;
 
 		height = width = input.testimgsize;
 		int image_number = imgidx;
@@ -745,7 +745,7 @@ int main(int argc, char **argv)
 				if(!randomimg && input.bitdepth < 16)
 				{
 					if(input.bitdepth == 8)
-						img8 = new _uint8[height * width];
+						img8 = new uint8[height * width];
 					adjust_bitdepth(img8, img, height * width, input.bitdepth);
 					delete[] img;
 					img = 0;
@@ -758,8 +758,8 @@ int main(int argc, char **argv)
 					img8 = 0;
 					img = 0;
 					int bitdepth = input.bitdepth;
-					_uint32 *img32 = 0;
-					_uint64 *img64 = 0;
+					uint32 *img32 = 0;
+					uint64 *img64 = 0;
 					if(bitdepth <= 8)		Randomizedimage(img8, height * width, bitdepth, 1);
 					else if(bitdepth <= 16) Randomizedimage(img, height * width, bitdepth, 1);
 					else if(bitdepth <= 32) Randomizedimage(img32, height * width, bitdepth, 1);

@@ -17,7 +17,7 @@ class Trie
 	Trieidx **trie;
 	//Imgidx *levelsize;
 	Imgidx triesize, mask_field, nbits;
-	_int8 shamt, numlevels;
+	int8 shamt, numlevels;
 	//delayed non-leaf node push
 
 #if TRIE_DEBUG
@@ -29,7 +29,7 @@ class Trie
 	// 	ofstream f;
 
 
-		//_int32 curSize;//tmp
+		//int32 curSize;//tmp
 public:
 	Trie(Imgidx triesize_in)
 	{
@@ -40,7 +40,7 @@ public:
 		triesize = triesize_in;
 		Imgidx size;
 		shamt = 2;
-		for (_int8 nbyte = sizeof(Trieidx); nbyte; nbyte >>= 1)
+		for (int8 nbyte = sizeof(Trieidx); nbyte; nbyte >>= 1)
 			shamt++;
 		nbits = 1 << shamt;
 		mask_field = nbits - 1;
@@ -51,7 +51,7 @@ public:
 		trie = (Trieidx**)Malloc(sizeof(Trieidx*) * numlevels);
 		//levelsize = (Imgidx*)Malloc(sizeof(Imgidx) * numlevels);
 		size = triesize + 1;
-		for (_int16 i = 0; i < numlevels; i++)
+		for (int16 i = 0; i < numlevels; i++)
 		{
 			size >>= shamt;
 			trie[i] = (Trieidx*)Malloc(sizeof(Trieidx) * (size + 1));
@@ -69,7 +69,7 @@ public:
 	}
 	~Trie()
 	{
-		for (_int16 i = 0; i < numlevels; i++)
+		for (int16 i = 0; i < numlevels; i++)
 			Free(trie[i]);
 		Free(trie);
 
@@ -79,18 +79,18 @@ public:
 	inline Imgidx top() { return minidx; }
 	inline Imgidx get_minlev() { return minidx >> 1; }
 	inline Imgidx min_incidence() { return minidx & 1; }
-	inline _int8 push(Imgidx in, _int8 incidence)
+	inline int8 push(Imgidx in, int8 incidence)
 	{
 		//curSize++; //tmp
 		//tmp
 /*		f << '0' << '\n' << in << endl;*/
 		return push((in << 1) + incidence);
 	}
-	inline _int8 push(Imgidx in)
+	inline int8 push(Imgidx in)
 	{
 		Imgidx n = in, s_in, shamt1;
 		Trieidx *p;
-		_int8 ret = 0;
+		int8 ret = 0;
 
 #if TRIE_DEBUG
 		cout << "Push " << in << endl;
@@ -112,7 +112,7 @@ public:
 		*p = *p | ((Trieidx)1 << (n & mask_field));
 		n = s_in;
 		s_in >>= shamt;
-		for (_int16 i = 1; i < numlevels; i++)
+		for (int16 i = 1; i < numlevels; i++)
 		{
 			p = &(trie[i][s_in]);
 			shamt1 = n & mask_field;
@@ -133,7 +133,7 @@ public:
 	{
 		Imgidx s_idx = minidx >> shamt, shamt1;
 		Trieidx *p, tmp;
-		_int16 lvl;
+		int16 lvl;
 
 		//curSize--;//tmp
 // 		//tmp

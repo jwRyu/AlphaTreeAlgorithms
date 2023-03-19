@@ -17,18 +17,18 @@ class HierarQueue//: public PriorityQueue<Imgidx>
 public://tmp
 	Imgidx *queue;
 	Imgidx *bottom, *cur;
-	_int32 numlevel;
+	int32 numlevel;
 #if HQUEUE_DEBUG
 	Imgidx *cnt;
 	Imgidx *curmax;
 #endif
 
-	_int64 qsize;
-	_int64 min_level, max_level;
+	int64 qsize;
+	int64 min_level, max_level;
 
 	void print()
 	{
-		for(_int32 i = min_level;i < numlevel;i++)
+		for(int32 i = min_level;i < numlevel;i++)
 		{
 			if(cur[i] == bottom[i])
 				continue;
@@ -40,7 +40,7 @@ public://tmp
 		}
 	}
 
-	HierarQueue(_uint64 qsize_in, _int32 numlevels)
+	HierarQueue(uint64 qsize_in, int32 numlevels)
 	{
 		//tmp
 		queue = (Imgidx*)Malloc((size_t)qsize_in * sizeof(Imgidx));
@@ -65,9 +65,9 @@ public://tmp
 	}
 
 
-	HierarQueue(_uint64 qsize_in)
+	HierarQueue(uint64 qsize_in)
 	{
-		_int32 numlevels = (_int32)1 << 20;
+		int32 numlevels = (int32)1 << 20;
 		//tmp
 		queue = (Imgidx*)Malloc((size_t)qsize_in * sizeof(Imgidx));
 		bottom = (Imgidx*)Malloc(((size_t)numlevels + 1) * sizeof(Imgidx));
@@ -92,7 +92,7 @@ public://tmp
 
 	void reset_queue()
 	{
-		for (_int32 i = 0; i < numlevel; i++)
+		for (int32 i = 0; i < numlevel; i++)
 			cur[i] = bottom[i];
 		min_level = numlevel;
 	}
@@ -100,7 +100,7 @@ public://tmp
 	Imgidx set_queue(Imgidx *dhist)
 	{
 		Imgidx sum_hist = 0;
-		for (_int32 i = 0; i < numlevel; i++)
+		for (int32 i = 0; i < numlevel; i++)
 		{
 			bottom[i] = cur[i] = sum_hist;
 
@@ -117,10 +117,10 @@ public://tmp
 		return sum_hist;
 	}
 
-	Imgidx set_queue(Imgidx *dhist, _int32 maxpix)
+	Imgidx set_queue(Imgidx *dhist, int32 maxpix)
 	{
 		Imgidx sum_hist = 0;
-		_int32 numlevels = (_int32)1 << 20;
+		int32 numlevels = (int32)1 << 20;
 
 		for(int i = 0;i < numlevels;i++)
 			bottom[i] = cur[i] = 0;
@@ -128,7 +128,7 @@ public://tmp
 			queue[i] = 0;
 
 		max_level = 0;
-		for (_int32 i = 0; i <= maxpix; i++)
+		for (int32 i = 0; i <= maxpix; i++)
 		{
 			bottom[i] = cur[i] = sum_hist;
 			if(dhist[i])
@@ -145,7 +145,7 @@ public://tmp
 		return sum_hist;
 	}
 
-	HierarQueue(_uint64 qsize_in, Imgidx *dhist, _int32 numlevels)
+	HierarQueue(uint64 qsize_in, Imgidx *dhist, int32 numlevels)
 	{
 		//tmp
 		queue = (Imgidx*)Malloc((size_t)qsize_in * sizeof(Imgidx));
@@ -164,7 +164,7 @@ public://tmp
 		min_level = numlevels - 1;
 
 		Imgidx sum_hist = 0;
-		for (_int32 i = 0; i < numlevels; i++)
+		for (int32 i = 0; i < numlevels; i++)
 		{
 			bottom[i] = cur[i] = sum_hist;
 			if(dhist[i])
@@ -179,9 +179,9 @@ public://tmp
 	}
 
 
-	HierarQueue(Imgidx *dhist, _int32 numlevels)
+	HierarQueue(Imgidx *dhist, int32 numlevels)
 	{
-		_uint64 dsum = 0;
+		uint64 dsum = 0;
 		max_level = 0;
 		for(int i = 0;i < numlevels;i++)
 		{
@@ -208,7 +208,7 @@ public://tmp
 		min_level = numlevels - 1;
 
 		Imgidx sum_hist = 0;
-		for (_int32 i = 0; i < numlevels; i++)
+		for (int32 i = 0; i < numlevels; i++)
 		{
 			bottom[i] = cur[i] = sum_hist;
 			sum_hist += dhist[i];
@@ -217,7 +217,7 @@ public://tmp
 		cur[numlevels] = 1;
 	}
 
-	HierarQueue(_int32 numlevels, Imgidx binsize)
+	HierarQueue(int32 numlevels, Imgidx binsize)
 	{
 		qsize = numlevels * binsize;
 		//tmp
@@ -231,7 +231,7 @@ public://tmp
 		this->numlevel = numlevels;
 
 		Imgidx sum_hist = 0;
-		for (_int32 i = 0; i < numlevels; i++)
+		for (int32 i = 0; i < numlevels; i++)
 		{
 			bottom[i] = cur[i] = sum_hist;
 			sum_hist += binsize;
@@ -272,7 +272,7 @@ public://tmp
 	}
 #endif
 
-	inline _int8 push(Imgidx pidx, _int64 level)
+	inline int8 push(Imgidx pidx, int64 level)
 	{
 #if HQUEUE_DEBUG
 	cnt[level]++;
@@ -320,7 +320,7 @@ public://tmp
 	{
 		return queue[bottom[min_level]];
 	}
-	inline _int64 get_minlev()
+	inline int64 get_minlev()
 	{
 		return min_level;
 	}
@@ -337,32 +337,32 @@ class HQueue_l1idx
 public://tmp
 	Imgidx *queue;
 	Imgidx *bottom, *cur;
-	_uint64 *seeker;
+	uint64 *seeker;
 	//move public: here
 
-	_int64 qsize, seekersize;
-	_int32 min_level;
-	HQueue_l1idx(_uint64 qsize_in, Imgidx *dhist, _int32 numlevels)
+	int64 qsize, seekersize;
+	int32 min_level;
+	HQueue_l1idx(uint64 qsize_in, Imgidx *dhist, int32 numlevels)
 	{
 		//tmp
 		queue = (Imgidx*)Malloc((size_t)qsize_in * sizeof(Imgidx));
 		bottom = (Imgidx*)Malloc((size_t)(numlevels + 1) * sizeof(Imgidx));
 		cur = (Imgidx*)Malloc((size_t)(numlevels + 1) * sizeof(Imgidx));
 		seekersize = (numlevels + 1 + 63) >> 6;
-		seeker = (_uint64 *)Malloc((size_t)(seekersize) * sizeof(_uint64));
+		seeker = (uint64 *)Malloc((size_t)(seekersize) * sizeof(uint64));
 
 		qsize = qsize_in;
 		min_level = numlevels - 1;
 
 		Imgidx sum_hist = 0;
-		for (_int32 i = 0; i < numlevels; i++)
+		for (int32 i = 0; i < numlevels; i++)
 		{
 			bottom[i] = cur[i] = sum_hist;
 			sum_hist += dhist[i];
 		}
-		for (_int64 i = 0; i < seekersize; i++)
+		for (int64 i = 0; i < seekersize; i++)
 			seeker[i] = 0;
-		seeker[numlevels >> 6] |= (_uint64)1 << (numlevels & 63);
+		seeker[numlevels >> 6] |= (uint64)1 << (numlevels & 63);
 		bottom[numlevels] = 0;
 		cur[numlevels] = 1;
 	}
@@ -374,11 +374,11 @@ public://tmp
 		Free(seeker);
 	}
 
-	inline int push(Imgidx pidx, _int32 level)
+	inline int push(Imgidx pidx, int32 level)
 	{
-		_int64 qidx = cur[level]++;
+		int64 qidx = cur[level]++;
 		queue[qidx] = pidx;
-		seeker[level >> 6] |= (_uint64)1 << (level & 63);
+		seeker[level >> 6] |= (uint64)1 << (level & 63);
 		if (level <= min_level)
 		{
 			min_level = level;
@@ -394,7 +394,7 @@ public://tmp
 		Imgidx popidx = --cur[min_level];
 
 		if(bottom[min_level] == cur[min_level])
-			seeker[min_level >> 6] &= ~((_uint64)1 << (min_level & 63));
+			seeker[min_level >> 6] &= ~((uint64)1 << (min_level & 63));
 		return queue[popidx];
 	}
 
@@ -403,7 +403,7 @@ public://tmp
 		return queue[cur[min_level] - 1];
 	}
 
-	inline _int32 get_minlev()
+	inline int32 get_minlev()
 	{
 		return min_level;
 	}
@@ -411,7 +411,7 @@ public://tmp
 	inline void find_minlev()
 	{
 		Imgidx qidx, widx;
-		_uint64 w;
+		uint64 w;
 
 		for (qidx = min_level >> 6; !seeker[qidx]; qidx++)
 			;
@@ -426,7 +426,7 @@ public://tmp
 			w >>= 32;
 		}
 
-		while (!(w&(_uint64)1))
+		while (!(w&(uint64)1))
 		{
 			w >>= 1;
 			widx++;
@@ -448,13 +448,13 @@ class HQueue_l2idx
 {
 	Imgidx *queue;
 	Imgidx *bottom, *cur;
-	_uint64 *seeker,*seeker2;
+	uint64 *seeker,*seeker2;
 public:
-	_int64 qsize;
-	_int64 min_level;
-	HQueue_l2idx(_uint64 qsize_in, Imgidx *dhist, _int32 numlevels)
+	int64 qsize;
+	int64 min_level;
+	HQueue_l2idx(uint64 qsize_in, Imgidx *dhist, int32 numlevels)
 	{
-		_int64 seekersize, seeker2size;
+		int64 seekersize, seeker2size;
 		//tmp
 		queue = (Imgidx*)Malloc((size_t)qsize_in * sizeof(Imgidx));
 		bottom = (Imgidx*)Malloc((size_t)(numlevels + 1) * sizeof(Imgidx));
@@ -463,24 +463,24 @@ public:
 		seekersize = (numlevels + 1 + 63) >> 6;
 		seeker2size = (seekersize + 63) >> 6;
 
-		seeker = (_uint64 *)Malloc((size_t)(seekersize) * sizeof(_uint64));
-		seeker2 = (_uint64 *)Malloc((size_t)(seeker2size) * sizeof(_uint64));
+		seeker = (uint64 *)Malloc((size_t)(seekersize) * sizeof(uint64));
+		seeker2 = (uint64 *)Malloc((size_t)(seeker2size) * sizeof(uint64));
 
 		qsize = qsize_in;
 		min_level = numlevels - 1;
 
 		Imgidx sum_hist = 0;
-		for (_int32 i = 0; i < numlevels; i++)
+		for (int32 i = 0; i < numlevels; i++)
 		{
 			bottom[i] = cur[i] = sum_hist;
 			sum_hist += dhist[i];
 		}
-		for (_int64 i = 0; i < seekersize; i++)
+		for (int64 i = 0; i < seekersize; i++)
 			seeker[i] = 0;
-		seeker[numlevels >> 6] |= (_uint64)1 << (numlevels & 63);
-		for (_int64 i = 0; i < seeker2size; i++)
+		seeker[numlevels >> 6] |= (uint64)1 << (numlevels & 63);
+		for (int64 i = 0; i < seeker2size; i++)
 			seeker2[i] = 0;
-		seeker2[numlevels >> 12] |= (_uint64)1 << ((numlevels >> 6) & 63);
+		seeker2[numlevels >> 12] |= (uint64)1 << ((numlevels >> 6) & 63);
 		bottom[numlevels] = 0;
 		cur[numlevels] = 1;
 	}
@@ -493,12 +493,12 @@ public:
 		Free(seeker2);
 	}
 
-	inline void push(Imgidx pidx, _int64 level)
+	inline void push(Imgidx pidx, int64 level)
 	{
-		_int64 qidx = cur[level]++;
+		int64 qidx = cur[level]++;
 		queue[qidx] = pidx;
-		seeker[level >> 6] |= (_uint64)1 << (level & 63);
-		seeker2[level >> 12] |= (_uint64)1 << ((level >> 6) & 63);
+		seeker[level >> 6] |= (uint64)1 << (level & 63);
+		seeker2[level >> 12] |= (uint64)1 << ((level >> 6) & 63);
 		if (level < min_level)
 		{
 			min_level = level;
@@ -516,9 +516,9 @@ public:
 
 		if (bottom[min_level] == cur[min_level])
 		{
-			seeker[min_level >> 6] &= ~((_uint64)1 << (min_level & 63));
+			seeker[min_level >> 6] &= ~((uint64)1 << (min_level & 63));
 			if (!seeker[min_level >> 6])
-				seeker2[min_level >> 12] &= ~((_uint64)1 << ((min_level >> 6) & 63));
+				seeker2[min_level >> 12] &= ~((uint64)1 << ((min_level >> 6) & 63));
 		}
 		return queue[popidx];
 	}
@@ -528,7 +528,7 @@ public:
 		return queue[cur[min_level] - 1];
 	}
 
-	inline _int64 get_minlev()
+	inline int64 get_minlev()
 	{
 		return min_level;
 	}
@@ -536,7 +536,7 @@ public:
 	inline void find_minlev()
 	{
 		Imgidx qidx, widx;
-		_uint64 w;
+		uint64 w;
 
 		for (qidx = min_level >> 12; !seeker2[qidx]; qidx++)
 			;
@@ -550,7 +550,7 @@ public:
 			w >>= 32;
 		}
 
-		while (!(w&(_uint64)1))
+		while (!(w&(uint64)1))
 		{
 			w >>= 1;
 			widx++;
@@ -567,7 +567,7 @@ public:
 			w >>= 32;
 		}
 
-		while (!(w&(_uint64)1))
+		while (!(w&(uint64)1))
 		{
 			w >>= 1;
 			widx++;
@@ -589,16 +589,16 @@ class HQueue_l1idx_rank
 {
 	struct hqueue_word
 	{
-		_int64 qword[64];
-		_int64 seeker;
+		int64 qword[64];
+		int64 seeker;
 	};
 
 	hqueue_word *queue;
 public:
-	_int64 qsize, seekersize;
-	_int64 min_level;
+	int64 qsize, seekersize;
+	int64 min_level;
 //	double jumpdist, jumpnum;
-	HQueue_l1idx_rank(_int64 qsize_in)
+	HQueue_l1idx_rank(int64 qsize_in)
 	{
 // 		jumpnum = 0;
 // 		jumpdist = 0;
@@ -615,26 +615,26 @@ public:
 
 	inline void push(Imgidx pidx)
 	{
-		_int64 qidx = pidx >> 12;
-		_int64 widx = (pidx >> 6) & 63;
-		_int64 bitpos = pidx & 63;
+		int64 qidx = pidx >> 12;
+		int64 widx = (pidx >> 6) & 63;
+		int64 bitpos = pidx & 63;
 
-		queue[qidx].qword[widx] |= (_int64)1 << (bitpos);
-		queue[qidx].seeker |= (_int64)1 << (widx);
+		queue[qidx].qword[widx] |= (int64)1 << (bitpos);
+		queue[qidx].seeker |= (int64)1 << (widx);
 		min_level = min_level < pidx ? min_level : pidx;
 	}
 
 //stack -> queue. should change later
 	inline void pop()
 	{
-		_int64 qidx = min_level >> 12;
-		_int64 widx = (min_level >> 6) & 63;
-		_int64 bitpos = min_level & 63;
-		_int64 w, skr;
+		int64 qidx = min_level >> 12;
+		int64 widx = (min_level >> 6) & 63;
+		int64 bitpos = min_level & 63;
+		int64 w, skr;
 
-		queue[qidx].qword[widx] &= ~((_int64)1 << (bitpos));
+		queue[qidx].qword[widx] &= ~((int64)1 << (bitpos));
 		if(!queue[qidx].qword[widx])
-			queue[qidx].seeker &= ~((_int64)1 << (widx));
+			queue[qidx].seeker &= ~((int64)1 << (widx));
 
 		//find_min_level
 		for (qidx = min_level >> 12; !queue[qidx].seeker; qidx++)
@@ -667,14 +667,14 @@ public:
 		return min_level;
 	}
 
-	inline _int64 get_minlev()
+	inline int64 get_minlev()
 	{
 		return min_level;
 	}
 
 	inline void find_minlev()
 	{
-		_int64 qidx, widx, bitpos, w, skr;
+		int64 qidx, widx, bitpos, w, skr;
 
 		for (qidx = min_level >> 12; !queue[qidx].seeker; qidx++)
 			;
@@ -706,18 +706,18 @@ public:
 template <class Imgidx>
 class HQueue_ubr
 {
-	_int8 *queue;
+	int8 *queue;
 //	Imgidx *bottom, *cur;
 public:
-	_uint64 qsize;
+	uint64 qsize;
 	Imgidx min_level;
-	HQueue_ubr(_uint64 qsize)
+	HQueue_ubr(uint64 qsize)
 	{
 		//tmp
-		queue = (_int8*)Malloc((size_t)(qsize + 1) * sizeof(_int8));
+		queue = (int8*)Malloc((size_t)(qsize + 1) * sizeof(int8));
 		min_level = (Imgidx)(qsize);
 
-		for (_uint64 i = 0; i < qsize; i++)
+		for (uint64 i = 0; i < qsize; i++)
 			queue[i] = 0;
 		//queue[qsize] = 1;
 //		bottom = (Imgidx*)Malloc((size_t)(numlevels + 1) * sizeof(Imgidx), 1);
@@ -728,7 +728,7 @@ public:
 		// 		min_level = numlevels - 1;
 		//
 		// 		Imgidx sum_hist = 0;
-		// 		for (_int32 i = 0; i < numlevels; i++)
+		// 		for (int32 i = 0; i < numlevels; i++)
 		// 		{
 		// 			bottom[i] = cur[i] = sum_hist;
 		// 			sum_hist += dhist[i];
@@ -775,24 +775,24 @@ struct neighbouridx {
 	//  -  3  -
 	//  2  p  1
 	//  -  0  -
-	_uint8 neighbour;
-	_uint32 pidx;
+	uint8 neighbour;
+	uint32 pidx;
 };
 template <>
 class HQueue <neighbouridx>
 {
 	neighbouridx *queue;
-	_uint64 *bottom, *cur;
-	_uint64 qsize;
-	_uint64 min_level, max_level;
+	uint64 *bottom, *cur;
+	uint64 qsize;
+	uint64 min_level, max_level;
 public:
-	HQueue(_uint64 qsize, _uint64 *dhist, _uint32 dhistsize, _uint8 neighbours)
+	HQueue(uint64 qsize, uint64 *dhist, uint32 dhistsize, uint8 neighbours)
 	{
-		_uint64 nn = neighbours >> 1;
+		uint64 nn = neighbours >> 1;
 		int shamt;
 		queue = (neighbouridx*)Malloc((size_t)qsize * nn * sizeof(neighbouridx));
-		bottom = (_uint64*)Malloc((size_t)(dhistsize + 1) * sizeof(_uint64));
-		cur = (_uint64*)Malloc((size_t)(dhistsize + 1) * sizeof(_uint64));
+		bottom = (uint64*)Malloc((size_t)(dhistsize + 1) * sizeof(uint64));
+		cur = (uint64*)Malloc((size_t)(dhistsize + 1) * sizeof(uint64));
 
 		this->qsize = qsize;
 		min_level = max_level = dhistsize;
@@ -800,8 +800,8 @@ public:
 		for (shamt = -1; nn; nn >>= 1)
 			shamt++;
 
-		_uint64 sum_hist = 0;
-		for (_uint64 i = 0; i < dhistsize; i++)
+		uint64 sum_hist = 0;
+		for (uint64 i = 0; i < dhistsize; i++)
 		{
 			bottom[i] = cur[i] = sum_hist;
 			sum_hist += dhist[i] << shamt;
@@ -816,7 +816,7 @@ public:
 		Free(cur);
 	}
 
-	inline void hqueue_push(_uint64 pidx, _uint64 level)
+	inline void hqueue_push(uint64 pidx, uint64 level)
 	{
 		min_level = min(level, min_level);
 #if HQUEUE_DEBUG
@@ -837,7 +837,7 @@ public:
 			min_level++;
 	}
 };
-inline void hqueue_push(HQueue<neighidx>* hqueue, _uint32 idx, _uint8 neighbor, _uint32 level)
+inline void hqueue_push(HQueue<neighidx>* hqueue, uint32 idx, uint8 neighbor, uint32 level)
 {
 	hqueue->min_level = min(level, hqueue->min_level);
 #if HQUEUE_DEBUG
@@ -850,6 +850,6 @@ inline void hqueue_push(HQueue<neighidx>* hqueue, _uint32 idx, _uint8 neighbor, 
 */
 
 /*
-void hqueue_new(HQueue<_uint32>** hqueue, _uint64 qsize, _uint32 *dhist, _uint32 dhistsize);
-void hqueue_new(HQueue<neighidx>** hqueue, _uint64 qsize, _uint32 *dhist, _uint32 dhistsize, _uint8 neighbours);
+void hqueue_new(HQueue<uint32>** hqueue, uint64 qsize, uint32 *dhist, uint32 dhistsize);
+void hqueue_new(HQueue<neighidx>** hqueue, uint64 qsize, uint32 *dhist, uint32 dhistsize, uint8 neighbours);
 */
