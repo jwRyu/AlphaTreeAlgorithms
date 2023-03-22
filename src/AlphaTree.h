@@ -37,7 +37,6 @@ using namespace pmt;
 #define	PIXEL_FLOAT			16
 #define	PIXEL_DOUBLE		32
 
-//aa0
 //algcode
 #define UNIONFIND							0//p1
 #define FLOOD_HIERARQUEUE					1//p1,2
@@ -257,11 +256,15 @@ public:
 	int8 pix_type;
 	int8 bit_depth;
 
+	uint64 cnt_getlevelroot;
+
 	double alpha_lim;
 
 	//for debugging
 	double tijd0, tijd1, tijd2;
 	int int0,int1,int2,int3;
+
+	char buf[100];
 
 	ATree(int8 ptype, int8 bit_depth_in) : maxSize(0), curSize(0), node(0), parentAry(0), pix_type(ptype), bit_depth(bit_depth_in) {}
 	~ATree()
@@ -278,6 +281,22 @@ public:
 	inline void clear() { Free(node); Free(parentAry); node = NULL; parentAry = NULL; curSize = 0; }
 	double get_alpha_root(){return node[rootidx].alpha;}
 
+	char* atof(double num)
+	{
+		if(num < 10e3)
+			sprintf(buf, "%.3f", (num));
+		else if(num < 10e6)
+			sprintf(buf, "%.3fK", (num / 10e3));
+		else if(num < 10e9)
+			sprintf(buf, "%.3fM", (num / 10e6));
+		else if(num < 10e12)
+			sprintf(buf, "%.3fB", (num / 10e9));
+		else 
+			sprintf(buf, "%.3fT", (num / 10e12));
+		
+		return buf;
+	}
+
 	void BuildAlphaTree(Pixel *img, int height_in, int width_in, int channel_in, int connectivity_in, int algorithm, int numthreads, int tse, double fparam1 = 0.0, double fparam2 = 0.0, int iparam1 = 0)
 	{
 		this->height = (Imgidx)height_in;
@@ -292,7 +311,7 @@ public:
 			return;
 		}
 
-		//aa1
+		//aa0
 		switch (algorithm)
 		{
 			case(UNIONFIND):							Unionfind(img);													break;
@@ -2102,6 +2121,7 @@ private:
 		}
 	}
 
+	//aa1
 	template <class Queue>
 	void Flood_HierarQueue(Pixel* img, Queue* queue, int tse)
 	{
@@ -2347,8 +2367,8 @@ private:
 		 (int)arr_cache_moves[2], (double)arr_cache_moves[2] / (double)movesum);
 */
 
-		printf("Number of total a-value comparisons:%f\n", (double)queue->numcmp);
-		printf("Number of non-empty level searches:%f\n", (double)queue->num_level_search);
+		//printf("Number of total a-value comparisons:%s\n", atof((double)queue->numcmp));
+		printf("Number of non-empty level searches:%s\n", atof((double)queue->num_level_search));
 		
 		delete[] qp;
 
@@ -2358,6 +2378,7 @@ private:
 		Free(isAvailable);
 	}
 
+	//aa5
 	void Flood_HeapQueue(Pixel* img)
 	{
 		HeapQueue_naive_quad<Imgidx, double>* queue;
@@ -2597,7 +2618,9 @@ private:
 		 (int)arr_moves[1], (double)arr_cache_moves[1] / (double)movesum, 
 		 (int)arr_cache_moves[2], (double)arr_cache_moves[2] / (double)movesum);
 
-
+		movesum = (double)(arr_moves[0] + arr_moves[1] + arr_moves[2]);
+		printf("Total number of moves: %s, P(redundant moves) = %.3f\n", 
+		atof(movesum), (double)arr_moves[1] / (double)movesum);
 		printf("Number of total a-value comparisons:%f\n", (double)queue->numcmp);
 		
 		delete[] qp;
@@ -2608,6 +2631,7 @@ private:
 		Free(isAvailable);
 	}
 
+	//aa6
 	void Flood_HeapQueue_Cache(Pixel* img, Imgidx listsize)
 	{
 		Cache_Quad_Heapqueue<Imgidx, double>* queue;
@@ -2871,6 +2895,11 @@ private:
 		 (int)cache_only[2], (double)cache_only[2] / (double)cache_pop[2]);
 
 
+		movesum = (double)(arr_moves[0] + arr_moves[1] + arr_moves[2]);
+		printf("Total number of moves: %s, P(redundant moves) = %.3f\n", 
+		atof(movesum), (double)arr_moves[1] / (double)movesum);
+		movesum = (double)(arr_cache_moves[0] + arr_cache_moves[1] + arr_cache_moves[2]);
+		printf("Total number of cache moves: %s\n", atof(movesum));
 		printf("Number of total a-value comparisons:%f\n", (double)queue->get_numcmp());
 		
 		Free(qp);
@@ -2881,6 +2910,7 @@ private:
 		Free(isAvailable);
 	}
 
+	//aa2
 	void Flood_HierarQueue_Cache(Pixel* img, int listsize)
 	{
 		//if(sizeof(Pixel) > 2 || channel > 1)
@@ -2951,6 +2981,7 @@ private:
 				qp[qpidx].alpha = queue->top_alpha();
 				qp[qpidx].flag = 0;
 				qp[qpidx].cache_moves = queue->top_cache_moves();
+				qp[qpidx].moves = queue->top_moves();
 				qp[qpidx].pure_cache = queue->top_pure_cache();
 				//qp[qpidx++].moves = queue->top_moves();
 				qpidx++;
@@ -3053,6 +3084,7 @@ FLOOD_END:
 			qp[qpidx].pidx = hqueue->top();
 			qp[qpidx].alpha = hqueue->top_alpha();
 			qp[qpidx].cache_moves = hqueue->top_moves();
+			qp[qpidx].moves = 2;
 			qp[qpidx].pure_cache = 0;
 			qp[qpidx].flag = 2;
 			qpidx++;
@@ -3149,9 +3181,13 @@ FLOOD_END:
 		 (int)cache_only[2], (double)cache_only[2] / (double)cache_pop[2]);
 
 
-
-		printf("Number of total a-value comparisons:%f\n", (double)queue->numcmp);
-		printf("Number of non-empty level searches:%f\n", (double)hqueue->num_level_search);
+		movesum = (double)(arr_moves[0] + arr_moves[1] + arr_moves[2]);
+		printf("Total number of moves: %s, P(redundant moves) = %.3f\n", 
+		atof(movesum), (double)arr_moves[1] / (double)movesum);
+		movesum = (double)(arr_cache_moves[0] + arr_cache_moves[1] + arr_cache_moves[2]);
+		printf("Total number of cache moves: %s\n", atof(movesum));
+		//printf("Number of total a-value comparisons:%f\n", (double)queue->numcmp);
+		printf("Number of non-empty level searches:%s\n", atof((double)hqueue->num_level_search));
 		
 		delete[] qp;
 
@@ -3172,7 +3208,7 @@ FLOOD_END:
 		return ret;
 	}
 
-	//aa4
+	//aa7
 	void Flood_HierarHeapQueue(Pixel* img, double a = 12.0, double r = 0.5, int listsize = 12)
 	{
 	  	HierarHeapQueue<Imgidx, Pixel>* queue;
@@ -3340,7 +3376,7 @@ FLOOD_END:
 			}
 			else //go to existing node
 			{
-			node[iNode].add(node + stack_top, pix_type);
+				node[iNode].add(node + stack_top, pix_type);
 			}
 			prev_top = stack_top;
 			stack_top = iNode;
@@ -3352,8 +3388,11 @@ FLOOD_END:
 		rootidx = (node[stack_top].area == imgsize) ? stack_top : iNode; //remove redundant root
 		node[rootidx].parentidx = ROOTIDX;
 
+		//print_tree();
+		//printf("root = %d\n",(int)rootidx);
+
 		int cnt = 0;
-		while(!queue->is_empty())
+		while(0)//!queue->is_empty())
 		{
 			cnt++;
 			qp[qpidx].pidx = queue->top();
@@ -3376,7 +3415,7 @@ FLOOD_END:
 			//printf("Q item[%d]: pidx=%d, alpha=%f, flag=%d, moves=%d, caching=%d\n", (int)i, (int)qp[i].pidx, log2(1+qp[i].alpha), qp[i].flag, qp[i].moves, qp[i].cache_moves);
 			
 			pop[qp[i].flag]++;
-			arr_moves[qp[i].flag] += (qp[i].moves - qp[i].cache_moves);
+			arr_moves[qp[i].flag] += qp[i].moves;
 			arr_cache_moves[qp[i].flag] += qp[i].cache_moves;
 		}
 
@@ -3411,8 +3450,11 @@ FLOOD_END:
 		 (int)arr_cache_moves[2], (double)arr_cache_moves[2] / (double)movesum);
 */
 
-		printf("Number of total a-value comparisons:%f\n", (double)queue->get_numcmp());
-		printf("Number of non-empty level searches:%f\n", (double)queue->num_level_search);
+		movesum = (double)(arr_moves[0] + arr_moves[1] + arr_moves[2]);
+		printf("Total number of moves: %s, P(redundant moves) = %.3f\n", 
+		atof(movesum), (double)arr_moves[1] / (double)movesum);
+		//printf("Number of total a-value comparisons:%f\n", (double)queue->get_numcmp());
+		printf("Number of non-empty level searches:%s\n", atof((double)queue->num_level_search));
 		double popsum = (double)queue->get_numcmp() + (double)queue->get_storage_pop();
 		printf("residual hqueue %d vs storage %d (%f:%f)\n", 
 		(int)queue->get_numcmp(), (int)queue->get_storage_pop(),
@@ -3426,6 +3468,7 @@ FLOOD_END:
 		Free(isAvailable);
 	}
 
+	//aa8
 	void Flood_HierarHeapQueue_Cache(Pixel* img, double a = 12.0, double r = 0.5, int listsize = 12)
 	{
 	  	HierarHeapQueue_cache<Imgidx, Pixel>* queue;
@@ -3476,6 +3519,8 @@ FLOOD_END:
 		qstat<Imgidx> *qp = new qstat<Imgidx>[2 * nredges];
 		Imgidx qpidx = 0;
 
+		Imgidx cnt = 0;
+
 		Imgidx prev_top = stack_top;
 		queue->push_1stitem(x0, max_level);
 		while (1) //flooding
@@ -3496,7 +3541,7 @@ FLOOD_END:
 					qp[qpidx - 1].flag = 1;
 					continue;
 				}
-				//printf("++visiting %d: stack_top[%d] at %.3f, area: %d curSize: %d\n", (int)p, (int)stack_top, log2((double)(node[stack_top].alpha)), (int)node[stack_top].area, (int)curSize);
+				printf("++(%d)visiting %d: stack_top[%d] at %.3f, area: %d curSize: %d\n", (int)cnt, (int)p, (int)stack_top, log2((double)(node[stack_top].alpha)), (int)node[stack_top].area, (int)curSize);
 				queue->start_pushes();
 
 				//queue->mark(0);
@@ -3607,6 +3652,9 @@ FLOOD_END:
 		rootidx = (node[stack_top].area == imgsize) ? stack_top : iNode; //remove redundant root
 		node[rootidx].parentidx = ROOTIDX;
 
+		//print_tree();
+		//printf("rootidx: %d\n", (int)rootidx);
+
 		//while(!queue->is_empty())
 		while(0)
 		{
@@ -3627,7 +3675,7 @@ FLOOD_END:
 		int cntcnt = 0;
 		for(Imgidx i = 0;i < qpidx;i++)
 		{
-			qp[i].moves -= qp[i].cache_moves;
+			//qp[i].moves -= qp[i].cache_moves;
 
 			//if(qp[i].alpha >= node[rootidx].alpha)
 			if(qp[i].flag == 1 && (qp[i].alpha >= node[rootidx].alpha))
@@ -3669,10 +3717,10 @@ FLOOD_END:
 		 (int)arr_moves[2], (double)arr_moves[2] / (double)movesum);
 		
 		uint64 cpop = cache_pop[0] + cache_pop[1] + cache_pop[2];		
-		printf("Cache population (%d of %d): %d(%f) %d(%f) %d(%f) \n", (int)cpop, (int)(nredges + 1),
-		 (int)cache_pop[0], (double)cache_pop[0] / (double)(cpop), 
-		 (int)cache_pop[1], (double)cache_pop[1] / (double)(cpop), 
-		 (int)cache_pop[2], (double)cache_pop[2] / (double)(cpop));
+		printf("Cache population (%d of %d): %d(%s) ", (int)cpop, (int)(nredges + 1),
+		 (int)cache_pop[0], atof((double)cache_pop[0] / (double)(nredges + 1)));
+		printf("%d(%s) ",   (int)cache_pop[1], atof((double)cache_pop[1] / (double)(nredges + 1)));
+		printf("%d(%s)\n", (int)cache_pop[2], atof((double)cache_pop[2] / (double)(nredges + 1)));
 
 		printf("cache_moves: %d(%f) %d(%f) %d(%f)\n",
 		 (int)arr_cache_moves[0], (double)arr_cache_moves[0] / (double)cache_pop[0], 
@@ -3693,8 +3741,13 @@ FLOOD_END:
 		 (int)cache_only[1], (double)cache_only[1] / (double)cache_pop[1], 
 		 (int)cache_only[2], (double)cache_only[2] / (double)cache_pop[2]);
 
-		printf("Number of total a-value comparisons:%f\n", (double)queue->get_numcmp());
-		printf("Number of non-empty level searches:%f\n", (double)queue->num_level_search);
+		movesum = (double)(arr_moves[0] + arr_moves[1] + arr_moves[2]);
+		printf("Total number of moves: %s, P(redundant moves) = %.3f\n", 
+		atof(movesum), (double)arr_moves[1] / (double)movesum);
+		movesum = (double)(arr_cache_moves[0] + arr_cache_moves[1] + arr_cache_moves[2]);
+		printf("Total number of cache moves: %s\n", atof(movesum));
+		//printf("Number of total a-value comparisons:%s\n", atof((double)queue->get_numcmp()));
+		printf("Number of non-empty level searches:%s\n", atof((double)queue->num_level_search));
 		double popsum = (double)queue->get_numcmp() + (double)queue->get_storage_pop();
 		printf("residual hqueue %d vs storage %d (%f:%f)\n", 
 		(int)queue->get_numcmp(), (int)queue->get_storage_pop(),
@@ -6252,7 +6305,7 @@ FLOOD_END:
 		Imgidx r, q;
 
 		for(r = p;node[r].rootidx != ROOTIDX;r = node[r].rootidx)
-			;
+			cnt_getlevelroot++;
 
 		while(p != r)
 		{
@@ -6317,6 +6370,8 @@ FLOOD_END:
 
 		//double t_findroot = 0, t_unionbyrank = 0;
 
+		cnt_getlevelroot = 0;
+
 		Imgidx curSize = 0;
 		for(Imgidx r = 0; r < nredges; r++)
 		{
@@ -6371,6 +6426,9 @@ FLOOD_END:
 				}
 			}
 		}
+
+		printf("Findroot counts: %s\n", atof((double)cnt_getlevelroot));
+
 		if(unionbyrank) Free(treedepth);
 		Free(rankitem);
 //		Free(isVisited);
@@ -8110,7 +8168,7 @@ FLOOD_END:
 		}
 	}
 
-	//aa2
+	//aa3
 	void Flood_Trie(Pixel* img)
 	{
 		Imgidx imgsize, dimgsize, nredges;
@@ -8310,8 +8368,8 @@ FLOOD_END:
 		 (int)arr_cache_moves[2], (double)arr_cache_moves[2] / (double)movesum);
 */
 
-		printf("Number of total a-value comparisons:%f\n", (double)queue->numcmp);
-		printf("Number of non-empty level searches:%f\n", (double)queue->num_level_search);
+		//printf("Number of total a-value comparisons:%f\n", (double)queue->numcmp);
+		printf("Number of non-empty level searches:%s\n", atof((double)queue->num_level_search));
 		
 		delete[] qp;
 
@@ -8323,7 +8381,7 @@ FLOOD_END:
 		Free(isAvailable);
 	}
 
-	//aa3
+	//aa4
 	void Flood_Trie_Cache(Pixel* img)
 	{
 		Imgidx imgsize, dimgsize, nredges;
@@ -8565,9 +8623,13 @@ FLOOD_END:
 		 (int)cache_only[2], (double)cache_only[2] / (double)cache_pop[2]);
 
 
-
-		printf("Number of total a-value comparisons:%f\n", (double)queue->numcmp);
-		printf("Number of non-empty level searches:%f\n", (double)tq->num_level_search);
+		movesum = (double)(arr_moves[0] + arr_moves[1] + arr_moves[2]);
+		printf("Total number of moves: %s, P(redundant moves) = %.3f\n", 
+		atof(movesum), (double)arr_moves[1] / (double)movesum);
+		movesum = (double)(arr_cache_moves[0] + arr_cache_moves[1] + arr_cache_moves[2]);
+		printf("Total number of cache moves: %s\n", atof(movesum));
+		//printf("Number of total a-value comparisons:%f\n", (double)queue->numcmp);
+		printf("Number of non-empty level searches:%s\n", atof((double)tq->num_level_search));
 		
 		delete[] qp;
 

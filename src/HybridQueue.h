@@ -15,7 +15,7 @@ using namespace std;
 #define HEAPSIZE_DEFAULT 128
 
 #define TRACK_QUEUEING	0
-#define QUEUE_DEBUG		0
+#define QUEUE_DEBUG		1
 
 #define PROFILE			0
 
@@ -706,7 +706,8 @@ public:
 		numqueue = 0;
 #endif
 
-		list = (HQentry<Imgidx, Pixel>*)Malloc((listsize) * sizeof(HQentry<Imgidx, Pixel>));
+		list = (HQentry<Imgidx, Pixel>*)Calloc((listsize + 1) * sizeof(HQentry<Imgidx, Pixel>));
+		list++;
 		maxSize_list = listsize - 1;
 		curSize_list = -1;
 
@@ -763,7 +764,7 @@ public:
 
 	~HierarHeapQueue_cache()
 	{
-		Free(list);
+		Free(list - 1);
 		Free(qsizes);
 
 		for(int level = 0;level < numlevels;level++)
@@ -841,6 +842,46 @@ public:
 		return cnt;
 	}
 
+#if QUEUE_DEBUG
+	void print_queue()
+	{
+		printf("List(%d): ", (int)(curSize_list + 1));
+		for(int i = 0;i <= curSize_list;i++)
+		{
+			printf("%d-%.3f(%d, %d) ", (int)list[i].pidx, log2((double)list[i].alpha), list[i].moves, list[i].cache_moves);
+		}
+		printf("\n");
+
+		for(int i = 0;i < curthr;i++)
+		{
+			if(qsizes[i] && hqueue[i]->cursize)
+			{
+				HeapQueue_naive_quad<Imgidx, Pixel> *hq = hqueue[i];
+				printf("HQ[%d]: ", i);
+				for(int j = 1;j <= hq->cursize;j++)
+				{
+					printf("%d-%.3f(%d, %d) ", (int)hq->arr[j].pidx, log2((double)hq->arr[j].alpha), hq->arr[j].moves, hq->arr[j].cache_moves);
+				}
+				printf("\n");
+			}
+		}
+
+		for(int i = curthr;i < numlevels;i++)
+		{
+			if(qsizes[i] && storage_cursize[i])
+			{
+				HQentry<Imgidx, Pixel> *p = storage[i];
+				printf("UA[%d]: ", i);
+				for(int j = 0;j < storage_cursize[i];j++)
+				{
+					printf("%d-%.3f(%d, %d) ", (int)p[j].pidx, log2((double)p[j].alpha), p[j].moves, p[j].cache_moves);
+				}
+			printf("\n");
+			}
+		}
+	}
+#endif
+
 	inline void push_1stitem(Imgidx idx, Pixel alpha)
 	{
 		list[0].pidx = idx;
@@ -889,6 +930,9 @@ public:
 			list[0].moves = 0;
 			list[0].cache_moves = 0;
 			list[0].pure_cache = 1;
+#if QUEUE_DEBUG
+		print_queue();
+#endif
 			return;
 		}
 
@@ -913,6 +957,7 @@ public:
 				for (i = curSize_list; alpha < list[i].alpha; i--)
 				{
 					list[i + 1] = list[i];
+					list[i + 1].moves--; //moves being negative... check
 					list[i + 1].cache_moves++;
 				}
 				list[i + 1].pidx = idx;
@@ -938,6 +983,7 @@ public:
 				for (i = curSize_list - 1; alpha < list[i].alpha; i--)
 				{
 					list[i + 1] = list[i];
+					list[i + 1].moves--;
 					list[i + 1].cache_moves++;
 				}
 				list[i + 1].pidx = idx;
@@ -974,16 +1020,17 @@ public:
 #endif
 		}
 
-
 #if QUEUE_DEBUG
+		print_queue();
+/*
 		printf("List(%d): ", (int)(curSize_list + 1));
 		for(int i = 0;i <= curSize_list;i++)
 		{
 			printf("%d-%.3f ", (int)list[i].pidx, log2((double)list[i].alpha));
 		}
 		printf("\n");
+*/
 #endif
-
 			//qtime += get_cpu_time() - tt; //tmp
 	}
 
@@ -1061,9 +1108,9 @@ public:
 		if (curSize_list == 0)
 		{
 #if QUEUE_DEBUG
-			if(queue_minlev == numlevels) //this should never happen
+			//if(queue_minlev == numlevels) //this should never happen
 			{
-				cout << "Error on HybridQueue.h: Trying to empty a queue." << endl;
+			//	cout << "Error on HybridQueue.h: Trying to empty a queue." << endl;
 			}
 #endif
 			while(!check_queue_level(isVisited))
@@ -1081,18 +1128,20 @@ public:
 			for (i = 0; i < curSize_list; i++)
 			{
 				list[i] = list[i + 1];
+				list[i].moves--;
 				list[i].cache_moves++;
 			}
 			curSize_list--;
 		}
 
 #if QUEUE_DEBUG
-		printf("List(%d): ", (int)(curSize_list + 1));
-		for(i = 0;i <= curSize_list;i++)
+		print_queue();
+		//printf("List(%d): ", (int)(curSize_list + 1));
+		//for(i = 0;i <= curSize_list;i++)
 		{
-			printf("%d-%.3f ", (int)list[i].pidx, log2((double)list[i].alpha));
+		//	printf("%d-%.3f ", (int)list[i].pidx, log2((double)list[i].alpha));
 		}
-		printf("\n");
+		//printf("\n");
 #endif
 
 
@@ -1134,7 +1183,7 @@ public:
 				if(!isVisited[store[p].pidx])
 				{
 					tranferred++;
-					pQ->push(store[p].pidx, store[p].alpha, 1, 0);
+					pQ->push(store[p].pidx, store[p].alpha, store[p].moves + 1, store[p].cache_moves);
 				}
 				else
 				{
@@ -2040,6 +2089,7 @@ public:
 					numcmp++;
 					list[i + 1] = list[i];
 					list[i + 1].cache_moves++;
+					list[i + 1].moves--;
 				}
 				list[i + 1].pidx = idx;
 				list[i + 1].alpha = alpha;
@@ -2059,6 +2109,7 @@ public:
 					numcmp++;
 					list[i + 1] = list[i];
 					list[i + 1].cache_moves++;
+					list[i + 1].moves--;
 				}
 				list[i + 1].pidx = idx;
 				list[i + 1].alpha = alpha;
@@ -2128,6 +2179,7 @@ public:
 			{
 				list[i] = list[i + 1];
 				list[i].cache_moves++;
+				list[i].moves--;
 			}
 			curSize_list--;
 		}
