@@ -628,7 +628,7 @@ public:
 #endif
 
 		list = (HQentry<Imgidx, Pixel>*)Malloc((listsize + 1) * sizeof(HQentry<Imgidx, Pixel>));
-		list = list - 1;
+		list = list + 1;
 		list[-1].alpha = 0;
 		maxSize_list = listsize - 1;
 		curSize_list = -1;
@@ -686,7 +686,7 @@ public:
 
 	~HierarHeapQueue_cache()
 	{
-		Free(list + 1);
+		Free(list - 1);
 		Free(qsizes);
 
 		for(int level = 0;level < numlevels;level++)
