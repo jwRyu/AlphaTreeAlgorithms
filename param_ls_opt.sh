@@ -20,4 +20,3 @@
 ./AlphaTree rand 1 1 1000 9 64 0 test 8 1 45.0 0.15 89
 ./AlphaTree rand 1 1 1000 9 64 0 test 8 1 45.0 0.15 101
 
-

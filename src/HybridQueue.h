@@ -15,7 +15,7 @@ using namespace std;
 #define HEAPSIZE_DEFAULT 128
 
 #define TRACK_QUEUEING	0
-#define QUEUE_DEBUG		1
+#define QUEUE_DEBUG		0
 
 #define PROFILE			0
 

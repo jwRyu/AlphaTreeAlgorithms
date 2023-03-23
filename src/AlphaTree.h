@@ -3460,6 +3460,11 @@ FLOOD_END:
 		(int)queue->get_numcmp(), (int)queue->get_storage_pop(),
 		(double)queue->get_numcmp() / popsum, (double)queue->get_storage_pop() / popsum);
 		
+		//double pr = (double)(nredges + 1 - pop[0] - pop[1] - pop[2]);		
+		std::ofstream outfile;
+		outfile.open("out.txt", std::ios_base::app); // append instead of overwrite
+		outfile << movesum << " " << (arr_moves[1] / movesum) << " " << (double)queue->num_level_search << endl;
+	
 		delete[] qp;
 
 		delete queue;
@@ -3519,7 +3524,7 @@ FLOOD_END:
 		qstat<Imgidx> *qp = new qstat<Imgidx>[2 * nredges];
 		Imgidx qpidx = 0;
 
-		Imgidx cnt = 0;
+		//Imgidx cnt = 0;
 
 		Imgidx prev_top = stack_top;
 		queue->push_1stitem(x0, max_level);
@@ -3541,7 +3546,7 @@ FLOOD_END:
 					qp[qpidx - 1].flag = 1;
 					continue;
 				}
-				printf("++(%d)visiting %d: stack_top[%d] at %.3f, area: %d curSize: %d\n", (int)cnt, (int)p, (int)stack_top, log2((double)(node[stack_top].alpha)), (int)node[stack_top].area, (int)curSize);
+				//printf("++(%d)visiting %d: stack_top[%d] at %.3f, area: %d curSize: %d\n", (int)cnt, (int)p, (int)stack_top, log2((double)(node[stack_top].alpha)), (int)node[stack_top].area, (int)curSize);
 				queue->start_pushes();
 
 				//queue->mark(0);
@@ -3752,6 +3757,18 @@ FLOOD_END:
 		printf("residual hqueue %d vs storage %d (%f:%f)\n", 
 		(int)queue->get_numcmp(), (int)queue->get_storage_pop(),
 		(double)queue->get_numcmp() / popsum, (double)queue->get_storage_pop() / popsum);
+		
+
+		//double pr = (double)(nredges + 1 - pop[0] - pop[1] - pop[2]);		
+		std::ofstream outfile;
+		outfile.open("out.txt", std::ios_base::app); // append instead of overwrite
+		movesum = (double)(arr_moves[0] + arr_moves[1] + arr_moves[2]);
+		outfile << movesum << " " << (arr_moves[1] / movesum) << " " << (double)queue->num_level_search << endl;
+		//outfile << (double)cache_pop[0] / (double)(nredges + 1) << " "
+	//			<< (double)cache_pop[1] / (double)(nredges + 1) << " "
+	 //  		    << (double)cache_only[0] / (double)cache_pop[0] << " "
+	  // 		    << (double)cache_only[1] / (double)cache_pop[1] << " "
+	//			<< (double)cache_pop[1] / (double)(cache_pop[0] + cache_pop[1]) << endl;
 		
 		delete[] qp;
 
