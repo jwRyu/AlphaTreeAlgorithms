@@ -745,7 +745,7 @@ int main(int argc, char **argv)
 			img = 0;
 		}
 
-		height /= 10; width /= 10;
+		//height /= 10; width /= 10;
 		//printf("========================================================================================\n");
 		printf("========== image [%d/%d]: imgsize = %d x %d (%d bits, %d channels) ================\n",
 		imgidx + 1, numimg, (int)height, (int)width, (int)input.bitdepth, (int)input.nchannels);
@@ -872,6 +872,15 @@ int main(int argc, char **argv)
 		printf("#thr = %d: %.3fMpix/s / %.3fB/pix \n", nthr[thridx], meanrunspeed[thridx]/numimg, maxmemuse[thridx]/numimg);
 	}
 	printf("==============================================\n");
+
+	if(1)
+	{
+		ofstream fout("out.txt", std::ios_base::app);
+		{
+			fout <<  meanrunspeed[0]/numimg << " ";// << ' ' << maxmemuse[thridx] << endl;
+		}
+		fout.close();
+	}
 
 
 	return 0;

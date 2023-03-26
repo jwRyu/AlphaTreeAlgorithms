@@ -279,7 +279,7 @@ public:
 		{
 			case(UNIONFIND):							Unionfind(img);													break;
 			case(FLOOD_HIERARQUEUE):					Flood_HierarQueue(img, (HierarQueue<Imgidx>*)0, tse);			break;
-			case(FLOOD_HIERARQUEUE_CACHE):				Flood_HierarQueue_Cache(img);									break;
+			case(FLOOD_HIERARQUEUE_CACHE):				Flood_HierarQueue_Cache(img, iparam1);							break;
 			case(FLOOD_TRIE):							Flood_Trie(img,(Trie<Imgidx, trieidx>*)0);						break;
 			case(FLOOD_TRIE_CACHE):						Flood_Trie(img,(Trie_Cache<Imgidx, trieidx>*)0, iparam1);		break;
 			case(FLOOD_HEAPQUEUE): 						Flood_HeapQueue(img);											break;
@@ -2941,7 +2941,7 @@ private:
 		Free(isAvailable);
 	}
 
-	void Flood_HierarQueue_Cache(Pixel* img)
+	void Flood_HierarQueue_Cache(Pixel* img, int listsize)
 	{
 		//if(sizeof(Pixel) > 2 || channel > 1)
 		{
@@ -2973,7 +2973,7 @@ private:
 		numlevels = max_level + 1;
 
 	  //create hierarchical queue from dhist
-	  queue = new HierarQueueCache<Imgidx, Pixel>(nredges + 1, dhist, numlevels); // +1 for the dummy node
+	  queue = new HierarQueueCache<Imgidx, Pixel>(nredges + 1, dhist, numlevels, listsize); // +1 for the dummy node
 	  curSize = 0;
 
 	  if(imgsize < 10000 || sizeof(Pixel) > 2) //for small imags do not use TSE
