@@ -31,7 +31,7 @@ class Trie
 
 		//_int32 curSize;//tmp
 public:
-	Trie(Imgidx triesize_in)
+	Trie(Imgidx triesize_in, int dummy = 0)
 	{
 #if TRIE_DEBUG
 		cursize = 0;

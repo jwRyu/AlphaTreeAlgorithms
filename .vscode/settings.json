@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "ostream": "cpp",
+        "random": "cpp",
+        "chrono": "cpp",
+        "cmath": "cpp"
+    }
+}

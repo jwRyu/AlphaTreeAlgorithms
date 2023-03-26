@@ -240,6 +240,7 @@ public:
 	double nrmsd;
 	_int8 pix_type;
 	_int8 bit_depth;
+	_int8 shamt;
 
 	//for debugging
 	double tijd0, tijd1, tijd2;
@@ -259,12 +260,13 @@ public:
 	}
 	inline void clear() { Free(node); Free(parentAry); node = NULL; parentAry = NULL; curSize = 0; }
 
-	void BuildAlphaTree(Pixel *img, int height_in, int width_in, int channel_in, int connectivity_in, int algorithm, int numthreads, int tse, double fparam1 = 0.0, double fparam2 = 0.0, int iparam1 = 0)
+	void BuildAlphaTree(Pixel *img, int height_in, int width_in, int channel_in, int connectivity_in, int algorithm, int numthreads, int tse, double fparam1 = 0.0, double fparam2 = 0.0, int iparam1 = 0, int iparam2 = 0)
 	{
 		this->height = (Imgidx)height_in;
 		this->width = (Imgidx)width_in;
 		this->channel = (Imgidx)channel_in;
 		this->connectivity = (Imgidx)connectivity_in;
+		this->shamt = iparam2;
 		curSize = 0;
 
 		if (connectivity != 4 && connectivity != 8)
@@ -279,9 +281,9 @@ public:
 			case(FLOOD_HIERARQUEUE):					Flood_HierarQueue(img, (HierarQueue<Imgidx>*)0, tse);			break;
 			case(FLOOD_HIERARQUEUE_CACHE):				Flood_HierarQueue_Cache(img);									break;
 			case(FLOOD_TRIE):							Flood_Trie(img,(Trie<Imgidx, trieidx>*)0);						break;
-			case(FLOOD_TRIE_CACHE):						Flood_Trie(img,(Trie_Cache<Imgidx, trieidx>*)0);				break;
+			case(FLOOD_TRIE_CACHE):						Flood_Trie(img,(Trie_Cache<Imgidx, trieidx>*)0, iparam1);		break;
 			case(FLOOD_HEAPQUEUE): 						Flood_HeapQueue(img);											break;
-			case(FLOOD_HEAPQUEUE_CACHE):				Flood_HeapQueue_Cache(img);										break;
+			case(FLOOD_HEAPQUEUE_CACHE):				Flood_HeapQueue_Cache(img, iparam1);							break;
 			case(FLOOD_HIERARQUEUE_HYPERGRAPH):			Flood_HierarQueue_Hypergraph(img);								break;
 			case(FLOOD_TRIE_HYPERGRAPH):				Flood_Trie_Hypergraph(img, (Trie<Imgidx, trieidx>*)0);			break;
 			case(FLOOD_HIERARHEAPQUEUE):				Flood_HierarHeapQueue(img, fparam1, fparam2, iparam1);			break;
@@ -1311,6 +1313,363 @@ private:
 		return maxdiff;
 	}
 
+	//c++ translation of rgb2lab conversion python code by manojpandey
+	//https://gist.github.com/manojpandey/f5ece715132c572c80421febebaf66ae
+	inline void rgb2lab(double& L, double& a, double& b, _uint8 rin, _uint8 gin, _uint8 bin)
+	{
+		double r = rin / 255.0;
+		double g = gin / 255.0;
+		double bb = bin / 255.0;
+
+		r = ((r > 0.04045) ? pow((r + 0.055) / 1.055, 2.4) : r / 12.92) * 100;
+		g = ((g > 0.04045) ? pow((g + 0.055) / 1.055, 2.4) : g / 12.92) * 100;
+		bb = ((bb > 0.04045) ? pow((bb + 0.055) / 1.055, 2.4) : b / 12.92) * 100;
+
+		double X = 0.4124 * r + 0.3576 * g + 0.1805 * bb;
+		double Y = 0.2126 * r + 0.7152 * g + 0.0722 * bb;
+		double Z = 0.0193 * r + 0.1192 * g + 0.9505 * bb;
+
+		X = X / 95.047;
+		Y = Y / 100.0;
+		Z = Z / 108.883;
+
+		X = (X > 0.008856) ? pow(X, 1.0/3.0) : (7.787 * X) + (16.0 / 116.0);
+		Y = (Y > 0.008856) ? pow(Y, 1.0/3.0) : (7.787 * Y) + (16.0 / 116.0);
+		Z = (Z > 0.008856) ? pow(Z, 1.0/3.0) : (7.787 * Z) + (16.0 / 116.0);
+
+		L = (116.0 * Y) - 16.0;
+		a = 500.0 * (X - Y);
+		b = 200 * (Y - Z);
+	}
+
+	double diff_lab(Pixel *img, Imgidx i, Imgidx j, Imgidx imgsize)
+	{
+		double li, lj, ai, aj = 0, bi = 0, bj = 0;
+
+		rgb2lab(li, ai, bi, img[i], img[i + imgsize], img[i + imgsize + imgsize]);
+		rgb2lab(lj, aj, bj, img[j], img[j + imgsize], img[j + imgsize + imgsize]);
+
+		double dl = (li - lj) / 100.0;
+		double da = (ai - aj) / 256.0;
+		double db = (bi - bj) / 256.0;
+
+		return sqrt((dl * dl + da * da + db * db) / 3.0);
+	}
+
+	double diff_hue(Pixel *img, Imgidx i, Imgidx j, Imgidx imgsize)
+	{
+		double pval_max = (double)((Pixel)(-1));
+
+		double r0 = img[i] / pval_max;
+		double g0 = img[i + imgsize] / pval_max;
+		double b0 = img[i + imgsize + imgsize] / pval_max;
+		double r1 = img[j] /pval_max;
+		double g1 = img[j + imgsize] / pval_max;
+		double b1 = img[j + imgsize + imgsize] / pval_max;
+
+		double cmax0 = _max(r0, _max(g0, b0));
+		double cmin0 = _min(r0, _min(g0, b0));
+		double cmax1 = _max(r1, _max(g1, b1));
+		double cmin1 = _min(r1, _min(g1, b1));
+
+		double delta0 = cmax0 - cmin0;
+		double delta1 = cmax1 - cmin1;
+
+		double h0, h1;
+
+		if(delta0 == 0) h0 = 0;
+		else if(cmax0 == r0) h0 = (g0 - b0) / delta0 / 6.0;
+		else if(cmax0 == g0) h0 = (2.0 + (b0 - r0) / delta0) / 6.0;
+		else if(cmax0 == b0) h0 = (4.0 + (r0 - g0) / delta0) / 6.0;
+		else h0 = 0;
+
+		if(delta1 == 0) h1 = 0;
+		else if(cmax1 == r1) h1 = (g1 - b1) / delta1 / 6.0;
+		else if(cmax1 == g1) h1 = (2.0 + (b1 - r1) / delta1) / 6.0;
+		else if(cmax1 == b1) h1 = (4.0 + (r1 - g1) / delta1) / 6.0;
+		else h1 = 0;
+
+		if(h0 < 0) h0 += 1;
+		if(h1 < 0) h1 += 1;
+
+		double dh = abs(h1 - h0);
+		if(dh > 0.5) dh = 1.0 - dh;
+
+		return dh;
+	}
+
+	double diff_hsv(Pixel *img, Imgidx i, Imgidx j, Imgidx imgsize)
+	{
+		double pval_max = (double)((Pixel)(-1));
+		double r0 = img[i] / pval_max;
+		double g0 = img[i + imgsize] / pval_max;
+		double b0 = img[i + 2 * imgsize] / pval_max;
+		double r1 = img[j] / pval_max;
+		double g1 = img[j + imgsize] / pval_max;
+		double b1 = img[j + 2 * imgsize] / pval_max;
+
+		double cmax0 = _max(r0, _max(g0, b0));
+		double cmin0 = _min(r0, _min(g0, b0));
+		double cmax1 = _max(r1, _max(g1, b1));
+		double cmin1 = _min(r1, _min(g1, b1));
+
+		double delta0 = cmax0 - cmin0;
+		double delta1 = cmax1 - cmin1;
+
+		//hue
+		double h0, h1;
+
+		if(delta0 == 0) h0 = 0;
+		else if(cmax0 == r0) h0 = (g0 - b0) / delta0 / 6.0;
+		else if(cmax0 == g0) h0 = (2.0 + (b0 - r0) / delta0) / 6.0;
+		else if(cmax0 == b0) h0 = (4.0 + (r0 - g0) / delta0) / 6.0;
+		else h0 = 0;
+
+		if(delta1 == 0) h1 = 0;
+		else if(cmax1 == r1) h1 = (g1 - b1) / delta1 / 6.0;
+		else if(cmax1 == g1) h1 = (2.0 + (b1 - r1) / delta1) / 6.0;
+		else if(cmax1 == b1) h1 = (4.0 + (r1 - g1) / delta1) / 6.0;
+		else h1 = 0;
+
+		if(h0 < 0) h0 += 1;
+		if(h1 < 0) h1 += 1;
+
+		double dh = abs(h1 - h0); // hue difference
+		if(dh > 0.5) dh = 1.0 - dh;
+
+		dh = dh * 2; //normalize hue difference to (0,1)
+
+		//saturation
+		double s0 = cmax0 == 0 ? 0 : delta0 / cmax0;
+		double s1 = cmax1 == 0 ? 0 : delta1 / cmax1;
+
+		double ds = abs(s0 - s1) / pval_max;
+
+		//value
+		double dv = abs(cmax0 - cmax1) / pval_max;
+
+		return sqrt((dh * dh + ds * ds + dv * dv) / 3.0);
+	}
+
+	inline double diff_euclidean(Pixel *img, Imgidx i, Imgidx j, Imgidx imgsize)
+	{
+		double d = 0;
+		Pixel *pimg = img;
+		for(Imgidx ch = 0;ch < channel;ch++)
+		{
+			double dch = (double)pimg[i] - (double)pimg[j];
+			d += dch * dch;
+			pimg += imgsize;
+		}
+		return sqrt(d / (double)channel);
+	}
+
+	double diff_dinf(Pixel *img, Imgidx i, Imgidx j, Imgidx imgsize)
+	{
+		double dmax = 0;
+		Pixel *pimg = img;
+		for(Imgidx ch = 0;ch < channel;ch++)
+		{
+			double dch = abs((double)pimg[i] - (double)pimg[j]);
+			dmax = _max(dmax, dch);
+			pimg += imgsize;
+		}
+		return dmax;
+	}
+/*
+	void compute_dimg(double* dimg, Imgidx* dhist, Pixel* img, double a)
+	{
+		Imgidx dimgidx, imgidx, stride_w = width, i, j;
+		int hidx;
+		imgidx = dimgidx = 0;
+		Imgidx imgsize = width * height;
+
+		double (ATree<Imgidx,Index,Pixel>::*dist_metric)(Pixel*, Imgidx, Imgidx, Imgidx);
+		//dist_metric = &ATree<Imgidx,Index,Pixel>::diff_lab;
+		//dist_metric = &ATree<Imgidx,Index,Pixel>::diff_hsv;
+		dist_metric = &ATree<Imgidx,Index,Pixel>::diff_euclidean;
+		//dist_metric = &ATree<Imgidx,Index,Pixel>::diff_hue;
+		//dist_metric = &ATree<Imgidx,Index,Pixel>::diff_dinf;
+
+		if (connectivity == 4)
+		{
+			if(channel == 1)
+			{
+				for (i = 0; i < height - 1; i++)
+				{
+					for (j = 0; j < width - 1; j++)
+					{
+						dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + stride_w], img[imgidx]));
+						hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
+						dhist[hidx]++;
+						dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + 1], img[imgidx]));
+						hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
+						dhist[hidx]++;
+						imgidx++;
+					}
+					dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + stride_w], img[imgidx]));
+					hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
+					dhist[hidx]++;
+					dimgidx++;
+					imgidx++;
+				}
+				for (j = 0; j < width - 1; j++)
+				{
+					dimgidx++;
+					dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + 1], img[imgidx]));
+					hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
+					dhist[hidx]++;
+					imgidx++;
+				}
+			}
+			else
+			{
+				double d;
+				for (i = 0; i < height - 1; i++)
+				{
+					for (j = 0; j < width - 1; j++)
+					{
+						d = (*this.*dist_metric)(img, imgidx + stride_w, imgidx, imgsize);
+						dimg[dimgidx++] = d;
+						hidx = (int)(a * log2(1 + d));
+						dhist[hidx]++;
+
+						d = (*this.*dist_metric)(img, imgidx + 1, imgidx, imgsize);
+						dimg[dimgidx++] = d;
+						hidx = (int)(a * log2(1 + d));
+						dhist[hidx]++;
+						imgidx++;
+					}
+
+					d = (*this.*dist_metric)(img, imgidx + stride_w, imgidx, imgsize);
+					dimg[dimgidx] = d;
+					hidx = (int)(a * log2(1 + d));
+					dhist[hidx]++;
+					dimgidx += 2;
+					imgidx++;
+				}
+				for (j = 0; j < width - 1; j++)
+				{
+					dimgidx++;
+					d = (*this.*dist_metric)(img, imgidx + 1, imgidx, imgsize);
+					dimg[dimgidx++] = d;
+					hidx = (int)(a * log2(1 + (double)d));
+					dhist[hidx]++;
+					imgidx++;
+				}
+			} //else
+		}
+		else if (connectivity == 8)
+		{
+			//   -  -  3
+			//   -  p  2
+			//   -  0  1
+			//top,middle
+			if(channel == 1)
+			{
+				for (i = 0; i < height - 1; i++)
+				{
+					for (j = 0; j < width - 1; j++)
+					{
+						dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + width], img[imgidx]));//0
+						hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
+						dhist[hidx]++;
+						dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + width + 1], img[imgidx]));//1
+						hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
+						dhist[hidx]++;
+						dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + 1], img[imgidx]));//2
+						hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
+						dhist[hidx]++;
+						if(i > 0)
+						{
+							dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx - width + 1], img[imgidx]));//3
+							hidx = (int)(a * log2(1 + (double)dimg[dimgidx]));
+							dhist[hidx]++;
+						}
+						dimgidx++;
+						imgidx++;
+					}
+					dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + width], img[imgidx]));//0
+					hidx = (int)(a * log2(1 + (double)dimg[dimgidx]));
+					dhist[hidx]++;
+					dimgidx += 4;//skip 1,2,3
+					imgidx++;
+				}
+
+				//bottom
+				dimgidx += 2; //skip 0,1
+				for (j = 0; j < width - 1; j++)
+				{
+					dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + 1], img[imgidx]));//2
+					hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
+					dhist[hidx]++;
+					dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx - width + 1], img[imgidx]));//3
+					hidx = (int)(a * log2(1 + (double)dimg[dimgidx]));
+					dhist[hidx]++;
+					dimgidx += 3;
+					imgidx++;
+				}
+			}
+			else //channel > 1
+			{
+				double d;
+				for (i = 0; i < height - 1; i++)
+				{
+					for (j = 0; j < width - 1; j++)
+					{
+						d = (*this.*dist_metric)(img, imgidx + stride_w, imgidx, imgsize);//0
+						dimg[dimgidx++] = d;
+						hidx = (int)(a * log2(1 + (double)d));
+						dhist[hidx]++;
+
+						d = (*this.*dist_metric)(img, imgidx + stride_w + 1, imgidx, imgsize);//1
+						dimg[dimgidx++] = d;
+						hidx = (int)(a * log2(1 + (double)d));
+						dhist[hidx]++;
+
+						d = (*this.*dist_metric)(img, imgidx + 1, imgidx, imgsize);//2
+						dimg[dimgidx++] = d;
+						hidx = (int)(a * log2(1 + (double)d));
+						dhist[hidx]++;
+
+						if(i > 0)
+						{
+							d = (*this.*dist_metric)(img, imgidx - stride_w + 1, imgidx, imgsize);//3
+							dimg[dimgidx] = d;
+							hidx = (int)(a * log2(1 + (double)d));
+							dhist[hidx]++;
+						}
+						dimgidx++;
+						imgidx++;
+					}
+					d = (*this.*dist_metric)(img, imgidx + stride_w, imgidx, imgsize);//0
+					dimg[dimgidx] = d;
+					hidx = (int)(a * log2(1 + (double)d));
+					dhist[hidx]++;
+					dimgidx += 4;//skip 1,2,3
+					imgidx++;
+				}
+
+				//bottom
+				dimgidx += 2; //skip 0,1
+				for (j = 0; j < width - 1; j++)
+				{
+					d = (*this.*dist_metric)(img, imgidx + 1, imgidx, imgsize);//2
+					dimg[dimgidx++] = d;
+					hidx = (int)(a * log2(1 + (double)d));
+					dhist[hidx]++;
+
+					d = (*this.*dist_metric)(img, imgidx - width + 1, imgidx, imgsize);//3
+					dimg[dimgidx] = d;
+					hidx = (int)(a * log2(1 + (double)d));
+					dhist[hidx]++;
+					dimgidx += 3;
+					imgidx++;
+				}
+			}
+		}
+	}
+*/
 	void compute_dimg(Imgidx &minidx, double &mindiff, Pixel* dimg, Imgidx* dhist, Pixel* img, double a)
 	{
 		Imgidx dimgidx, imgidx, stride_w = width, i, j;
@@ -1409,28 +1768,34 @@ private:
 		}
 	}
 
-
-	void compute_dimg(Pixel* dimg, Imgidx* dhist, Pixel* img, double a)
+	template<class PixelDiff>
+	void compute_dimg(PixelDiff* dimg, Imgidx* dhist, Pixel* img, double a)
 	{
 		Imgidx dimgidx, imgidx, stride_w = width, i, j;
 		int hidx;
 		imgidx = dimgidx = 0;
+		Imgidx imgsize = height * width;
+		double scale = 1.0;
+		if(sizeof(Pixel) < sizeof(PixelDiff))
+		{
+			scale = pow(2, sizeof(PixelDiff) - sizeof(Pixel));
+		}
 
 		if (connectivity == 4)
 		{
 			for (i = 0; i < height - 1; i++)
 			{
 				for (j = 0; j < width - 1; j++)
-				{
-					dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + stride_w], img[imgidx]));
+				{					
+					dimg[dimgidx] = (PixelDiff)(scale * diff_euclidean(img, imgidx, imgidx + stride_w, imgsize));
 					hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
-					dhist[hidx]++;
-					dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + 1], img[imgidx]));
+					dhist[hidx]++;					
+					dimg[dimgidx] = (PixelDiff)(scale * diff_euclidean(img, imgidx, imgidx + 1, imgsize));
 					hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
 					dhist[hidx]++;
 					imgidx++;
-				}
-				dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + stride_w], img[imgidx]));
+				}					
+				dimg[dimgidx] = (PixelDiff)(scale * diff_euclidean(img, imgidx, imgidx + stride_w, imgsize));
 				hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
 				dhist[hidx]++;
 				dimgidx++;
@@ -1439,7 +1804,8 @@ private:
 			for (j = 0; j < width - 1; j++)
 			{
 				dimgidx++;
-				dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + 1], img[imgidx]));
+					
+				dimg[dimgidx] = (PixelDiff)(scale * diff_euclidean(img, imgidx, imgidx + 1, imgsize));
 				hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
 				dhist[hidx]++;
 				imgidx++;
@@ -1455,25 +1821,25 @@ private:
 			{
 				for (j = 0; j < width - 1; j++)
 				{
-					dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + width], img[imgidx]));//0
+					dimg[dimgidx] = (PixelDiff)(scale * diff_euclidean(img, imgidx, imgidx + width, imgsize));//0
 					hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
 					dhist[hidx]++;
-					dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + width + 1], img[imgidx]));//1
+					dimg[dimgidx] = (PixelDiff)(scale * diff_euclidean(img, imgidx, imgidx + width + 1, imgsize));//1
 					hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
 					dhist[hidx]++;
-					dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + 1], img[imgidx]));//2
+					dimg[dimgidx] = (PixelDiff)(scale * diff_euclidean(img, imgidx, imgidx + 1, imgsize));//2
 					hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
 					dhist[hidx]++;
 					if(i > 0)
 					{
-						dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx - width + 1], img[imgidx]));//3
+						dimg[dimgidx] = (PixelDiff)(scale * diff_euclidean(img, imgidx, imgidx - width + 1, imgsize));//3
 						hidx = (int)(a * log2(1 + (double)dimg[dimgidx]));
 						dhist[hidx]++;
 					}
 					dimgidx++;
 					imgidx++;
 				}
-				dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + width], img[imgidx]));//0
+				dimg[dimgidx] = (PixelDiff)(scale * diff_euclidean(img, imgidx, imgidx + width, imgsize));//0
 				hidx = (int)(a * log2(1 + (double)dimg[dimgidx]));
 				dhist[hidx]++;
 				dimgidx += 4;//skip 1,2,3
@@ -1484,10 +1850,10 @@ private:
 			dimgidx += 2; //skip 0,1
 			for (j = 0; j < width - 1; j++)
 			{
-				dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + 1], img[imgidx]));//2
+				dimg[dimgidx] = (PixelDiff)(scale * diff_euclidean(img, imgidx, imgidx + 1, imgsize));//2
 				hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
 				dhist[hidx]++;
-				dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx - width + 1], img[imgidx]));//3
+				dimg[dimgidx] = (PixelDiff)(scale * diff_euclidean(img, imgidx, imgidx - width + 1, imgsize));//3
 				hidx = (int)(a * log2(1 + (double)dimg[dimgidx]));
 				dhist[hidx]++;
 				dimgidx += 3;
@@ -2265,7 +2631,7 @@ private:
 
 	void Flood_HeapQueue(Pixel* img)
 	{
-		HeapQueue<Imgidx, double>* queue;
+		HeapQueue_naive_quad<Imgidx, double>* queue;
 
 		Imgidx imgsize, dimgsize, nredges, x0;
 		_uint64 numlevels, max_level;
@@ -2297,7 +2663,7 @@ private:
 		}
 
 		//create heap-based priority queue
-		queue = new HeapQueue<Imgidx, double>(nredges);
+		queue = new HeapQueue_naive_quad<Imgidx, double>(nredges);
 		curSize = 0;
 
 		_SET_COMMON_MEMORY
@@ -2311,15 +2677,14 @@ private:
 		//current_level = max_level;
 		prev_top = stack_top; /*to find redundant node*/
 
-		queue->push_run(x0, current_level);
+		queue->push(x0, current_level);
 		while (1)
 		{
 			while (queue->get_minlev() <= current_level) //flood all levels below current_level
 			{
-				p = queue->top();
+				p = queue->pop();
 				if (isVisited[p])
 				{
-					queue->pop();
 					continue;
 				}
 				isVisited[p] = 1;
@@ -2329,22 +2694,22 @@ private:
 				{
 					q = p << 1;
 					if(is_available(isAv, 0) && !isVisited[p + width])	queue->push(p + width, dimg[q]);
-					if(is_available(isAv, 1) && !isVisited[p + 1])			queue->push(p + 1, dimg[q + 1]);
-					if(is_available(isAv, 2) && !isVisited[p - 1])			queue->push(p - 1, dimg[q - 1]);
+					if(is_available(isAv, 1) && !isVisited[p + 1])		queue->push(p + 1, dimg[q + 1]);
+					if(is_available(isAv, 2) && !isVisited[p - 1])		queue->push(p - 1, dimg[q - 1]);
 					if(is_available(isAv, 3) && !isVisited[p - width])	queue->push(p - width, dimg[q - (width << 1)]);
 				}
 				else if (connectivity == 8)
 				{
 					Imgidx width4 = width << 2;
 					q = p << 2;
-					if(is_available(isAv, 0) && !isVisited[p + width]) 		 queue->push(p + width, 		dimg[q]);
-					if(is_available(isAv, 1) && !isVisited[p + width + 1]) queue->push(p + width + 1, dimg[q + 1]);
-					if(is_available(isAv, 2) && !isVisited[p + 1]) 		 		 queue->push(p + 1, 				dimg[q + 2]);
-					if(is_available(isAv, 3) && !isVisited[p - width + 1]) queue->push(p - width + 1, dimg[q + 3]);
-					if(is_available(isAv, 4) && !isVisited[p - width]) 		 queue->push(p - width, 		dimg[q - width4]);
-					if(is_available(isAv, 5) && !isVisited[p - width - 1]) queue->push(p - width - 1, dimg[q - width4 - 3]);
-					if(is_available(isAv, 6) && !isVisited[p - 1]) 				 queue->push(p - 1, 				dimg[q - 2]);
-					if(is_available(isAv, 7) && !isVisited[p + width - 1]) queue->push(p + width - 1, dimg[q + width4 - 1]);
+					if(is_available(isAv, 0) && !isVisited[p + width]) 		queue->push(p + width, 		dimg[q]);
+					if(is_available(isAv, 1) && !isVisited[p + width + 1])	queue->push(p + width + 1, dimg[q + 1]);
+					if(is_available(isAv, 2) && !isVisited[p + 1]) 		 	queue->push(p + 1, 				dimg[q + 2]);
+					if(is_available(isAv, 3) && !isVisited[p - width + 1])	queue->push(p - width + 1, dimg[q + 3]);
+					if(is_available(isAv, 4) && !isVisited[p - width]) 		queue->push(p - width, 		dimg[q - width4]);
+					if(is_available(isAv, 5) && !isVisited[p - width - 1])	queue->push(p - width - 1, dimg[q - width4 - 3]);
+					if(is_available(isAv, 6) && !isVisited[p - 1]) 			queue->push(p - 1, 				dimg[q - 2]);
+					if(is_available(isAv, 7) && !isVisited[p + width - 1])	queue->push(p + width - 1, dimg[q + width4 - 1]);
 				}
 				else
 				{
@@ -2354,7 +2719,6 @@ private:
 
 
 				//queue->end_pushes();
-				queue->find_minlev();
 				if (current_level > queue->get_minlev()) //remove typecasting later
 				{
 						_CREATE_NEW_NODE(queue->get_minlev())
@@ -2413,7 +2777,7 @@ private:
 		Free(isAvailable);
 	}
 
-	void Flood_HeapQueue_Cache(Pixel* img)
+	void Flood_HeapQueue_Cache(Pixel* img, int iparam1)
 	{
 		Cache_Quad_Heapqueue<Imgidx, double>* queue;
 
@@ -2447,7 +2811,7 @@ private:
 		}
 
 		//create heap-based priority queue
-		queue = new Cache_Quad_Heapqueue<Imgidx, double>(nredges);
+		queue = new Cache_Quad_Heapqueue<Imgidx, double>(nredges, iparam1);
 		curSize = 0;
 
 		_SET_COMMON_MEMORY
@@ -2923,14 +3287,16 @@ FLOOD_END:
 	  Free(isAvailable);
 	}
 
+	//aa2
 	void Flood_HierarHeapQueue_Cache(Pixel* img, double a = 12.0, double r = 0.5, int listsize = 12)
 	{
-	  	HierarHeapQueue_cache<Imgidx, Pixel>* queue;
+	  	HierarHeapQueue_cache<Imgidx, _uint64>* queue;
 
 		Imgidx imgsize, dimgsize, nredges, x0;
 		_uint64 numlevels, max_level;
 		double current_level;
 		Imgidx *dhist;
+		_uint64 *dimg;
 		Imgidx stack_top, iNode;
 		_uint8 *isVisited, *isAvailable, isAv;
 		Imgidx p, q;
@@ -2939,17 +3305,14 @@ FLOOD_END:
 		dimgsize = (1 + (connectivity >> 1)) * width * height;
 
 		//double a = 4.0;
-		max_level = (sizeof(Pixel)==8) ? 0xffffffffffffffff : (_int64)((Pixel)(-1));
+		max_level = 0xffffffffffffffff;
 		numlevels = (_uint64)(a * log2(1 + (double)max_level)) + 1;
-
-		Pixel *dimg;
+		dimg = (_uint64*)Malloc((size_t)dimgsize * sizeof(_uint64));
 		dhist = (Imgidx*)Calloc((size_t)numlevels * sizeof(Imgidx));
-		dimg = (Pixel*)Malloc((size_t)dimgsize * sizeof(Pixel));
-
 		compute_dimg(dimg, dhist, img, a);//calculate pixel differences and make histogram
 
 		//create hierarchical queue from dhist
-		queue = new HierarHeapQueue_cache<Imgidx, Pixel>(dhist, numlevels, nredges, a, listsize, connectivity, r); // +1 for the dummy node
+		queue = new HierarHeapQueue_cache<Imgidx, _uint64>(dhist, numlevels, nredges, a, listsize, connectivity, r); // +1 for the dummy node
 		curSize = 0;
 
 		maxSize = 1 + imgsize + dimgsize; //Do not use TSE here, becasue dhist is a logged histogram (also this algorithm is for hdr)
@@ -2965,7 +3328,7 @@ FLOOD_END:
 
 		stack_top = NewAlphaNode();/*dummy root*/
 		AlphaNode<Imgidx, Pixel> *pNode = node + stack_top;
-		pNode->set(0, (double)max_level, (double)0.0, (Pixel)max_level, (Pixel)0, pix_type);
+		pNode->set(0, (double)max_level, (double)0.0, (Pixel)(-1), (Pixel)0, pix_type);
 		pNode->parentidx = stack_top;
 		current_level = (double)max_level;
 		x0 = 0; /*arbitrary starting point*/
@@ -2995,22 +3358,22 @@ FLOOD_END:
 				{
 					q = p << 1;
 					if(is_available(isAv, 0) && !isVisited[p + width])	queue->push(p + width, dimg[q]);
-					if(is_available(isAv, 1) && !isVisited[p + 1])			queue->push(p + 1, dimg[q + 1]);
-					if(is_available(isAv, 2) && !isVisited[p - 1])			queue->push(p - 1, dimg[q - 1]);
+					if(is_available(isAv, 1) && !isVisited[p + 1])		queue->push(p + 1, dimg[q + 1]);
+					if(is_available(isAv, 2) && !isVisited[p - 1])		queue->push(p - 1, dimg[q - 1]);
 					if(is_available(isAv, 3) && !isVisited[p - width])	queue->push(p - width, dimg[q - (width << 1)]);
 				}
 				else if (connectivity == 8)
 				{
 					Imgidx width4 = width << 2;
 					q = p << 2;
-					if(is_available(isAv, 0) && !isVisited[p + width]) 		 {queue->push(p + width, 		dimg[q]); 							};//printf("0:pushing %d at %.3f \n",(int)(p + width),log2((double)dimg[q] + 1));}
-					if(is_available(isAv, 1) && !isVisited[p + width + 1]) {queue->push(p + width + 1, dimg[q + 1]); 					};//printf("1:pushing %d at %.3f \n",(int)(p + width + 1),log2((double)dimg[q + 1] + 1));}
-					if(is_available(isAv, 2) && !isVisited[p + 1]) 		 		 {queue->push(p + 1, 				dimg[q + 2]); 					};//printf("2:pushing %d at %.3f \n",(int)(p + 1),log2((double)dimg[q + 2] + 1));}
-					if(is_available(isAv, 3) && !isVisited[p - width + 1]) {queue->push(p - width + 1, dimg[q + 3]); 					};//printf("3:pushing %d at %.3f \n",(int)(p - width + 1),log2((double)dimg[q + 3] + 1));}
-					if(is_available(isAv, 4) && !isVisited[p - width]) 		 {queue->push(p - width, 		dimg[q - width4]); 			};//printf("4:pushing %d at %.3f \n",(int)(p - width),log2((double)dimg[q - width4] + 1));}
-					if(is_available(isAv, 5) && !isVisited[p - width - 1]) {queue->push(p - width - 1, dimg[q - width4 - 3]); };//printf("5:pushing %d at %.3f \n",(int)(p - width - 1),log2((double)dimg[q - width4 - 3] + 1));}
-					if(is_available(isAv, 6) && !isVisited[p - 1]) 				 {queue->push(p - 1, 				dimg[q - 2]); 					};//printf("6:pushing %d at %.3f \n",(int)(p - 1),log2((double)dimg[q - 2] + 1));}
-					if(is_available(isAv, 7) && !isVisited[p + width - 1]) {queue->push(p + width - 1, dimg[q + width4 - 1]); };//printf("7:pushing %d at %.3f \n",(int)(p + width - 1),log2((double)dimg[q + width4 - 1] + 1));}
+					if(is_available(isAv, 0) && !isVisited[p + width]) 		{queue->push(p + width, 	dimg[q]);};//printf("0:pushing %d at %.3f \n",(int)(p + width),log2((double)dimg[q] + 1));}
+					if(is_available(isAv, 1) && !isVisited[p + width + 1])	{queue->push(p + width + 1, dimg[q + 1]);};//printf("1:pushing %d at %.3f \n",(int)(p + width + 1),log2((double)dimg[q + 1] + 1));}
+					if(is_available(isAv, 2) && !isVisited[p + 1]) 			{queue->push(p + 1, 		dimg[q + 2]);};//printf("2:pushing %d at %.3f \n",(int)(p + 1),log2((double)dimg[q + 2] + 1));}
+					if(is_available(isAv, 3) && !isVisited[p - width + 1])	{queue->push(p - width + 1, dimg[q + 3]);};//printf("3:pushing %d at %.3f \n",(int)(p - width + 1),log2((double)dimg[q + 3] + 1));}
+					if(is_available(isAv, 4) && !isVisited[p - width]) 		{queue->push(p - width, 	dimg[q - width4]);};//printf("4:pushing %d at %.3f \n",(int)(p - width),log2((double)dimg[q - width4] + 1));}
+					if(is_available(isAv, 5) && !isVisited[p - width - 1])	{queue->push(p - width - 1, dimg[q - width4 - 3]);};//printf("5:pushing %d at %.3f \n",(int)(p - width - 1),log2((double)dimg[q - width4 - 3] + 1));}
+					if(is_available(isAv, 6) && !isVisited[p - 1]) 			{queue->push(p - 1, 		dimg[q - 2]);};//printf("6:pushing %d at %.3f \n",(int)(p - 1),log2((double)dimg[q - 2] + 1));}
+					if(is_available(isAv, 7) && !isVisited[p + width - 1])	{queue->push(p + width - 1, dimg[q + width4 - 1]);};//printf("7:pushing %d at %.3f \n",(int)(p + width - 1),log2((double)dimg[q + width4 - 1] + 1));}
 				}
 				else
 				{
@@ -7504,7 +7867,7 @@ FLOOD_END:
 	}
 
 	template<class Queue>
-	void Flood_Trie(Pixel* img, Queue *queue)
+	void Flood_Trie(Pixel* img, Queue *queue, int iparam = 13)
 	{
 		Imgidx imgsize, dimgsize, nredges;
 		Imgidx current_rank = 0, next_rank = 0;
@@ -7535,7 +7898,7 @@ FLOOD_END:
 
 		set_isAvailable(isAvailable);
 
-		queue = new Queue(nredges);
+		queue = new Queue(nredges, iparam);
 
 		omp_set_num_threads(1);
 		Index* rank2rankitem = (Index*)Calloc(nredges * sizeof(Index));
@@ -8198,7 +8561,7 @@ public:
 		tree = 0;
 	}
 
-	#define BUILD_ALPHATREE(pixeltype, pixeltype_in_tree, float) void BuildAlphaTree(pixeltype *img, int height, int width, int channel, int connectivity, int algorithm, int numthreads, int tse, double fparam1, double fparam2, int iparam1) \
+	#define BUILD_ALPHATREE(pixeltype, pixeltype_in_tree, float) void BuildAlphaTree(pixeltype *img, int height, int width, int channel, int connectivity, int algorithm, int numthreads, int tse, double fparam1, double fparam2, int iparam1, int iparam2) \
 	{ \
 		pix_type = sizeof(pixeltype); \
 		if(float) \
@@ -8211,13 +8574,13 @@ public:
 		{ \
 			imgidx = IMGIDX_32BITS; \
 			tree = new ATree<_int32, _uint32, pixeltype_in_tree>(pix_type, bit_depth); \
-			((ATree<_int32, _uint32, pixeltype_in_tree>*)tree)->BuildAlphaTree((pixeltype_in_tree*)img, height, width, channel, connectivity, algorithm, numthreads, tse, fparam1, fparam2, iparam1); \
+			((ATree<_int32, _uint32, pixeltype_in_tree>*)tree)->BuildAlphaTree((pixeltype_in_tree*)img, height, width, channel, connectivity, algorithm, numthreads, tse, fparam1, fparam2, iparam1, iparam2); \
 		} \
 		else \
 		{ \
 			imgidx = IMGIDX_64BITS; \
 			tree = new ATree<_int64, _uint64, pixeltype_in_tree>(pix_type, bit_depth); \
-			((ATree<_int64, _uint64, pixeltype_in_tree>*)tree)->BuildAlphaTree((pixeltype_in_tree*)img, height, width, channel, connectivity, algorithm, numthreads, tse, fparam1, fparam2, iparam1); \
+			((ATree<_int64, _uint64, pixeltype_in_tree>*)tree)->BuildAlphaTree((pixeltype_in_tree*)img, height, width, channel, connectivity, algorithm, numthreads, tse, fparam1, fparam2, iparam1, iparam2); \
 		} \
 	}
 
@@ -8238,13 +8601,13 @@ public:
 		{ \
 			imgidx = IMGIDX_32BITS; \
 			tree = new ATree<_int32, _uint32, pixeltype_in_tree>(pix_type, bit_depth); \
-			((ATree<_int32, _uint32, pixeltype_in_tree>*)tree)->BuildAlphaTree((pixeltype_in_tree*)img, height, width, channel, 4, algorithm, 0, 0, 0); \
+			((ATree<_int32, _uint32, pixeltype_in_tree>*)tree)->BuildAlphaTree((pixeltype_in_tree*)img, height, width, channel, 4, algorithm, 0, 0, 0, 0); \
 		} \
 		else \
 		{ \
 			imgidx = IMGIDX_64BITS; \
 			tree = new ATree<_int64, _uint64, pixeltype_in_tree>(pix_type, bit_depth); \
-			((ATree<_int64, _uint64, pixeltype_in_tree>*)tree)->BuildAlphaTree((pixeltype_in_tree*)img, height, width, channel, 4, algorithm, 0, 0, 0); \
+			((ATree<_int64, _uint64, pixeltype_in_tree>*)tree)->BuildAlphaTree((pixeltype_in_tree*)img, height, width, channel, 4, algorithm, 0, 0, 0, 0); \
 		} \
 	}
 
