@@ -318,7 +318,7 @@ public:
 			case(FLOOD_HIERARQUEUE):					Flood_HierarQueue(img, (HierarQueue<Imgidx>*)0, tse);			break;
 			case(FLOOD_HIERARQUEUE_CACHE):				Flood_HierarQueue_Cache(img, iparam1);							break;
 			case(FLOOD_TRIE):							Flood_Trie(img);												break;
-			case(FLOOD_TRIE_CACHE):						Flood_Trie_Cache(img);											break;
+			case(FLOOD_TRIE_CACHE):						Flood_Trie_Cache(img, iparam1);									break;
 			case(FLOOD_HEAPQUEUE): 						Flood_HeapQueue(img);											break;
 			case(FLOOD_HEAPQUEUE_CACHE):				Flood_HeapQueue_Cache(img, iparam1);							break;
 			case(FLOOD_HIERARQUEUE_HYPERGRAPH):			Flood_HierarQueue_Hypergraph(img);								break;
@@ -2892,7 +2892,15 @@ private:
 		printf("cache_only: %d(%f) %d(%f) %d(%f)\n",
 		 (int)cache_only[0], (double)cache_only[0] / (double)cache_pop[0], 
 		 (int)cache_only[1], (double)cache_only[1] / (double)cache_pop[1], 
-		 (int)cache_only[2], (double)cache_only[2] / (double)cache_pop[2]);
+		 (int)cache_only[2], (double)cache_only[2] / (double)cache_pop[2]);		 	
+		
+		std::ofstream outfile;
+		outfile.open("out.txt", std::ios_base::app); // append instead of overwrite
+		outfile << (double)cache_pop[0] / (double)(nredges + 1) << " " 
+				<< (double)cache_pop[1] / (double)(nredges + 1) << " " 
+				<< (double)cache_only[0] / (double)cache_pop[0] << " "
+		 		<< (double)cache_only[1] / (double)cache_pop[1] << " "
+		 		<< (double)arr_cache_moves[1] / (double)(arr_cache_moves[0] + arr_cache_moves[1] + arr_cache_moves[2]) << endl;
 
 
 		movesum = (double)(arr_moves[0] + arr_moves[1] + arr_moves[2]);
@@ -3155,7 +3163,9 @@ FLOOD_END:
 		 (int)arr_moves[1], (double)arr_moves[1] / (double)movesum, 
 		 (int)arr_moves[2], (double)arr_moves[2] / (double)movesum);
 		
+		
 		uint64 cpop = cache_pop[0] + cache_pop[1] + cache_pop[2];		
+
 		printf("Cache population (%d of %d): %d(%f) %d(%f) %d(%f) \n", (int)cpop, (int)(nredges + 1),
 		 (int)cache_pop[0], (double)cache_pop[0] / (double)(cpop), 
 		 (int)cache_pop[1], (double)cache_pop[1] / (double)(cpop), 
@@ -3170,7 +3180,7 @@ FLOOD_END:
 		 (int)cache_zeromove[1], (double)cache_zeromove[1] / (double)cache_pop[1], 
 		 (int)cache_zeromove[2], (double)cache_zeromove[2] / (double)cache_pop[2]);
 
-		 movesum = (double)(arr_cache_moves[0] + arr_cache_moves[1] + arr_cache_moves[2]);
+		movesum = (double)(arr_cache_moves[0] + arr_cache_moves[1] + arr_cache_moves[2]);
 		printf("cache_P_move: %d(%f) %d(%f) %d(%f)\n",
 		 (int)arr_cache_moves[0], (double)arr_cache_moves[0] / (double)movesum, 
 		 (int)arr_cache_moves[1], (double)arr_cache_moves[1] / (double)movesum, 
@@ -3179,6 +3189,15 @@ FLOOD_END:
 		 (int)cache_only[0], (double)cache_only[0] / (double)cache_pop[0], 
 		 (int)cache_only[1], (double)cache_only[1] / (double)cache_pop[1], 
 		 (int)cache_only[2], (double)cache_only[2] / (double)cache_pop[2]);
+
+		 	
+		std::ofstream outfile;
+		outfile.open("out.txt", std::ios_base::app); // append instead of overwrite
+		outfile << (double)cache_pop[0] / (double)(nredges + 1) << " " 
+				<< (double)cache_pop[1] / (double)(nredges + 1) << " " 
+				<< (double)cache_only[0] / (double)cache_pop[0] << " "
+		 		<< (double)cache_only[1] / (double)cache_pop[1] << " "
+		 		<< (double)arr_cache_moves[1] / (double)(arr_cache_moves[0] + arr_cache_moves[1] + arr_cache_moves[2]) << endl;
 
 
 		movesum = (double)(arr_moves[0] + arr_moves[1] + arr_moves[2]);
@@ -3208,7 +3227,7 @@ FLOOD_END:
 		return ret;
 	}
 
-	//aa7
+	//aa8
 	void Flood_HierarHeapQueue(Pixel* img, double a = 12.0, double r = 0.5, int listsize = 12)
 	{
 	  	HierarHeapQueue<Imgidx, Pixel>* queue;
@@ -3473,7 +3492,7 @@ FLOOD_END:
 		Free(isAvailable);
 	}
 
-	//aa8
+	//aa7
 	void Flood_HierarHeapQueue_Cache(Pixel* img, double a = 12.0, double r = 0.5, int listsize = 12)
 	{
 	  	HierarHeapQueue_cache<Imgidx, Pixel>* queue;
@@ -3722,10 +3741,11 @@ FLOOD_END:
 		 (int)arr_moves[2], (double)arr_moves[2] / (double)movesum);
 		
 		uint64 cpop = cache_pop[0] + cache_pop[1] + cache_pop[2];		
-		printf("Cache population (%d of %d): %d(%s) ", (int)cpop, (int)(nredges + 1),
-		 (int)cache_pop[0], atof((double)cache_pop[0] / (double)(nredges + 1)));
-		printf("%d(%s) ",   (int)cache_pop[1], atof((double)cache_pop[1] / (double)(nredges + 1)));
-		printf("%d(%s)\n", (int)cache_pop[2], atof((double)cache_pop[2] / (double)(nredges + 1)));
+
+		printf("Cache population (%d of %d): %d(%f) %d(%f) %d(%f) \n", (int)cpop, (int)(nredges + 1),
+		 (int)cache_pop[0], (double)cache_pop[0] / (double)(cpop), 
+		 (int)cache_pop[1], (double)cache_pop[1] / (double)(cpop), 
+		 (int)cache_pop[2], (double)cache_pop[2] / (double)(cpop));
 
 		printf("cache_moves: %d(%f) %d(%f) %d(%f)\n",
 		 (int)arr_cache_moves[0], (double)arr_cache_moves[0] / (double)cache_pop[0], 
@@ -3736,7 +3756,7 @@ FLOOD_END:
 		 (int)cache_zeromove[1], (double)cache_zeromove[1] / (double)cache_pop[1], 
 		 (int)cache_zeromove[2], (double)cache_zeromove[2] / (double)cache_pop[2]);
 
-		 movesum = (double)(arr_cache_moves[0] + arr_cache_moves[1] + arr_cache_moves[2]);
+		movesum = (double)(arr_cache_moves[0] + arr_cache_moves[1] + arr_cache_moves[2]);
 		printf("cache_P_move: %d(%f) %d(%f) %d(%f)\n",
 		 (int)arr_cache_moves[0], (double)arr_cache_moves[0] / (double)movesum, 
 		 (int)arr_cache_moves[1], (double)arr_cache_moves[1] / (double)movesum, 
@@ -3744,31 +3764,17 @@ FLOOD_END:
 		printf("cache_only: %d(%f) %d(%f) %d(%f)\n",
 		 (int)cache_only[0], (double)cache_only[0] / (double)cache_pop[0], 
 		 (int)cache_only[1], (double)cache_only[1] / (double)cache_pop[1], 
-		 (int)cache_only[2], (double)cache_only[2] / (double)cache_pop[2]);
-
-		movesum = (double)(arr_moves[0] + arr_moves[1] + arr_moves[2]);
-		printf("Total number of moves: %s, P(redundant moves) = %.3f\n", 
-		atof(movesum), (double)arr_moves[1] / (double)movesum);
-		movesum = (double)(arr_cache_moves[0] + arr_cache_moves[1] + arr_cache_moves[2]);
-		printf("Total number of cache moves: %s\n", atof(movesum));
-		//printf("Number of total a-value comparisons:%s\n", atof((double)queue->get_numcmp()));
-		printf("Number of non-empty level searches:%s\n", atof((double)queue->num_level_search));
-		double popsum = (double)queue->get_numcmp() + (double)queue->get_storage_pop();
-		printf("residual hqueue %d vs storage %d (%f:%f)\n", 
-		(int)queue->get_numcmp(), (int)queue->get_storage_pop(),
-		(double)queue->get_numcmp() / popsum, (double)queue->get_storage_pop() / popsum);
+		 (int)cache_only[2], (double)cache_only[2] / (double)cache_pop[2]);		 	
 		
-
-		//double pr = (double)(nredges + 1 - pop[0] - pop[1] - pop[2]);		
 		std::ofstream outfile;
 		outfile.open("out.txt", std::ios_base::app); // append instead of overwrite
-		movesum = (double)(arr_moves[0] + arr_moves[1] + arr_moves[2]);
-		outfile << movesum << " " << (arr_moves[1] / movesum) << " " << (double)queue->num_level_search << endl;
-		//outfile << (double)cache_pop[0] / (double)(nredges + 1) << " "
-	//			<< (double)cache_pop[1] / (double)(nredges + 1) << " "
-	 //  		    << (double)cache_only[0] / (double)cache_pop[0] << " "
-	  // 		    << (double)cache_only[1] / (double)cache_pop[1] << " "
-	//			<< (double)cache_pop[1] / (double)(cache_pop[0] + cache_pop[1]) << endl;
+		outfile << (double)cache_pop[0] / (double)(nredges + 1) << " " 
+				<< (double)cache_pop[1] / (double)(nredges + 1) << " " 
+				<< (double)cache_only[0] / (double)cache_pop[0] << " "
+		 		<< (double)cache_only[1] / (double)cache_pop[1] << " "
+		 		<< (double)arr_cache_moves[1] / (double)(arr_cache_moves[0] + arr_cache_moves[1] + arr_cache_moves[2]) << endl;
+
+
 		
 		delete[] qp;
 
@@ -8399,7 +8405,7 @@ FLOOD_END:
 	}
 
 	//aa4
-	void Flood_Trie_Cache(Pixel* img)
+	void Flood_Trie_Cache(Pixel* img, int listsize)
 	{
 		Imgidx imgsize, dimgsize, nredges;
 		Imgidx current_rank = 0, next_rank = 0;
@@ -8430,7 +8436,7 @@ FLOOD_END:
 
 		set_isAvailable(isAvailable);
 
-		Trie_Cache<Imgidx, trieidx> *queue = new Trie_Cache<Imgidx, trieidx> (nredges);
+		Trie_Cache<Imgidx, trieidx> *queue = new Trie_Cache<Imgidx, trieidx> (nredges, listsize);
 
 		omp_set_num_threads(1);
 		Index* rank2rankitem = (Index*)Calloc(nredges * sizeof(Index));
@@ -8615,6 +8621,7 @@ FLOOD_END:
 		 (int)arr_moves[2], (double)arr_moves[2] / (double)movesum);
 		
 		uint64 cpop = cache_pop[0] + cache_pop[1] + cache_pop[2];		
+
 		printf("Cache population (%d of %d): %d(%f) %d(%f) %d(%f) \n", (int)cpop, (int)(nredges + 1),
 		 (int)cache_pop[0], (double)cache_pop[0] / (double)(cpop), 
 		 (int)cache_pop[1], (double)cache_pop[1] / (double)(cpop), 
@@ -8629,7 +8636,7 @@ FLOOD_END:
 		 (int)cache_zeromove[1], (double)cache_zeromove[1] / (double)cache_pop[1], 
 		 (int)cache_zeromove[2], (double)cache_zeromove[2] / (double)cache_pop[2]);
 
-		 movesum = (double)(arr_cache_moves[0] + arr_cache_moves[1] + arr_cache_moves[2]);
+		movesum = (double)(arr_cache_moves[0] + arr_cache_moves[1] + arr_cache_moves[2]);
 		printf("cache_P_move: %d(%f) %d(%f) %d(%f)\n",
 		 (int)arr_cache_moves[0], (double)arr_cache_moves[0] / (double)movesum, 
 		 (int)arr_cache_moves[1], (double)arr_cache_moves[1] / (double)movesum, 
@@ -8638,6 +8645,17 @@ FLOOD_END:
 		 (int)cache_only[0], (double)cache_only[0] / (double)cache_pop[0], 
 		 (int)cache_only[1], (double)cache_only[1] / (double)cache_pop[1], 
 		 (int)cache_only[2], (double)cache_only[2] / (double)cache_pop[2]);
+		 	
+		
+		std::ofstream outfile;
+		outfile.open("out.txt", std::ios_base::app); // append instead of overwrite
+		outfile << (double)cache_pop[0] / (double)(nredges + 1) << " " 
+				<< (double)cache_pop[1] / (double)(nredges + 1) << " " 
+				<< (double)cache_only[0] / (double)cache_pop[0] << " "
+		 		<< (double)cache_only[1] / (double)cache_pop[1] << " "
+		 		<< (double)arr_cache_moves[1] / (double)(arr_cache_moves[0] + arr_cache_moves[1] + arr_cache_moves[2]) << endl;
+
+
 
 
 		movesum = (double)(arr_moves[0] + arr_moves[1] + arr_moves[2]);
