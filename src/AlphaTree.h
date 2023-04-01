@@ -3437,6 +3437,7 @@ FLOOD_END:
 			arr_moves[qp[i].flag] += qp[i].moves;
 			arr_cache_moves[qp[i].flag] += qp[i].cache_moves;
 		}
+		pop[1]
 
 		printf("# redundant -> residual: %d \n", cntcnt);
 
@@ -3720,6 +3721,7 @@ FLOOD_END:
 			if(qp[i].pure_cache)
 				cache_only[qp[i].flag]++;
 		}
+		pop[1] += queue->HQpopulation();
 
 		printf("# redundant -> residual: %d \n", cntcnt);
 		printf("# cache overflow: %d \n", (int)queue->cache_overflow);

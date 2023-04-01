@@ -38,6 +38,21 @@
         "stdexcept": "cpp",
         "streambuf": "cpp",
         "typeinfo": "cpp",
-        "vector": "cpp"
+        "vector": "cpp",
+        "array": "cpp",
+        "chrono": "cpp",
+        "cinttypes": "cpp",
+        "cstring": "cpp",
+        "ctime": "cpp",
+        "deque": "cpp",
+        "fstream": "cpp",
+        "iomanip": "cpp",
+        "numeric": "cpp",
+        "optional": "cpp",
+        "ranges": "cpp",
+        "ratio": "cpp",
+        "sstream": "cpp",
+        "stop_token": "cpp",
+        "thread": "cpp"
     }
 }

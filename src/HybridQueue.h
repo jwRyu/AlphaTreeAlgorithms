@@ -396,6 +396,12 @@ public:
 					break;
 				}
 			}
+			if(thr_hqueue == 0)
+			{
+				thr_hqueue = curthr = numlevels;
+			}
+
+			printf("HHQ: numlevels = %d, curthr = %d\n", (int)numlevels, (int)curthr);
 
 			hqueue = (HeapQueue_naive_quad<Imgidx, Pixel>**)Calloc(numlevels * sizeof(HeapQueue_naive_quad<Imgidx, Pixel>*));
 			for(int level = 0;level < thr_hqueue;level++)
@@ -425,6 +431,16 @@ public:
 				if(storage[level]) Free(storage[level]);
 			Free(storage + thr_hqueue);
 		}
+	}
+
+	uint64 HQpopulation()
+	{
+		uint64 ret = 0;
+		for(int i = 0;i < curthr;i++)
+		{
+			ret += hqueue[i]->cursize;
+		}
+		return ret;
 	}
 
 	inline Imgidx top() { return hqueue[queue_minlev]->top(); }
@@ -677,6 +693,16 @@ public:
 		Imgidx numqueue;
 	#endif
 
+	uint64 HQpopulation()
+	{
+		uint64 ret = 0;
+		for(int i = 0;i < curthr;i++)
+		{
+			ret += hqueue[i]->cursize;
+		}
+		return ret;
+	}
+
 	void initHQ(Imgidx *dhist, Imgidx numlevels_in, Imgidx size, double a_in, int listsize, int connectivity, double r)
 	{
 		/*		cnt = 0;//tmp*/
@@ -739,6 +765,12 @@ public:
 					break;
 				}
 			}
+
+			if(thr_hqueue == 0)
+			{
+				thr_hqueue = curthr = numlevels;
+			}
+			printf("HHQ: numlevels = %d, curthr = %d\n", (int)numlevels, (int)curthr);
 
 			hqueue = (HeapQueue_naive_quad<Imgidx, Pixel>**)Calloc(numlevels * sizeof(HeapQueue_naive_quad<Imgidx, Pixel>*));
 			for(int level = 0;level < thr_hqueue;level++)
