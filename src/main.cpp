@@ -1,22 +1,12 @@
-// #include <cstdio>
 #include <ctime>
-//#include <opencv2/opencv.hpp>
-//#include <experimental/filesystem>
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
-//#include <ctime>
-//#include <chrono>
-//#include <fstream>
 #include <stdio.h>
 #include <string.h>
 #include <cstring>
-//#include <fitsio.h>
 #include "defines.h"
 #include "AlphaTree.h"
-//#include "opencv2/opencv.hpp"
-//#include "tinytiffreader.h"
-//#include "tinytiffwriter.h"
 #include "walltime.h"
 #include "pgmio.h"
 
@@ -29,15 +19,6 @@ using namespace std;
 
 #define OUTPUT_FNAME "./AlphaTree.dat"
 #define OUTIMG_FNAME "./outimg.jpg"
-//#define INPUTIMAGE_DIR	"C:/Users/jwryu/Google Drive/RUG/2018/AlphaTree/imgdata/OrientedAlphaTree_test"
-//#define INPUTIMG_FNAME	"../image/Moon_5000x5000.pgm"
-//#define INPUTIMG_FNAME	"../image/Moonface_ext_5186x5506.pgm"
-//#define INPUTIMG_FNAME	"../image/Moonface_ext_10372x11012.pgm"
-//#define INPUTIMG_FNAME	"../image/Moonface_ext_20744x22024.pgm"
-//#define INPUTIMG_FNAME	"../image/Moonface_ext_20744x44048.pgm"
-//#define INPUTIMG_FNAME	"../image/Moonface_ext_41488x44048.pgm"
-//#define INPUTIMG_FNAME	"imegg.pgm"
-//#define INPUTIMG_FNAME	"../image/Moonrep_20000x20000.pgm"
 
 
 _uint64 *qrecord;
@@ -71,7 +52,6 @@ void RandomizedHDRimage(_uint64* hdrimg, _uint8* ldrimg, _int64 imgsize)
 	for (_int64 i = 0; i < imgsize; i++)
 	{
 		pix = ((_uint64)ldrimg[i]) << 56;
-		//pix = ((uint64)(rand() & 0xff) << 56); //tmp!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		pix |= ((_uint64)(rand() & 0xff) << 48);
 		pix |= ((_uint64)(rand() & 0xff) << 40);
 		pix |= ((_uint64)(rand() & 0xff) << 32);
@@ -98,18 +78,7 @@ void RandomizedHDRimage(_uint64* hdrimg, _int64 imgsize)
 		pix |= ((_uint64)(rand() & 0xff) << 16);
 		pix |= ((_uint64)(rand() & 0xff) << 8);
 		pix |= ((_uint64)(rand() & 0xff));
-/*
-		pix1 = pix;
-		pix = ((_uint64)(rand() & 0xff) << 56); //tmp!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		pix |= ((_uint64)(rand() & 0xff) << 48);
-		pix |= ((_uint64)(rand() & 0xff) << 40);
-		pix |= ((_uint64)(rand() & 0xff) << 32);
-		pix |= ((_uint64)(rand() & 0xff) << 24);
-		pix |= ((_uint64)(rand() & 0xff) << 16);
-		pix |= ((_uint64)(rand() & 0xff) << 8);
-		pix |= ((_uint64)(rand() & 0xff));
-		pix = pix >> 1 + pix1 >> 1;
-*/
+
 		hdrimg[i] = pix;
 	}
 }
@@ -142,7 +111,7 @@ void Randomizedimage(_uint8*& img, _int64 imgsize, int bit_depth, int ch)
 	_uint64 pix;
 	int shamt = 8 - bit_depth;
 
-	if(img == 0) img = new _uint8[imgsize];
+	if(img == 0) img = new _uint8[imgsize * ch];
 
 	for (_int64 i = 0; i < imgsize * ch; i++)
 	{
@@ -157,7 +126,7 @@ void Randomizedimage(_uint16*& img, _int64 imgsize, int bit_depth, int ch)
 	_uint64 pix;
 	int shamt = 16 - bit_depth;
 
-	if(img == 0) img = new _uint16[imgsize];
+	if(img == 0) img = new _uint16[imgsize * ch];
 
 	for (_int64 i = 0; i < imgsize * ch; i++)
 	{
@@ -173,7 +142,7 @@ void Randomizedimage(_uint32*& img, _int64 imgsize, int bit_depth, int ch)
 	_uint64 pix;
 	int shamt = 32 - bit_depth;
 
-	if(img == 0) img = new _uint32[imgsize];
+	if(img == 0) img = new _uint32[imgsize * ch];
 
 	for (_int64 i = 0; i < imgsize * ch; i++)
 	{
@@ -189,24 +158,74 @@ void Randomizedimage(_uint32*& img, _int64 imgsize, int bit_depth, int ch)
 void Randomizedimage(_uint64*& img, _int64 imgsize, int bit_depth, int ch)
 {
 	_uint64 pix;
-	int shamt = 64 - bit_depth;
+	int shamt = 32 - bit_depth;
 
-	if(img == 0) img = new _uint64[imgsize];
+	if(img == 0) img = new _uint64[imgsize * ch];
 
 	for (_int64 i = 0; i < imgsize * ch; i++)
 	{
-		//pix = ((_uint64)ldrimg[i]) << 56;
-		pix = ((_uint64)(rand() & 0xff) << 56); //tmp!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		pix |= ((_uint64)(rand() & 0xff) << 48);
-		pix |= ((_uint64)(rand() & 0xff) << 40);
-		pix |= ((_uint64)(rand() & 0xff) << 32);
-		pix |= ((_uint64)(rand() & 0xff) << 24);
+		pix = ((_uint64)(rand() & 0xff) << 56);
+		pix = ((_uint64)(rand() & 0xff) << 48);
+		pix = ((_uint64)(rand() & 0xff) << 40);
+		pix = ((_uint64)(rand() & 0xff) << 32);
+		pix = ((_uint64)(rand() & 0xff) << 24);
 		pix |= ((_uint64)(rand() & 0xff) << 16);
 		pix |= ((_uint64)(rand() & 0xff) << 8);
 		pix |= ((_uint64)(rand() & 0xff));
 
 		img[i] = pix >> shamt;
 	}
+}
+
+template<class T>
+T getRand() {
+	T ret;
+	switch (sizeof(T)) {
+		case (1):
+			ret = (T)(rand() & 0xff);
+			break;
+		case (2):
+			ret = (T)(rand() & 0xff);
+			ret |= (T)((rand()  & 0xff) << 8);
+			break;
+		case (4):
+			ret = (T)(rand() & 0xff);
+			ret |= (T)((rand() & 0xff) << 8);
+			ret |= (T)((rand() & 0xff) << 16);
+			ret |= (T)((rand() & 0xff) << 24);
+			break;
+		case (8):
+			ret = (T)(rand() & 0xff);
+			ret |= (T)((_uint64)(rand() & 0xff) << 8);
+			ret |= (T)((_uint64)(rand() & 0xff) << 16);
+			ret |= (T)((_uint64)(rand() & 0xff) << 24);
+			ret |= (T)((_uint64)(rand() & 0xff) << 32);
+			ret |= (T)((_uint64)(rand() & 0xff) << 40);
+			ret |= (T)((_uint64)(rand() & 0xff) << 48);
+			ret |= (T)((_uint64)(rand() & 0xff) << 56);
+			break;
+		default:
+			ret = 0;
+			break;	
+	}
+	return ret;
+}
+
+template<class T>
+T* getRandomizedImage(_int64 imgsize, int bit_depth, int ch)
+{
+	if ((int)(sizeof(T) * 8) < bit_depth)
+		return NULL;
+	int shamt = (sizeof(T) * 8) - bit_depth;
+
+	T* img = new T[imgsize * ch];
+
+	for (_int64 i = 0; i < imgsize * ch; i++)
+	{
+		T pix = getRand<T>();
+		img[i] = pix >> shamt;
+	}
+	return img;
 }
 
 void imageblur(_uint64** img, int height, int width, int nch)
@@ -653,7 +672,18 @@ int main(int argc, char **argv)
 	if(argc == 1)
 	{
 		printf("args: Filename, nchannels, numthreads, testimgsize, algorithmcode, bitdepth, tseflag, outfnameheader connectivity float_param1 float_param2 int_param1\n");
-		return -1;
+		printf("No Arg - running default tests\n");
+
+		int width = 4;
+		int height = 4;
+
+		_uint32 *img = getRandomizedImage<_uint32>(width * height, 32, 1);
+	
+		AlphaTree tree;
+
+		tree.BuildAlphaTree(img, height, width, 1, 4, FLOOD_HIERARHEAPQUEUE_CACHE, 1, 0, 0.0, 0.0, 0);
+
+		// return -1;
 	}
 
 	AtreeInputParams input;
@@ -671,7 +701,6 @@ int main(int argc, char **argv)
 	int thrstart = 0;
 
 	srand(time(NULL));
-
 
 	//if(!randomimg)
 	{
@@ -810,12 +839,6 @@ int main(int argc, char **argv)
 			meanrunspeed[thridx] += runspeed;
 			maxmemuse[thridx] += max_memuse / imgsize;
 
-			//if(imgidx == numimg - 1)
-			{
-				//meanrunspeed[thridx] /= numimg;
-				//maxmemuse[thridx] /= numimg;
-			}
-
 			if(0 && thridx < thritr - 1)
 			{
 				ofstream fout(outfname);
@@ -829,14 +852,6 @@ int main(int argc, char **argv)
 		}
 
 		thrstart = 0;
-		//ofstream fout(outfname);
-		//fout << imgidx + 1 << ' ' << 0 << endl;
-		//for(int thridx = 0;thridx < input.numthreads;thridx++)
-		{
-		//	fout << meanrunspeed[thridx] << ' ' << maxmemuse[thridx] << endl;
-		}
-		//fout.close();
-		//break;
 	}
 	printf("Summary ======================================\n");
 	int numthrs = randomimg ? 1 : input.numthreads;

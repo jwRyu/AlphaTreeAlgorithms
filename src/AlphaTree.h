@@ -3055,10 +3055,6 @@ FLOOD_END:
 					if(node[stack_top].area == imgsize)
 						goto FLOOD_END;
 				}
-
-					//printf("Piep2: %d\n",(int)curSize);
-					//printf("Queue top: %d at %.3f(%lu)\n",(int)queue->top(), log2((double)queue->top_alpha()), (_uint64)queue->top_alpha());
-					//printf("--visited %d: stack_top[%d] at %.2f, area: %d\n", (int)p, (int)stack_top, log2((double)(node[stack_top].alpha)), (int)node[stack_top].area);
 	    	}
 
 			if (node[prev_top].parentidx == stack_top && node[prev_top].area == node[stack_top].area)
