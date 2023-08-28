@@ -54,9 +54,6 @@ using namespace pmt;
 #define FLOOD_HIERARQUEUE_CACHE_PAR			13//p2
 #define FLOOD_HIERARHEAPQUEUE				14//p2
 
-//#define FLOOD_TRIE_HYPERGRAPH_PILOT         13
-//#define FLOOD_HQUEUE_HYPERGRAPH_PAR         14
-
 #define ROOTIDX -1
 
 #define CHKRNG(var,a,b) ( (var >= a) && (var < b) )
@@ -72,7 +69,6 @@ class AlphaNode
 {
 public:
 	Imgidx area;
-	//Imgidx nrnode; //number of hypergraph nodes - only used in hypergraph implementation
 	double alpha;  /* alpha of flat zone */
 	double sumPix;
 	Pixel minPix;
@@ -134,7 +130,7 @@ public:
 
 		val = (double)this->sumPix;
 		
-		if(sizeof(Pixel) > 2)
+		if (sizeof(Pixel) > 2)
 		{
 			printf("Node idx: %d  alpha: %f area: %d, sumpix: %.0f, min-max: %d-%d  rootidx: %d  parent: %d\n"
 			,(int)(this - node)
@@ -191,27 +187,24 @@ public:
 	{
 		this->alpha = item.alpha;
 		this->dimgidx = item.dimgidx;
-		//this->p = item.p;
-		//this->q = item.q;
 	}
 
 	inline Imgidx get_pidx0(Imgidx connectivity = 4)
 	{
-		if(connectivity == 4)
+		if (connectivity == 4)
 			return (this->dimgidx >> 1);
-		else if(connectivity == 8)
+		else if (connectivity == 8)
 			return (this->dimgidx >> 2);
 		else
 		{
 			return -1;
-			//??
 		}
 	}
 	inline Imgidx get_pidx1(Imgidx width, Imgidx connectivity = 4)
 	{
-		if(connectivity == 4)
+		if (connectivity == 4)
 			return (this->dimgidx >> 1) + width + (1 - width) * (this->dimgidx & 1);
-		else if(connectivity == 8)
+		else if (connectivity == 8)
 		{
 				Imgidx neighboridx = (this->dimgidx & 2);
 				return (this->dimgidx >> 2) + width * ((Imgidx)(neighboridx < 2) - (Imgidx)(neighboridx == 3)) + (Imgidx)(neighboridx > 0);
@@ -219,7 +212,6 @@ public:
 		else
 		{
 			return -1;
-			//??
 		}
 	}
 };
@@ -251,7 +243,7 @@ public:
 		 if (node)
 		 {
 				Free(node);
-				if(parentAry)
+				if (parentAry)
 				{
 					Free(parentAry);
 				}
@@ -289,37 +281,6 @@ public:
 			case(FLOOD_HIERARHEAPQUEUE_CACHE_HISTEQ):	Flood_HierarHeapQueue_Cache_histeq(img);						break;
 			case(FLOOD_HIERARQUEUE_PAR):				Flood_Hierarqueue_par_tse(img, numthreads, tse);				break;
 			case(PILOT_RANK):							Pilot_Rank(img, numthreads);									break;
-
-			//buggy
-			//case(FLOOD_TRIE_HYPERGRAPH_PILOT):Flood_Trie_Hypergraph_pilot(img);		break;
-			//case(FLOOD_HQUEUE_HYPERGRAPH_PAR): 	Flood_Hqueue_Hypergraph_par(img, numthreads); break;
-
-			//obsolete
-			//case(FLOOD_HIERARQUEUE_PAR):  		Flood_Hierarqueue_par(img);	        	break;
-			//case(FLOOD_HEAPQUEUE_PAR): 				Flood_HeapQueue_par(img);      		break;
-			//case(FLOOD_HEAPQUEUE_RANK_PAR): 	Flood_HeapQueue_Rank_par(img);		break;
-			//case(FLOOD_TRIE_PAR): 						Flood_Trie_par(img);		    			break;
-			//case(FLOOD_TRIE_CACHE_PAR): 			Flood_Trie_Cache_par(img);				break;
-			//case(FLOOD_HIERARQUEUE_PAR_TSE):	Flood_Hierarqueue_par_tse(img, numthreads);   							break;
-			//case(FLOOD_HYBRIDTRIEQUEUE_PAR):  	Flood_HybridTrieQueue_par(img,12,numthreads);		  break;
-			//case(FLOOD_HIERARQUEUE_RANK): 	  Flood_HierarQueue_Rank(img);			break;
-			//case(HYBRID_HQUEUE_HYPERGRAPH_PILOT): Hybrid_HQueue_Hypergraph_Pilot(img); 			  break;
-			//case(FLOOD_TRIE_HYPERGRAPH_PILOT):Flood_Trie_Hypergraph_pilot(img);		break;
-			//case(HYBRID_PILOT_RANK_PARPILOT):	Hybrid_Pilotree_Rank_parpilot(img);	break;
-			//case(HYBRID_PILOT_RANK_PILOTLINK):Hybrid_Pilot_Rank_pilotlink(img);	break;
-			//case(FLOOD_HIERARQUEUE_L1):  			Flood_HQueue1(img);        				break;
-			//case(FLOOD_HIERARQUEUE_L2):  			Flood_HQueue2(img);	    					break;
-			//case(FLOOD_CIRCACHE_HIERQUEUE):   Flood_CirCache_HierQueue(img, numthreads);    break;
-			//case(FLOOD_CACHE_HIERQUEUE_L1):		Flood_Cache_HierQueue_l1(img, numthreads);		break;
-			//case(FLOOD_CACHE_HIERQUEUE_L2):		Flood_Cache_HierQueue_l2(img, numthreads);		break;
-			//case(FLOOD_HEAPQUEUE_PAR):					Flood_HeapQueue_par(img, numthreads, tse);		break;
-			//case(FLOOD_HEAPQUEUE_RANK):  			Flood_HeapQueue_Rank(img);				break;
-			//case(FLOOD_HEAPQUEUE):  					Flood_HeapQueue(img);      				break;
-			//case(FLOOD_NAIVE_HEAPQUEUE):			Flood_Naive_HeapQueue(img);      	break;
-			//case(FLOOD_NAIVE_QUAD_HEAPQUEUE):	Flood_Naive_Quad_HeapQueue(img);  break;
-			//case(FLOOD_NAIVE_HEAPQUEUE_OBS):  Flood_Naive_HeapQueue_obs(img); 	break;
-			//case(FLOOD_CACHE_HEAPQUEUE):			Flood_Cache_HeapQueue(img);      	break;
-			//case(FLOOD_HIERARQUEUE_RANK_PAR): Flood_HierarQueue_Rank_par(img);	break;
 			default: break;
 		}
 	}
@@ -364,8 +325,7 @@ public:
 	void print_tree()
 	{
 		for (int i = 0; i < maxSize; i++)
-			if(node[i].area) node[i].print(node, pix_type);
-		//	node[i].print(node, pix_type);
+			if (node[i].area) node[i].print(node, pix_type);
 	}
 
 private:
@@ -393,16 +353,12 @@ private:
 			: (Pixel)(abs((_int64)img[imgidx + 1] - (_int64)img[imgidx]));\
 	rankitem[contidx++].dimgidx = dimgidx++;
 
-////rankitem[contidx].p = imgidx;
-////rankitem[contidx].q = imgidx + width;
 #define _COMPUTE_RANK_PIXEL_LASTCOL \
 	rankitem[contidx].alpha = p64 ? (Pixel)(abs((double)img[imgidx + width] - (double)img[imgidx]))\
 		: (Pixel)(abs((_int64)img[imgidx + width] - (_int64)img[imgidx]));\
 	rankitem[contidx++].dimgidx = dimgidx;\
 	dimgidx += 2;
 
-////rankitem[contidx].p = imgidx;
-////rankitem[contidx].q = imgidx + 1;
 #define _COMPUTE_RANK_PIXEL_LASTROW \
 	dimgidx++;\
 	rankitem[contidx].alpha = p64 ? (Pixel)(abs((double)img[imgidx + 1] - (double)img[imgidx]))\
@@ -417,7 +373,7 @@ private:
 		contidx = imgidx = dimgidx = 0;
 		if (connectivity == 4)
 		{
-			if(channel == 1)
+			if (channel == 1)
 			{
 				#pragma omp parallel for schedule(guided,1) private(imgidx, dimgidx, contidx, i, j)
 				for (i = 0; i < height; i++)
@@ -426,7 +382,7 @@ private:
 					imgidx = i * width;
 					dimgidx = imgidx << (connectivity >> 2);
 					contidx = dimgidx - i;
-					if(i < height - 1)
+					if (i < height - 1)
 					{
 						for (j = 0; j < width - 1; j++)
 						{
@@ -434,23 +390,17 @@ private:
 							vals[contidx].val_ = abs_diff(img[imgidx + width], img[imgidx]);
 							d = (double)(vals[contidx].val_);
 							rankitem[contidx].alpha = d;
-							//rankitem[contidx].p = imgidx;
-							//rankitem[contidx].q = imgidx + width;
 							rankitem[contidx++].dimgidx = dimgidx++;
 
 							vals[contidx].val_ = abs_diff(img[imgidx + 1], img[imgidx]);
 							d = (double)(vals[contidx].val_);
 							rankitem[contidx].alpha = d;
-							//rankitem[contidx].p = imgidx;
-							//rankitem[contidx].q = imgidx + 1;
 							rankitem[contidx++].dimgidx = dimgidx++;
 							imgidx++;
 						}
 						vals[contidx].val_ = abs_diff(img[imgidx + width], img[imgidx]);
 						d = (double)(vals[contidx].val_);
 						rankitem[contidx].alpha = d;
-						//rankitem[contidx].p = imgidx;
-						//rankitem[contidx].q = imgidx + width;
 						rankitem[contidx++].dimgidx = dimgidx;
 						dimgidx += 2;
 						imgidx++;
@@ -463,8 +413,6 @@ private:
 							vals[contidx].val_ = abs_diff(img[imgidx + 1], img[imgidx]);
 							d = (double)(vals[contidx].val_);
 							rankitem[contidx].alpha = d;
-							//rankitem[contidx].p = imgidx;
-							//rankitem[contidx].q = imgidx + 1;
 							rankitem[contidx++].dimgidx = dimgidx++;
 							imgidx++;
 						}
@@ -480,7 +428,7 @@ private:
 				Imgidx linestride = width * (connectivity >> 1) - (connectivity >> 2);
 
 				#pragma omp parallel for schedule(guided,1) private(imgidx, dimgidx, i, j)
-				for(int hch = 0;hch < channel * height;hch++)
+				for (int hch = 0;hch < channel * height;hch++)
 				{
 					double d;
 					int ch = hch / height;
@@ -488,8 +436,7 @@ private:
 					Pixel *pimg = img + ch * imgsize + i * width;
 					double *pdimg = dimg_3ch + ch + i * width * (connectivity >> 1) * channel;
 					imgidx = dimgidx = 0;
-					//dimgidx = (i * width) << (connectivity >> 2);
-					if(i < height - 1)
+					if (i < height - 1)
 					{
 						for (j = 0; j < width - 1; j++)
 						{
@@ -523,22 +470,17 @@ private:
 				for (i = 0; i < height; i++)
 				{
 					double d;
-					//int ch = hch / height;
-					//Pixel *pimg = img + ch * imgsize;
-					//i = hch % height;
 					double *pdimg = dimg_3ch + i * width * (connectivity >> 1) * channel;
 					contidx = i * linestride;
 					imgidx = i * width;
 					Imgidx dimgidx_3 = 0;
 					dimgidx = i * width * (connectivity >> 1);
-					if(i < height - 1)
+					if (i < height - 1)
 					{
 						for (j = 0; j < width - 1; j++)
 						{
 							d = pdimg[dimgidx_3] + pdimg[dimgidx_3 + 1] + pdimg[dimgidx_3 + 2]; //only for 3-ch
 							rankitem[contidx].alpha = vals[contidx].val_ = sqrt(d/(double)channel);
-							//rankitem[contidx].p = imgidx;
-							//rankitem[contidx].q = imgidx + width;
 							rankitem[contidx].dimgidx = dimgidx;
 							contidx++;
 
@@ -547,8 +489,6 @@ private:
 
 							d = pdimg[dimgidx_3] + pdimg[dimgidx_3 + 1] + pdimg[dimgidx_3 + 2]; //only for 3-ch
 							rankitem[contidx].alpha = vals[contidx].val_ = sqrt(d/(double)channel);
-							//rankitem[contidx].p = imgidx;
-							//rankitem[contidx].q = imgidx + 1;
 							rankitem[contidx].dimgidx = dimgidx;
 							contidx++;
 
@@ -559,8 +499,6 @@ private:
 						}
 						d = pdimg[dimgidx_3] + pdimg[dimgidx_3 + 1] + pdimg[dimgidx_3 + 2]; //only for 3-ch
 						rankitem[contidx].alpha = vals[contidx].val_ = sqrt(d/(double)channel);
-						//rankitem[contidx].p = imgidx;
-						//rankitem[contidx].q = imgidx + width;
 						rankitem[contidx].dimgidx = dimgidx;
 						contidx++;
 						dimgidx++;
@@ -577,8 +515,6 @@ private:
 
 							d = pdimg[dimgidx_3] + pdimg[dimgidx_3 + 1] + pdimg[dimgidx_3 + 2]; //only for 3-ch
 							rankitem[contidx].alpha = vals[contidx].val_ = sqrt(d/(double)channel);
-							//rankitem[contidx].p = imgidx;
-							//rankitem[contidx].q = imgidx + 1;
 							rankitem[contidx].dimgidx = dimgidx;
 							contidx++;
 
@@ -593,7 +529,7 @@ private:
 		}
 		else if (connectivity == 8) //not implemented yet
 		{
-			if(channel == 1)
+			if (channel == 1)
 			{
 				#pragma omp parallel for schedule(guided,1) private(imgidx, dimgidx, contidx, i, j)
 				for (i = 0; i < height; i++)
@@ -602,10 +538,10 @@ private:
 					imgidx = i * width;
 					dimgidx = imgidx << (connectivity >> 2);
 					contidx = dimgidx - ((connectivity == 4) ? (i) : (3 * i));
-					if(connectivity == 8 && i > 0)
+					if (connectivity == 8 && i > 0)
 						contidx -= width - 1;
 
-					if(i < height - 1)
+					if (i < height - 1)
 					{
 						for (j = 0; j < width - 1; j++)
 						{
@@ -613,31 +549,23 @@ private:
 							vals[contidx].val_ = abs_diff(img[imgidx + width], img[imgidx]);
 							d = (double)(vals[contidx].val_);
 							rankitem[contidx].alpha = d;
-							//rankitem[contidx].p = imgidx;
-							//rankitem[contidx].q = imgidx + width;
 							rankitem[contidx++].dimgidx = dimgidx++;
 
 							vals[contidx].val_ = abs_diff(img[imgidx + width + 1], img[imgidx]);
 							d = (double)(vals[contidx].val_);
 							rankitem[contidx].alpha = d;
-							//rankitem[contidx].p = imgidx;
-							//rankitem[contidx].q = imgidx + 1;
 							rankitem[contidx++].dimgidx = dimgidx++;
 
 							vals[contidx].val_ = abs_diff(img[imgidx + 1], img[imgidx]);
 							d = (double)(vals[contidx].val_);
 							rankitem[contidx].alpha = d;
-							//rankitem[contidx].p = imgidx;
-							//rankitem[contidx].q = imgidx + 1;
 							rankitem[contidx++].dimgidx = dimgidx++;
 
-							if(i > 0)
+							if (i > 0)
 							{
 								vals[contidx].val_ = abs_diff(img[imgidx - width + 1], img[imgidx]);
 								d = (double)(vals[contidx].val_);
 								rankitem[contidx].alpha = d;
-								//rankitem[contidx].p = imgidx;
-								//rankitem[contidx].q = imgidx + 1;
 								rankitem[contidx++].dimgidx = dimgidx;
 							}
 							dimgidx++;
@@ -648,8 +576,6 @@ private:
 						vals[contidx].val_ = abs_diff(img[imgidx + width], img[imgidx]);
 						d = (double)(vals[contidx].val_);
 						rankitem[contidx].alpha = d;
-						//rankitem[contidx].p = imgidx;
-						//rankitem[contidx].q = imgidx + width;
 						rankitem[contidx++].dimgidx = dimgidx;
 						dimgidx += 4;
 						imgidx++;
@@ -662,15 +588,11 @@ private:
 							vals[contidx].val_ = abs_diff(img[imgidx + 1], img[imgidx]);
 							d = (double)(vals[contidx].val_);
 							rankitem[contidx].alpha = d;
-							//rankitem[contidx].p = imgidx;
-							//rankitem[contidx].q = imgidx + 1;
 							rankitem[contidx++].dimgidx = dimgidx++;
 
 							vals[contidx].val_ = abs_diff(img[imgidx - width + 1], img[imgidx]);
 							d = (double)(vals[contidx].val_);
 							rankitem[contidx].alpha = d;
-							//rankitem[contidx].p = imgidx;
-							//rankitem[contidx].q = imgidx + 1;
 							rankitem[contidx++].dimgidx = dimgidx++;
 
 							imgidx++;
@@ -681,13 +603,6 @@ private:
 		}
 	}
 
-	struct rankitempje
-	{
-		Pixel alpha;
-		Imgidx idx;
-		Imgidx dimgidx;
-	};
-
 	void compute_dimg1(Imgidx* rank, RankItem<Imgidx, double>*& rankitem, Pixel* img)
 	{
 		Imgidx contidx, dimgidx, imgidx, nbyte, i, j, nredges;
@@ -696,7 +611,6 @@ private:
 		RankItem<Imgidx, double> *tmp, *r;
 		Pixel hidx, h_offset, mask = (Pixel)0xffff, shamt;
 		size_t hist_size = 65536;
-		//_int8 p64 = (pix_type == PIXEL_64BIT) || (pix_type == PIXEL_DOUBLE);
 		Pixel *incidents = (Pixel*)Malloc(connectivity * width * height * sizeof(Pixel));
 
 		if (connectivity == 4)
@@ -704,35 +618,26 @@ private:
 		else
 			nredges = (width - 1) * height + width * (height - 1) + 2 * (width - 1) * (height - 1);
 
-		//rankitem = (RankItem1<Imgidx, Pixel>*)Malloc(nredges * sizeof(RankItem1<Imgidx, Pixel>));
 		tmp = (RankItem<Imgidx, double>*)Malloc(nredges * sizeof(RankItem<Imgidx, double>));
 		i = (sizeof(Pixel) >> 1) * 65536;
 		hist = (Imgidx*)Malloc(_max(hist_size * sizeof(Imgidx) * sizeof(Pixel), (sizeof(Pixel) * 65536 * sizeof(Imgidx)) >> 1));
 
-		//int aa = _max(hist_size, (sizeof(Pixel) * 65536 * sizeof(Imgidx)) >> 1);
-
 		contidx = imgidx = dimgidx = 0;
 		if (connectivity == 4)
 		{
-			if(channel == 1)
+			if (channel == 1)
 			{
 				for (i = 0; i < height - 1; i++)
 				{
 					for (j = 0; j < width - 1; j++)
 					{
 							rankitem[contidx].alpha = abs((double)img[imgidx + width] - (double)img[imgidx]);
-							//rankitem[contidx].p = imgidx;
-							//rankitem[contidx].q = imgidx + width;
 							rankitem[contidx++].dimgidx = dimgidx++;
 							rankitem[contidx].alpha = abs((double)img[imgidx + 1] - (double)img[imgidx]);
-							//rankitem[contidx].p = imgidx;
-							//rankitem[contidx].q = imgidx + 1;
 							rankitem[contidx++].dimgidx = dimgidx++;
 							imgidx++;
 					}
 					rankitem[contidx].alpha = abs((double)img[imgidx + width] - (double)img[imgidx]);
-					//rankitem[contidx].p = imgidx;
-					//rankitem[contidx].q = imgidx + width;
 					rankitem[contidx++].dimgidx = dimgidx;
 					dimgidx += 2;
 					imgidx++;
@@ -741,8 +646,6 @@ private:
 				{
 						dimgidx++;
 						rankitem[contidx].alpha = abs((double)img[imgidx + 1] - (double)img[imgidx]);
-						//rankitem[contidx].p = imgidx;
-						//rankitem[contidx].q = imgidx + 1;
 						rankitem[contidx++].dimgidx = dimgidx++;
 					imgidx++;
 				}
@@ -754,7 +657,7 @@ private:
 				Imgidx imgsize = height * width;
 				double* dimg = (double*)Calloc(2 * imgsize * sizeof(double));
 				contidx = 0;
-				for(int ch = 0;ch < channel;ch++)
+				for (int ch = 0;ch < channel;ch++)
 				{
 					imgidx = dimgidx = 0;
 					for (i = 0; i < height - 1; i++)
@@ -762,35 +665,29 @@ private:
 						for (j = 0; j < width - 1; j++)
 						{
 							d = (double)pimg[imgidx + width] - (double)pimg[imgidx];
-							if(ch < channel - 1)	dimg[dimgidx] += d * d;
+							if (ch < channel - 1)	dimg[dimgidx] += d * d;
 							else
 							{
 								rankitem[contidx].alpha = sqrt((dimg[dimgidx] + d * d)/(double)channel);
-								//rankitem[contidx].p = imgidx;
-								//rankitem[contidx].q = imgidx + width;
 								rankitem[contidx++].dimgidx = dimgidx;
 							}
 							dimgidx++;
 
 							d = (double)pimg[imgidx + 1] - (double)pimg[imgidx];
-							if(ch < channel - 1) dimg[dimgidx] += d * d;
+							if (ch < channel - 1) dimg[dimgidx] += d * d;
 							else
 							{
 									rankitem[contidx].alpha = sqrt((dimg[dimgidx] + d * d)/(double)channel);
-									//rankitem[contidx].p = imgidx;
-									//rankitem[contidx].q = imgidx + 1;
 									rankitem[contidx++].dimgidx = dimgidx;
 							}
 							dimgidx++;
 							imgidx++;
 						}
 						d = (double)pimg[imgidx + width] - (double)pimg[imgidx];
-						if(ch < channel - 1) dimg[dimgidx] += d * d;
+						if (ch < channel - 1) dimg[dimgidx] += d * d;
 						else
 						{
 								rankitem[contidx].alpha = sqrt((dimg[dimgidx] + d * d)/(double)channel);
-								//rankitem[contidx].p = imgidx;
-								//rankitem[contidx].q = imgidx + width;
 								rankitem[contidx++].dimgidx = dimgidx;
 						}
 						dimgidx += 2;
@@ -800,12 +697,10 @@ private:
 					{
 						dimgidx++;
 						d = (double)pimg[imgidx + 1] - (double)pimg[imgidx];
-						if(ch < channel - 1) dimg[dimgidx] += d * d;
+						if (ch < channel - 1) dimg[dimgidx] += d * d;
 						else
 						{
 								rankitem[contidx].alpha = sqrt((dimg[dimgidx] + d * d)/(double)channel);
-								//rankitem[contidx].p = imgidx;
-								//rankitem[contidx].q = imgidx + 1;
 								rankitem[contidx++].dimgidx = dimgidx;
 						}
 						dimgidx++;
@@ -888,13 +783,9 @@ private:
 		}
 		for (i = 0; i < nredges; i++)
 		{
-			//rank_to_alpha[i] = rankitem[i].alpha;
 			rank[rankitem[i].dimgidx] = i;
 		}
 
-		//std::cout << "in_func2: " << rankitem << " " << rankitem[0].alpha << std::endl;
-
-		//Free(rankitem);
 		Free(tmp);
 		Free(hist);
 		Free(incidents);
@@ -916,7 +807,6 @@ private:
 		else
 			nredges = (width - 1) * height + width * (height - 1) + 2 * (width - 1) * (height - 1);
 
-		//rankitem = (RankItem1<Imgidx, Pixel>*)Malloc(nredges * sizeof(RankItem1<Imgidx, Pixel>));
 		tmp = (RankItem<Imgidx, Pixel>*)Malloc(nredges * sizeof(RankItem<Imgidx, Pixel>));
 		i = (sizeof(Pixel) >> 1) * 65536;
 		hist = (Imgidx*)Malloc(_max(hist_size * sizeof(Imgidx) * sizeof(Pixel), (sizeof(Pixel) * 65536 * sizeof(Imgidx)) >> 1));
@@ -954,38 +844,30 @@ private:
 				imgidx = i * width;
 				dimgidx = imgidx << (connectivity >> 2);
 				contidx = dimgidx - ((connectivity == 4) ? (i) : (3 * i));
-				if(connectivity == 8 && i > 0)
+				if (connectivity == 8 && i > 0)
 					contidx -= width - 1;
 
-				if(i < height - 1)
+				if (i < height - 1)
 				{
 					for (j = 0; j < width - 1; j++)
 					{
 						//caclulate histogram here
 						d = abs_diff(img[imgidx + width], img[imgidx]);
 						rankitem[contidx].alpha = d;
-						//rankitem[contidx].p = imgidx;
-						//rankitem[contidx].q = imgidx + width;
 						rankitem[contidx++].dimgidx = dimgidx++;
 
 						d = abs_diff(img[imgidx + width + 1], img[imgidx]);
 						rankitem[contidx].alpha = d;
-						//rankitem[contidx].p = imgidx;
-						//rankitem[contidx].q = imgidx + 1;
 						rankitem[contidx++].dimgidx = dimgidx++;
 
 						d = abs_diff(img[imgidx + 1], img[imgidx]);
 						rankitem[contidx].alpha = d;
-						//rankitem[contidx].p = imgidx;
-						//rankitem[contidx].q = imgidx + 1;
 						rankitem[contidx++].dimgidx = dimgidx++;
 
-						if(i > 0)
+						if (i > 0)
 						{
 							d = abs_diff(img[imgidx - width + 1], img[imgidx]);
 							rankitem[contidx].alpha = d;
-							//rankitem[contidx].p = imgidx;
-							//rankitem[contidx].q = imgidx + 1;
 							rankitem[contidx++].dimgidx = dimgidx;
 						}
 						dimgidx++;
@@ -995,8 +877,6 @@ private:
 
 					d = abs_diff(img[imgidx + width], img[imgidx]);
 					rankitem[contidx].alpha = d;
-					//rankitem[contidx].p = imgidx;
-					//rankitem[contidx].q = imgidx + width;
 					rankitem[contidx++].dimgidx = dimgidx;
 					dimgidx += 4;
 					imgidx++;
@@ -1008,14 +888,10 @@ private:
 						dimgidx += 2;
 						d = abs_diff(img[imgidx + 1], img[imgidx]);
 						rankitem[contidx].alpha = d;
-						//rankitem[contidx].p = imgidx;
-						//rankitem[contidx].q = imgidx + 1;
 						rankitem[contidx++].dimgidx = dimgidx++;
 
 						d = abs_diff(img[imgidx - width + 1], img[imgidx]);
 						rankitem[contidx].alpha = d;
-						//rankitem[contidx].p = imgidx;
-						//rankitem[contidx].q = imgidx + 1;
 						rankitem[contidx++].dimgidx = dimgidx++;
 
 						imgidx++;
@@ -1091,12 +967,9 @@ private:
 		}
 		for (i = 0; i < nredges; i++)
 		{
-			//rank_to_alpha[i] = rankitem[i].alpha;
 			rank[rankitem[i].dimgidx] = i;
 		}
-		//std::cout << "in_func2: " << rankitem << " " << rankitem[0].alpha << std::endl;
 
-		//Free(rankitem);
 		Free(tmp);
 		Free(hist);
 		Free(incidents);
@@ -1113,7 +986,7 @@ private:
 		imgidx = dimgidx = 0;
 		if (connectivity == 4)
 		{
-			if(channel == 1)
+			if (channel == 1)
 			{
 				for (i = 0; i < height - 1; i++)
 				{
@@ -1140,7 +1013,7 @@ private:
 			else
 			{
 				double d;
-				for(int ch = 0;ch < channel;ch++)
+				for (int ch = 0;ch < channel;ch++)
 				{
 					imgidx = dimgidx = 0;
 					for (i = 0; i < height - 1; i++)
@@ -1148,21 +1021,21 @@ private:
 						for (j = 0; j < width - 1; j++)
 						{
 							d = (double)pimg[imgidx + stride_w] - (double)pimg[imgidx];
-							if(ch == 0) 						   dimg[dimgidx] = d * d;
-							else if(ch != channel - 1) dimg[dimgidx] += d * d;
+							if (ch == 0) 						   dimg[dimgidx] = d * d;
+							else if (ch != channel - 1) dimg[dimgidx] += d * d;
 							else 											 dimg[dimgidx] = sqrt(dimg[dimgidx] + d * d);
 							dimgidx++;
 
 							d = (double)pimg[imgidx + 1] - (double)pimg[imgidx];
-							if(ch == 0) 						   dimg[dimgidx] = d * d;
-							else if(ch != channel - 1) dimg[dimgidx] += d * d;
+							if (ch == 0) 						   dimg[dimgidx] = d * d;
+							else if (ch != channel - 1) dimg[dimgidx] += d * d;
 							else 											 dimg[dimgidx] = sqrt(dimg[dimgidx] + d * d);
 							dimgidx++;
 							imgidx++;
 						}
 						d = (double)pimg[imgidx + stride_w] - (double)pimg[imgidx];
-						if(ch == 0) 						   dimg[dimgidx] = d * d;
-						else if(ch != channel - 1) dimg[dimgidx] += d * d;
+						if (ch == 0) 						   dimg[dimgidx] = d * d;
+						else if (ch != channel - 1) dimg[dimgidx] += d * d;
 						else 											 dimg[dimgidx] = sqrt(dimg[dimgidx] + d * d);
 						dimgidx+=2;
 						imgidx++;
@@ -1171,8 +1044,8 @@ private:
 					{
 						dimgidx++;
 						d = (double)pimg[imgidx + 1] - (double)pimg[imgidx];
-						if(ch == 0) 						   dimg[dimgidx] = d * d;
-						else if(ch != channel - 1) dimg[dimgidx] += d * d;
+						if (ch == 0) 						   dimg[dimgidx] = d * d;
+						else if (ch != channel - 1) dimg[dimgidx] += d * d;
 						else 											 dimg[dimgidx] = sqrt(dimg[dimgidx] + d * d);
 						dimgidx++;
 						imgidx++;
@@ -1183,7 +1056,7 @@ private:
 		}
 		else if (connectivity == 8)
 		{
-			if(channel == 1)
+			if (channel == 1)
 			{
 				//   -  -  3
 				//   -  p  2
@@ -1196,7 +1069,7 @@ private:
 						dimg[dimgidx++] = (Value)(abs_diff((_int64)img[imgidx + width], (_int64)img[imgidx]));//0
 						dimg[dimgidx++] = (Value)(abs_diff((_int64)img[imgidx + width + 1], (_int64)img[imgidx]));//1
 						dimg[dimgidx++] = (Value)(abs_diff((_int64)img[imgidx + 1], (_int64)img[imgidx]));//2
-						if(i > 0)
+						if (i > 0)
 						{
 							dimg[dimgidx] = (Value)(abs_diff((_int64)img[imgidx - width + 1], (_int64)img[imgidx]));//3
 						}
@@ -1277,7 +1150,7 @@ private:
 					dimg[dimgidx] = (Pixel)(abs((_int64)img[imgidx + 1] - (_int64)img[imgidx]));//2
 					maxdiff = _max(maxdiff,dimg[dimgidx]);
 					dhist[dimg[dimgidx++]]++;
-					if(i > 0)
+					if (i > 0)
 					{
 						dimg[dimgidx] = (Pixel)(abs((_int64)img[imgidx - width + 1] - (_int64)img[imgidx]));//3
 						maxdiff = _max(maxdiff,dimg[dimgidx]);
@@ -1325,17 +1198,17 @@ private:
 				for (j = 0; j < width - 1; j++)
 				{
 					dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + stride_w], img[imgidx]));
-					if(dimg[dimgidx] < mindiff) {mindiff = dimg[dimgidx]; minidx = i * width + j;}
+					if (dimg[dimgidx] < mindiff) {mindiff = dimg[dimgidx]; minidx = i * width + j;}
 					hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
 					dhist[hidx]++;
 					dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + 1], img[imgidx]));
-					if(dimg[dimgidx] < mindiff) {mindiff = dimg[dimgidx]; minidx = i * width + j;}
+					if (dimg[dimgidx] < mindiff) {mindiff = dimg[dimgidx]; minidx = i * width + j;}
 					hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
 					dhist[hidx]++;
 					imgidx++;
 				}
 				dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + stride_w], img[imgidx]));
-				if(dimg[dimgidx] < mindiff) {mindiff = dimg[dimgidx]; minidx = i * width + j;}
+				if (dimg[dimgidx] < mindiff) {mindiff = dimg[dimgidx]; minidx = i * width + j;}
 				hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
 				dhist[hidx]++;
 				dimgidx++;
@@ -1345,7 +1218,7 @@ private:
 			{
 				dimgidx++;
 				dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + 1], img[imgidx]));
-				if(dimg[dimgidx] < mindiff) {mindiff = dimg[dimgidx]; minidx = i * width + j;}
+				if (dimg[dimgidx] < mindiff) {mindiff = dimg[dimgidx]; minidx = i * width + j;}
 				hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
 				dhist[hidx]++;
 				imgidx++;
@@ -1362,21 +1235,21 @@ private:
 				for (j = 0; j < width - 1; j++)
 				{
 					dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + width], img[imgidx]));//0
-					if(dimg[dimgidx] < mindiff) {mindiff = dimg[dimgidx]; minidx = i * width + j;}
+					if (dimg[dimgidx] < mindiff) {mindiff = dimg[dimgidx]; minidx = i * width + j;}
 					hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
 					dhist[hidx]++;
 					dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + width + 1], img[imgidx]));//1
-					if(dimg[dimgidx] < mindiff) {mindiff = dimg[dimgidx]; minidx = i * width + j;}
+					if (dimg[dimgidx] < mindiff) {mindiff = dimg[dimgidx]; minidx = i * width + j;}
 					hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
 					dhist[hidx]++;
 					dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + 1], img[imgidx]));//2
-					if(dimg[dimgidx] < mindiff) {mindiff = dimg[dimgidx]; minidx = i * width + j;}
+					if (dimg[dimgidx] < mindiff) {mindiff = dimg[dimgidx]; minidx = i * width + j;}
 					hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
 					dhist[hidx]++;
-					if(i > 0)
+					if (i > 0)
 					{
 						dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx - width + 1], img[imgidx]));//3
-						if(dimg[dimgidx] < mindiff) {mindiff = dimg[dimgidx]; minidx = i * width + j;}
+						if (dimg[dimgidx] < mindiff) {mindiff = dimg[dimgidx]; minidx = i * width + j;}
 						hidx = (int)(a * log2(1 + (double)dimg[dimgidx]));
 						dhist[hidx]++;
 					}
@@ -1384,7 +1257,7 @@ private:
 					imgidx++;
 				}
 				dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + width], img[imgidx]));//0
-				if(dimg[dimgidx] < mindiff) {mindiff = dimg[dimgidx]; minidx = i * width + j;}
+				if (dimg[dimgidx] < mindiff) {mindiff = dimg[dimgidx]; minidx = i * width + j;}
 				hidx = (int)(a * log2(1 + (double)dimg[dimgidx]));
 				dhist[hidx]++;
 				dimgidx += 4;//skip 1,2,3
@@ -1396,11 +1269,11 @@ private:
 			for (j = 0; j < width - 1; j++)
 			{
 				dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + 1], img[imgidx]));//2
-				if(dimg[dimgidx] < mindiff) {mindiff = dimg[dimgidx]; minidx = i * width + j;}
+				if (dimg[dimgidx] < mindiff) {mindiff = dimg[dimgidx]; minidx = i * width + j;}
 				hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
 				dhist[hidx]++;
 				dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx - width + 1], img[imgidx]));//3
-				if(dimg[dimgidx] < mindiff) {mindiff = dimg[dimgidx]; minidx = i * width + j;}
+				if (dimg[dimgidx] < mindiff) {mindiff = dimg[dimgidx]; minidx = i * width + j;}
 				hidx = (int)(a * log2(1 + (double)dimg[dimgidx]));
 				dhist[hidx]++;
 				dimgidx += 3;
@@ -1464,7 +1337,7 @@ private:
 					dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + 1], img[imgidx]));//2
 					hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
 					dhist[hidx]++;
-					if(i > 0)
+					if (i > 0)
 					{
 						dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx - width + 1], img[imgidx]));//3
 						hidx = (int)(a * log2(1 + (double)dimg[dimgidx]));
@@ -1542,7 +1415,7 @@ private:
 					dhist[dimg[dimgidx++]]++;
 					dimg[dimgidx] = (Pixel)(abs((_int64)img[imgidx + 1] - (_int64)img[imgidx]));//2
 					dhist[dimg[dimgidx++]]++;
-					if(i > 0)
+					if (i > 0)
 					{
 						dimg[dimgidx] = (Pixel)(abs((_int64)img[imgidx - width + 1] - (_int64)img[imgidx]));//3
 						dhist[dimg[dimgidx]]++;
@@ -1627,7 +1500,7 @@ private:
 					d = (Pixel)(abs_diff((_int64)img[imgidx + 1], (_int64)img[imgidx]));//2
 					dhist[d]++;
 					dimg[dimgidx++] = (double)d;
-					if(i > 0)
+					if (i > 0)
 					{
 						d = (Pixel)(abs_diff((_int64)img[imgidx - width + 1], (_int64)img[imgidx]));//3
 						dhist[d]++;
@@ -1761,16 +1634,11 @@ private:
 			for (i = 0; i < npartitions_ver - 1; i++)
 			{
 				j = (i + 1) * wstride - 1;
-				//k = j + height;
-				//set_field(isAvailable, j, 0x5);
-				//set_field(isAvailable, j + 1, 0x3);
 				for (; j < imgsize; j += width)
 				{
 					isAvailable[j] &= 0xd;
 					isAvailable[j + 1] &= 0xb;
 				}
-				//set_field(isAvailable, j, 0xc);
-				//set_field(isAvailable, j + width, 0xa);
 			}
 		}
 		else
@@ -1780,7 +1648,6 @@ private:
 
 	inline _uint8 is_available(_uint8 isAvailable, _uint8 iNeighbour)
 	{
-		//return	(((isAvailable[idx >> 1] >> ((idx & 1) << 2)) & 0x0f) >> iNeighbour) & 1;
 		return	(isAvailable >> iNeighbour) & 1;
 	}
 
@@ -2027,7 +1894,7 @@ private:
 
 	Imgidx TreeSizeEstimation(Imgidx *dhist, _int64 numlevels, Imgidx imgsize, Imgidx nredges, double m)
 	{
-		if(imgsize < TSE_MINSIZE)
+		if (imgsize < TSE_MINSIZE)
 			return 10 + nredges + imgsize;
 		double tse_nrmsd = 0;
 		for (_int64 p = 0; p < numlevels; p++)
@@ -2037,7 +1904,7 @@ private:
 		Imgidx ret = _min(2 * imgsize, (Imgidx)(2 * imgsize * ((A * exp(SIGMA * tse_nrmsd) + B) + m)));
 		double dret = _min((double)(2 * imgsize), (double)(2 * imgsize * ((A * exp(SIGMA * tse_nrmsd) + B) + m)));
 
-		if(ret < 0)
+		if (ret < 0)
 		{
 			printf("Warning: TSE returned 0< value\n");
 			printf("nrmsd = %lf\n",tse_nrmsd);
@@ -2065,7 +1932,7 @@ private:
 	}
 
 #define _SET_COMMON_MEMORY	\
-	if(dhist) Free(dhist);\
+	if (dhist) Free(dhist);\
 	isVisited = (_uint8*)Calloc((size_t)((imgsize)));\
 	isAvailable = (_uint8*)Malloc((size_t)(imgsize));\
 	set_isAvailable(isAvailable);\
@@ -2085,7 +1952,7 @@ private:
 	template <class Queue>
 	void Flood_HierarQueue(Pixel* img, Queue* queue, int tse)
 	{
-		if(sizeof(Pixel) > 2 || channel > 1)
+		if (sizeof(Pixel) > 2 || channel > 1)
 		{
 			printf("Error: Hierarchical queues do not work on >16 bits images or multispectral images\n");
 			printf("Try Unionfind (algorithm code %d), flooding using Heapqueue (%d), trie queue (%d) or cached trie queue (%d) \n", UNIONFIND, FLOOD_HEAPQUEUE_CACHE, FLOOD_TRIE, FLOOD_TRIE_CACHE);
@@ -2114,27 +1981,16 @@ private:
 		queue = new Queue(nredges + 1, dhist, numlevels); // +1 for the dummy node
 		curSize = 0;
 
-		if(!tse || imgsize < 10000 || sizeof(Pixel) > 1) //for small imags do not use TSE
+		if (!tse || imgsize < 10000 || sizeof(Pixel) > 1) //for small imags do not use TSE
 			maxSize = 1 + imgsize + nredges;
 		else
 			maxSize = TreeSizeEstimation(dhist, numlevels, imgsize, nredges);
 
-		if(dhist) Free(dhist);
+		if (dhist) Free(dhist);
 
 		isVisited = (_uint8*)Calloc((size_t)((imgsize)));
 		isAvailable = (_uint8*)Malloc((size_t)(imgsize));
 		set_isAvailable(isAvailable);
-
-		//int ii = 0;
-		//for(int i=0;i<height;i++)
-		//{
-		//	for(int j=0;j<width;j++)
-		//	{
-		//		printBits(sizeof(_uint8),&isAvailable[ii++]);
-		//		printf(" ");
-		//	}
-		//	printf("\n");
-		//}
 
 		parentAry = (Imgidx*)Malloc((size_t)imgsize * sizeof(_int32));
 		node = (AlphaNode<Imgidx, Pixel>*)Malloc((size_t)maxSize * sizeof(AlphaNode<Imgidx, Pixel>));
@@ -2163,23 +2019,23 @@ private:
 				if (connectivity == 4)
 				{
 					q = p << 1;
-					if(is_available(isAv, 0) && !isVisited[p + width]) queue->push(p + width, dimg[q]);
-					if(is_available(isAv, 1) && !isVisited[p + 1]) 		 queue->push(p + 1, dimg[q + 1]);
-					if(is_available(isAv, 2) && !isVisited[p - 1]) 		 queue->push(p - 1, dimg[q - 1]);
-					if(is_available(isAv, 3) && !isVisited[p - width]) queue->push(p - width, dimg[q - (width << 1)]);
+					if (is_available(isAv, 0) && !isVisited[p + width]) queue->push(p + width, dimg[q]);
+					if (is_available(isAv, 1) && !isVisited[p + 1]) 		 queue->push(p + 1, dimg[q + 1]);
+					if (is_available(isAv, 2) && !isVisited[p - 1]) 		 queue->push(p - 1, dimg[q - 1]);
+					if (is_available(isAv, 3) && !isVisited[p - width]) queue->push(p - width, dimg[q - (width << 1)]);
 				}
-				else if(connectivity == 8)
+				else if (connectivity == 8)
 				{
 					Imgidx width4 = width << 2;
 					q = p << 2;
-					if(is_available(isAv, 0) && !isVisited[p + width])				queue->push(p + width, 		dimg[q]);
-					if(is_available(isAv, 1) && !isVisited[p + width + 1])		queue->push(p + width + 1, dimg[q + 1]);
-					if(is_available(isAv, 2) && !isVisited[p + 1])						queue->push(p + 1, 				dimg[q + 2]);
-					if(is_available(isAv, 3) && !isVisited[p - width + 1])		queue->push(p - width + 1, dimg[q + 3]);
-					if(is_available(isAv, 4) && !isVisited[p - width])				queue->push(p - width, 		dimg[q - width4]);
-					if(is_available(isAv, 5) && !isVisited[p - width - 1])		queue->push(p - width - 1, dimg[q - width4 - 3]);
-					if(is_available(isAv, 6) && !isVisited[p - 1])						queue->push(p - 1, 				dimg[q - 2]);
-					if(is_available(isAv, 7) && !isVisited[p + width - 1])		queue->push(p + width - 1, dimg[q + width4 - 1]);
+					if (is_available(isAv, 0) && !isVisited[p + width])				queue->push(p + width, 		dimg[q]);
+					if (is_available(isAv, 1) && !isVisited[p + width + 1])		queue->push(p + width + 1, dimg[q + 1]);
+					if (is_available(isAv, 2) && !isVisited[p + 1])						queue->push(p + 1, 				dimg[q + 2]);
+					if (is_available(isAv, 3) && !isVisited[p - width + 1])		queue->push(p - width + 1, dimg[q + 3]);
+					if (is_available(isAv, 4) && !isVisited[p - width])				queue->push(p - width, 		dimg[q - width4]);
+					if (is_available(isAv, 5) && !isVisited[p - width - 1])		queue->push(p - width - 1, dimg[q - width4 - 3]);
+					if (is_available(isAv, 6) && !isVisited[p - 1])						queue->push(p - 1, 				dimg[q - 2]);
+					if (is_available(isAv, 7) && !isVisited[p + width - 1])		queue->push(p + width - 1, dimg[q + width4 - 1]);
 				}
 				else
 				{
@@ -2283,7 +2139,7 @@ private:
 
 		dimg = (double*)Malloc((size_t)dimgsize * sizeof(double));
 
-		if(sizeof(Pixel) == 1 && channel == 1)
+		if (sizeof(Pixel) == 1 && channel == 1)
 		{
 			dhist = (Imgidx*)Calloc(numlevels * sizeof(Imgidx));
 			compute_dimg(dimg, dhist, img);//calculate pixel differences and make histogram
@@ -2328,34 +2184,31 @@ private:
 				if (connectivity == 4)
 				{
 					q = p << 1;
-					if(is_available(isAv, 0) && !isVisited[p + width])	queue->push(p + width, dimg[q]);
-					if(is_available(isAv, 1) && !isVisited[p + 1])			queue->push(p + 1, dimg[q + 1]);
-					if(is_available(isAv, 2) && !isVisited[p - 1])			queue->push(p - 1, dimg[q - 1]);
-					if(is_available(isAv, 3) && !isVisited[p - width])	queue->push(p - width, dimg[q - (width << 1)]);
+					if (is_available(isAv, 0) && !isVisited[p + width])	queue->push(p + width, dimg[q]);
+					if (is_available(isAv, 1) && !isVisited[p + 1])			queue->push(p + 1, dimg[q + 1]);
+					if (is_available(isAv, 2) && !isVisited[p - 1])			queue->push(p - 1, dimg[q - 1]);
+					if (is_available(isAv, 3) && !isVisited[p - width])	queue->push(p - width, dimg[q - (width << 1)]);
 				}
 				else if (connectivity == 8)
 				{
 					Imgidx width4 = width << 2;
 					q = p << 2;
-					if(is_available(isAv, 0) && !isVisited[p + width]) 		 queue->push(p + width, 		dimg[q]);
-					if(is_available(isAv, 1) && !isVisited[p + width + 1]) queue->push(p + width + 1, dimg[q + 1]);
-					if(is_available(isAv, 2) && !isVisited[p + 1]) 		 		 queue->push(p + 1, 				dimg[q + 2]);
-					if(is_available(isAv, 3) && !isVisited[p - width + 1]) queue->push(p - width + 1, dimg[q + 3]);
-					if(is_available(isAv, 4) && !isVisited[p - width]) 		 queue->push(p - width, 		dimg[q - width4]);
-					if(is_available(isAv, 5) && !isVisited[p - width - 1]) queue->push(p - width - 1, dimg[q - width4 - 3]);
-					if(is_available(isAv, 6) && !isVisited[p - 1]) 				 queue->push(p - 1, 				dimg[q - 2]);
-					if(is_available(isAv, 7) && !isVisited[p + width - 1]) queue->push(p + width - 1, dimg[q + width4 - 1]);
+					if (is_available(isAv, 0) && !isVisited[p + width]) 		 queue->push(p + width, 		dimg[q]);
+					if (is_available(isAv, 1) && !isVisited[p + width + 1]) queue->push(p + width + 1, dimg[q + 1]);
+					if (is_available(isAv, 2) && !isVisited[p + 1]) 		 		 queue->push(p + 1, 				dimg[q + 2]);
+					if (is_available(isAv, 3) && !isVisited[p - width + 1]) queue->push(p - width + 1, dimg[q + 3]);
+					if (is_available(isAv, 4) && !isVisited[p - width]) 		 queue->push(p - width, 		dimg[q - width4]);
+					if (is_available(isAv, 5) && !isVisited[p - width - 1]) queue->push(p - width - 1, dimg[q - width4 - 3]);
+					if (is_available(isAv, 6) && !isVisited[p - 1]) 				 queue->push(p - 1, 				dimg[q - 2]);
+					if (is_available(isAv, 7) && !isVisited[p + width - 1]) queue->push(p + width - 1, dimg[q + width4 - 1]);
 				}
 				else
 				{
 					//?
 				}
-				//else later
 
-
-				//queue->end_pushes();
 				queue->find_minlev();
-				if (current_level > queue->get_minlev()) //remove typecasting later
+				if (current_level > queue->get_minlev()) 
 				{
 						_CREATE_NEW_NODE(queue->get_minlev())
 						if (current_level)
@@ -2375,7 +2228,7 @@ private:
 						_CREATE_SINGLETON_NODE_1
 					else
 						connectPix2Node(p, img[p], stack_top);
-					if(node[stack_top].area == imgsize)
+					if (node[stack_top].area == imgsize)
 						goto FLOOD_END;
 				}
 			}
@@ -2386,7 +2239,6 @@ private:
 				break;
 
 			iNode = node[stack_top].parentidx;
-			//_CREATE_NEW_STACKTOP(queue->get_minlev())
 			if (queue->get_minlev() < node[iNode].alpha)
 			{
 				iNode = NewAlphaNode1(queue->get_minlev(), node + stack_top);
@@ -2404,7 +2256,6 @@ private:
 				break;
 		}
 	FLOOD_END:
-		//rootidx = (node[stack_top].area == imgsize) ? stack_top : iNode; //remove redundant root
 		node[stack_top].parentidx = ROOTIDX;
 
 		delete queue;
@@ -2433,7 +2284,7 @@ private:
 
 		dimg = (double*)Malloc((size_t)dimgsize * sizeof(double));
 
-		if(sizeof(Pixel) == 1 && channel == 1)
+		if (sizeof(Pixel) == 1 && channel == 1)
 		{
 			dhist = (Imgidx*)Calloc(numlevels * sizeof(Imgidx));
 			compute_dimg(dimg, dhist, img);//calculate pixel differences and make histogram
@@ -2458,7 +2309,6 @@ private:
 		AlphaNode<Imgidx, Pixel> *pNode = node + stack_top;
 		pNode->set(0, current_level, (double)0.0, (Pixel)max_level, (Pixel)0, pix_type);
 		pNode->parentidx = stack_top;
-		//current_level = max_level;
 		prev_top = stack_top; /*to find redundant node*/
 
 
@@ -2474,34 +2324,29 @@ private:
 					continue;
 				}
 				queue->start_pushes();
-				//printf("++visiting %d: stack_top[%d] at %f, area: %d\n", (int)p, (int)stack_top, log(node[stack_top].alpha), (int)node[stack_top].area);
 				isVisited[p] = 1;
-				//if(p == 2)
-				//	isVisited[p] = 2;
-	//--visited 2: stack_top[23] at 44.067775, area: 2
-
 
 				isAv = isAvailable[p];
 				if (connectivity == 4)
 				{
 					q = p << 1;
-					if(is_available(isAv, 0) && !isVisited[p + width])	queue->push(p + width, dimg[q]);
-					if(is_available(isAv, 1) && !isVisited[p + 1])		queue->push(p + 1, dimg[q + 1]);
-					if(is_available(isAv, 2) && !isVisited[p - 1])		queue->push(p - 1, dimg[q - 1]);
-					if(is_available(isAv, 3) && !isVisited[p - width])	queue->push(p - width, dimg[q - (width << 1)]);
+					if (is_available(isAv, 0) && !isVisited[p + width])	queue->push(p + width, dimg[q]);
+					if (is_available(isAv, 1) && !isVisited[p + 1])		queue->push(p + 1, dimg[q + 1]);
+					if (is_available(isAv, 2) && !isVisited[p - 1])		queue->push(p - 1, dimg[q - 1]);
+					if (is_available(isAv, 3) && !isVisited[p - width])	queue->push(p - width, dimg[q - (width << 1)]);
 				}
 				else if (connectivity == 8)
 				{
 					Imgidx width4 = width << 2;
 					q = p << 2;
-					if(is_available(isAv, 0) && !isVisited[p + width])		queue->push(p + width, 		dimg[q]);
-					if(is_available(isAv, 1) && !isVisited[p + width + 1])	queue->push(p + width + 1,	dimg[q + 1]);
-					if(is_available(isAv, 2) && !isVisited[p + 1]) 		 	queue->push(p + 1, 			dimg[q + 2]);
-					if(is_available(isAv, 3) && !isVisited[p - width + 1])	queue->push(p - width + 1,	dimg[q + 3]);
-					if(is_available(isAv, 4) && !isVisited[p - width]) 		queue->push(p - width, 		dimg[q - width4]);
-					if(is_available(isAv, 5) && !isVisited[p - width - 1])	queue->push(p - width - 1,	dimg[q - width4 - 3]);
-					if(is_available(isAv, 6) && !isVisited[p - 1]) 			queue->push(p - 1, 			dimg[q - 2]);
-					if(is_available(isAv, 7) && !isVisited[p + width - 1])	queue->push(p + width - 1,	dimg[q + width4 - 1]);
+					if (is_available(isAv, 0) && !isVisited[p + width])		queue->push(p + width, 		dimg[q]);
+					if (is_available(isAv, 1) && !isVisited[p + width + 1])	queue->push(p + width + 1,	dimg[q + 1]);
+					if (is_available(isAv, 2) && !isVisited[p + 1]) 		 	queue->push(p + 1, 			dimg[q + 2]);
+					if (is_available(isAv, 3) && !isVisited[p - width + 1])	queue->push(p - width + 1,	dimg[q + 3]);
+					if (is_available(isAv, 4) && !isVisited[p - width]) 		queue->push(p - width, 		dimg[q - width4]);
+					if (is_available(isAv, 5) && !isVisited[p - width - 1])	queue->push(p - width - 1,	dimg[q - width4 - 3]);
+					if (is_available(isAv, 6) && !isVisited[p - 1]) 			queue->push(p - 1, 			dimg[q - 2]);
+					if (is_available(isAv, 7) && !isVisited[p + width - 1])	queue->push(p + width - 1,	dimg[q + width4 - 1]);
 				}
 				else
 				{
@@ -2510,7 +2355,6 @@ private:
 
 
 				queue->end_pushes();
-				//queue->find_minlev();
 				if (current_level > queue->get_minlev()) //remove typecasting later
 				{
 						_CREATE_NEW_NODE(queue->get_minlev())
@@ -2524,8 +2368,6 @@ private:
 						}
 						else
 							parentAry[p] = stack_top;
-
-						//printf("going lower level(%f): new stack_top[%d] area: %d\n", log(node[stack_top].alpha), (int)stack_top, (int)node[stack_top].area);
 				}
 				else
 				{
@@ -2533,11 +2375,9 @@ private:
 						_CREATE_SINGLETON_NODE_1
 					else
 						connectPix2Node(p, img[p], stack_top);
-					if(node[stack_top].area == imgsize)
+					if (node[stack_top].area == imgsize)
 						goto FLOOD_END;
 				}
-
-				//printf("--visited %d: stack_top[%d] at %f, area: %d\n", (int)p, (int)stack_top, log(node[stack_top].alpha), (int)node[stack_top].area);
 			}
 			remove_redundant_node(prev_top, stack_top);
 
@@ -2545,7 +2385,6 @@ private:
 				break;
 
 			iNode = node[stack_top].parentidx;
-			//_CREATE_NEW_STACKTOP(queue->get_minlev())
 			if (queue->get_minlev() < node[iNode].alpha)
 			{
 				iNode = NewAlphaNode1(queue->get_minlev(), node + stack_top);
@@ -2556,8 +2395,6 @@ private:
 			else
 				node[iNode].add(node + stack_top, pix_type);
 
-			//printf("new stack_top = %d at %f (area: %d)\n", (int)iNode, log(node[iNode].alpha), (int)node[iNode].area);
-
 			prev_top = stack_top;
 			stack_top = iNode;
 			current_level = node[stack_top].alpha;
@@ -2565,11 +2402,7 @@ private:
 				break;
 		}
 	FLOOD_END:
-		//rootidx = (node[stack_top].area == imgsize) ? stack_top : iNode; //remove redundant root
 		node[stack_top].parentidx = ROOTIDX;
-
-
-		//printf("HeapQueue time: %f\n", queue->qtime);
 
 		delete queue;
 		Free(dimg);
@@ -2579,15 +2412,7 @@ private:
 
 	void Flood_HierarQueue_Cache(Pixel* img)
 	{
-		//if(sizeof(Pixel) > 2 || channel > 1)
-		{
-			//printf("Error: Hierarchical queues do not work on >16 bits images or multispectral images\n");
-			//printf("Try Unionfind (algorithm code %d), flooding using Heapqueue (%d), trie queue (%d) or cached trie queue (%d) \n", UNIONFIND, FLOOD_HEAPQUEUE_CACHE, FLOOD_TRIE, FLOOD_TRIE_CACHE);
-			//return;
-		}
-
-	  HierarQueueCache<Imgidx, Pixel>* queue;
-
+		HierarQueueCache<Imgidx, Pixel>* queue;
 		Imgidx imgsize, dimgsize, nredges, x0;
 		_uint64 numlevels, max_level, current_level;
 		Imgidx *dhist;
@@ -2600,23 +2425,23 @@ private:
 		max_level = (sizeof(Pixel)==8) ? 0xffffffffffffffff : (_int64)((Pixel)(-1));
 		numlevels = max_level + 1;
 
-	  Pixel *dimg;
-	  dhist = (Imgidx*)Calloc((size_t)numlevels * sizeof(Imgidx));
-	  //memset(dhist, 0, (size_t)numlevels * sizeof(_int32));
-	  dimg = (Pixel*)Malloc((size_t)dimgsize * sizeof(Pixel));
+		Pixel *dimg;
+		dhist = (Imgidx*)Calloc((size_t)numlevels * sizeof(Imgidx));
+		dimg = (Pixel*)Malloc((size_t)dimgsize * sizeof(Pixel));
 
-	  max_level = compute_dimg1(dimg, dhist, img);//calculate pixel differences and make histogram
+		max_level = compute_dimg1(dimg, dhist, img);//calculate pixel differences and make histogram
 		numlevels = max_level + 1;
 
-	  //create hierarchical queue from dhist
-	  queue = new HierarQueueCache<Imgidx, Pixel>(nredges + 1, dhist, numlevels); // +1 for the dummy node
-	  curSize = 0;
+		//create hierarchical queue from dhist
+		queue = new HierarQueueCache<Imgidx, Pixel>(nredges + 1, dhist, numlevels); // +1 for the dummy node
+		curSize = 0;
 
-	  if(imgsize < 10000 || sizeof(Pixel) > 2) //for small imags do not use TSE
-	    maxSize = 1 + imgsize + dimgsize;
-	  else
-	    maxSize = TreeSizeEstimation(dhist, numlevels, imgsize, nredges);
-		if(dhist) Free(dhist);
+		if (imgsize < 10000 || sizeof(Pixel) > 2) //for small imags do not use TSE
+			maxSize = 1 + imgsize + dimgsize;
+		else
+	    	maxSize = TreeSizeEstimation(dhist, numlevels, imgsize, nredges);
+		if (dhist)
+			Free(dhist);
 
 		isVisited = (_uint8*)Calloc((size_t)((imgsize)));
 		isAvailable = (_uint8*)Malloc((size_t)(imgsize));
@@ -2632,43 +2457,41 @@ private:
 		x0 = 0; /*arbitrary starting point*/
 		prev_top = stack_top;
 
+		queue->push_1stitem(x0, current_level);
+		while (1) //flooding
+		{
+			while ((_int32)queue->top_alpha() <= (_int32)current_level) //flood all levels below current_level
+			{
+				p = queue->top();
+				if (isVisited[p] == 1)
+				{
+					queue->pop();
+					continue;
+				}
 
-		//int tmpcnt = 0;
-
-	  queue->push_1stitem(x0, current_level);
-	  while (1) //flooding
-	  {
-	    while ((_int32)queue->top_alpha() <= (_int32)current_level) //flood all levels below current_level
-	    {
-	      p = queue->top();
-	      if (isVisited[p] == 1)
-	      {
-	        queue->pop();
-	        continue;
-	      }
 				queue->start_pushes();
-	      isVisited[p] = 1;
-	      isAv = isAvailable[p];
-	      if (connectivity == 4)
+				isVisited[p] = 1;
+				isAv = isAvailable[p];
+				if (connectivity == 4)
 				{
 					q = p << 1;
-					if(is_available(isAv, 0) && !isVisited[p + width])	queue->push(p + width, dimg[q]);
-					if(is_available(isAv, 1) && !isVisited[p + 1]) 		queue->push(p + 1, dimg[q + 1]);
-					if(is_available(isAv, 2) && !isVisited[p - 1]) 		queue->push(p - 1, dimg[q - 1]);
-					if(is_available(isAv, 3) && !isVisited[p - width])	queue->push(p - width, dimg[q - (width << 1)]);
+					if (is_available(isAv, 0) && !isVisited[p + width])	queue->push(p + width, dimg[q]);
+					if (is_available(isAv, 1) && !isVisited[p + 1]) 		queue->push(p + 1, dimg[q + 1]);
+					if (is_available(isAv, 2) && !isVisited[p - 1]) 		queue->push(p - 1, dimg[q - 1]);
+					if (is_available(isAv, 3) && !isVisited[p - width])	queue->push(p - width, dimg[q - (width << 1)]);
 				}
 				else if (connectivity == 8)
 				{
 					Imgidx width4 = width << 2;
 					q = p << 2;
-					if(is_available(isAv, 0) && !isVisited[p + width]) 		queue->push(p + width, 		dimg[q]);
-					if(is_available(isAv, 1) && !isVisited[p + width + 1])	queue->push(p + width + 1, dimg[q + 1]);
-					if(is_available(isAv, 2) && !isVisited[p + 1]) 		 	queue->push(p + 1, 				dimg[q + 2]);
-					if(is_available(isAv, 3) && !isVisited[p - width + 1])	queue->push(p - width + 1, dimg[q + 3]);
-					if(is_available(isAv, 4) && !isVisited[p - width]) 		queue->push(p - width, 		dimg[q - width4]);
-					if(is_available(isAv, 5) && !isVisited[p - width - 1])	queue->push(p - width - 1, dimg[q - width4 - 3]);
-					if(is_available(isAv, 6) && !isVisited[p - 1]) 			queue->push(p - 1, 				dimg[q - 2]);
-					if(is_available(isAv, 7) && !isVisited[p + width - 1])	queue->push(p + width - 1, dimg[q + width4 - 1]);
+					if (is_available(isAv, 0) && !isVisited[p + width]) 		queue->push(p + width, 		dimg[q]);
+					if (is_available(isAv, 1) && !isVisited[p + width + 1])	queue->push(p + width + 1, dimg[q + 1]);
+					if (is_available(isAv, 2) && !isVisited[p + 1]) 		 	queue->push(p + 1, 				dimg[q + 2]);
+					if (is_available(isAv, 3) && !isVisited[p - width + 1])	queue->push(p - width + 1, dimg[q + 3]);
+					if (is_available(isAv, 4) && !isVisited[p - width]) 		queue->push(p - width, 		dimg[q - width4]);
+					if (is_available(isAv, 5) && !isVisited[p - width - 1])	queue->push(p - width - 1, dimg[q - width4 - 3]);
+					if (is_available(isAv, 6) && !isVisited[p - 1]) 			queue->push(p - 1, 				dimg[q - 2]);
+					if (is_available(isAv, 7) && !isVisited[p + width - 1])	queue->push(p + width - 1, dimg[q + width4 - 1]);
 				}
 				else
 				{
@@ -2676,10 +2499,10 @@ private:
 				}
 
 				queue->end_pushes();
-	      if (current_level > (_uint64)queue->top_alpha()) //go to lower level
-	      {
-	        _CREATE_NEW_NODE(queue->top_alpha())
-	        if (current_level)
+				if (current_level > (_uint64)queue->top_alpha()) //go to lower level
+				{
+					_CREATE_NEW_NODE(queue->top_alpha())
+					if (current_level)
 					{
 						iNode = NewAlphaNode(0, node + stack_top);
 						node[iNode].parentidx = stack_top;
@@ -2687,54 +2510,54 @@ private:
 						parentAry[p] = iNode;
 						prev_top = iNode;
 					}
-	        else
-	          parentAry[p] = stack_top;
-	      }
-	      else
-	      {
-	        if (current_level)
-	          _CREATE_SINGLETON_NODE_1
-	        else
-	          connectPix2Node(p, img[p], stack_top);
-					if(node[stack_top].area == imgsize)
+					else
+					parentAry[p] = stack_top;
+				}
+				else
+				{
+					if (current_level)
+					_CREATE_SINGLETON_NODE_1
+					else
+					connectPix2Node(p, img[p], stack_top);
+					if (node[stack_top].area == imgsize)
 						goto FLOOD_END;
-	      }
-				//printf("--visited %d: stack_top[%d] at %d, area: %d\n", (int)p, (int)stack_top, (int)(node[stack_top].alpha), (int)node[stack_top].area);
-	    }
+				}
+			}
 
-	    remove_redundant_node(prev_top, stack_top);
+			remove_redundant_node(prev_top, stack_top);
 
 			if (node[stack_top].area == imgsize)	// root node found...done
 				break;
 
-	    //go to higher level
-	    iNode = node[stack_top].parentidx;
-	    if ((_int32)queue->top_alpha() < (_int32)node[iNode].alpha)
+			//go to higher level
+			iNode = node[stack_top].parentidx;
+			if ((_int32)queue->top_alpha() < (_int32)node[iNode].alpha)
 			{
 				iNode = NewAlphaNode1(queue->top_alpha(), node + stack_top);
 				node[iNode].parentidx = node[stack_top].parentidx;
 				node[iNode].rootidx = ROOTIDX;
 				node[stack_top].parentidx = iNode;
 			}
-	    else //go to existing node
-	    {
-	      node[iNode].add(node + stack_top, pix_type);
-	    }
+			else //go to existing node
+			{
+				node[iNode].add(node + stack_top, pix_type);
+			}
 
-	    prev_top = stack_top;
-	    stack_top = iNode;
-	    current_level = (_int32)node[stack_top].alpha;
+			prev_top = stack_top;
+			stack_top = iNode;
+			current_level = (_int32)node[stack_top].alpha;
 			if (node[stack_top].area == imgsize)	// root node found...done
 				break;
-	  }
-FLOOD_END:
-	  rootidx = (node[stack_top].area == imgsize) ? stack_top : iNode; //remove redundant root
-	  node[rootidx].parentidx = ROOTIDX;
+		}
 
-	  delete queue;
-	  Free(dimg);
-	  Free(isVisited);
-	  Free(isAvailable);
+FLOOD_END:
+		rootidx = (node[stack_top].area == imgsize) ? stack_top : iNode; //remove redundant root
+		node[rootidx].parentidx = ROOTIDX;
+
+		delete queue;
+		Free(dimg);
+		Free(isVisited);
+		Free(isAvailable);
 	}
 
 	int get_bitdepth(_uint64 num)
@@ -2748,7 +2571,6 @@ FLOOD_END:
 		return ret;
 	}
 
-	//aa1
 	void Flood_HierarHeapQueue(Pixel* img, double a = 12.0, double r = 0.5, int listsize = 12)
 	{
 	  	HierarHeapQueue<Imgidx, Pixel>* queue;
@@ -2764,7 +2586,6 @@ FLOOD_END:
 		nredges = width * (height - 1) + (width - 1) * height + ((connectivity == 8) ? ((width - 1) * (height - 1) * 2) : 0);
 		dimgsize = (1 + (connectivity >> 1)) * width * height;
 
-		//double a = 4.0;
 		max_level = (sizeof(Pixel)==8) ? 0xffffffffffffffff : (_int64)((Pixel)(-1));
 		numlevels = (_uint64)(a * log2(1 + (double)max_level)) + 1;
 
@@ -2779,7 +2600,6 @@ FLOOD_END:
 		curSize = 0;
 		
 		maxSize = 1 + imgsize + dimgsize; //Do not use TSE here, becasue dhist is a logged histogram (also this algorithm is for hdr)
-		//  maxSize = TreeSizeEstimation(dhist, numlevels, imgsize, nredges);
 
 
 		dhist = 0;
@@ -2802,7 +2622,7 @@ FLOOD_END:
 		{
 			while (firstpixel || (double)queue->top_alpha() <= (double)current_level) //flood all levels below current_level
 			{
-				if(!firstpixel)
+				if (!firstpixel)
 				{
 					p = queue->pop(isVisited);
 					if (isVisited[p])
@@ -2816,23 +2636,23 @@ FLOOD_END:
 				if (connectivity == 4)
 				{
 					q = p << 1;
-					if(is_available(isAv, 0) && !isVisited[p + width])	queue->push(p + width, dimg[q]);
-					if(is_available(isAv, 1) && !isVisited[p + 1])		queue->push(p + 1, dimg[q + 1]);
-					if(is_available(isAv, 2) && !isVisited[p - 1])		queue->push(p - 1, dimg[q - 1]);
-					if(is_available(isAv, 3) && !isVisited[p - width])	queue->push(p - width, dimg[q - (width << 1)]);
+					if (is_available(isAv, 0) && !isVisited[p + width])	queue->push(p + width, dimg[q]);
+					if (is_available(isAv, 1) && !isVisited[p + 1])		queue->push(p + 1, dimg[q + 1]);
+					if (is_available(isAv, 2) && !isVisited[p - 1])		queue->push(p - 1, dimg[q - 1]);
+					if (is_available(isAv, 3) && !isVisited[p - width])	queue->push(p - width, dimg[q - (width << 1)]);
 				}
 				else if (connectivity == 8)
 				{
 					Imgidx width4 = width << 2;
 					q = p << 2;
-					if(is_available(isAv, 0) && !isVisited[p + width])		{queue->push(p + width,		dimg[q]); 				};//printf("0:pushing %d at %.3f \n",(int)(p + width),log2((double)dimg[q] + 1));}
-					if(is_available(isAv, 1) && !isVisited[p + width + 1])	{queue->push(p + width + 1,	dimg[q + 1]); 			};//printf("1:pushing %d at %.3f \n",(int)(p + width + 1),log2((double)dimg[q + 1] + 1));}
-					if(is_available(isAv, 2) && !isVisited[p + 1])			{queue->push(p + 1,			dimg[q + 2]); 			};//printf("2:pushing %d at %.3f \n",(int)(p + 1),log2((double)dimg[q + 2] + 1));}
-					if(is_available(isAv, 3) && !isVisited[p - width + 1])	{queue->push(p - width + 1, dimg[q + 3]);			};//printf("3:pushing %d at %.3f \n",(int)(p - width + 1),log2((double)dimg[q + 3] + 1));}
-					if(is_available(isAv, 4) && !isVisited[p - width])		{queue->push(p - width,		dimg[q - width4]); 		};//printf("4:pushing %d at %.3f \n",(int)(p - width),log2((double)dimg[q - width4] + 1));}
-					if(is_available(isAv, 5) && !isVisited[p - width - 1])	{queue->push(p - width - 1, dimg[q - width4 - 3]);	};//printf("5:pushing %d at %.3f \n",(int)(p - width - 1),log2((double)dimg[q - width4 - 3] + 1));}
-					if(is_available(isAv, 6) && !isVisited[p - 1])			{queue->push(p - 1,			dimg[q - 2]); 			};//printf("6:pushing %d at %.3f \n",(int)(p - 1),log2((double)dimg[q - 2] + 1));}
-					if(is_available(isAv, 7) && !isVisited[p + width - 1])	{queue->push(p + width - 1, dimg[q + width4 - 1]);	};//printf("7:pushing %d at %.3f \n",(int)(p + width - 1),log2((double)dimg[q + width4 - 1] + 1));}
+					if (is_available(isAv, 0) && !isVisited[p + width])		{queue->push(p + width,		dimg[q]); 				};
+					if (is_available(isAv, 1) && !isVisited[p + width + 1])	{queue->push(p + width + 1,	dimg[q + 1]); 			};
+					if (is_available(isAv, 2) && !isVisited[p + 1])			{queue->push(p + 1,			dimg[q + 2]); 			};
+					if (is_available(isAv, 3) && !isVisited[p - width + 1])	{queue->push(p - width + 1, dimg[q + 3]);			};
+					if (is_available(isAv, 4) && !isVisited[p - width])		{queue->push(p - width,		dimg[q - width4]); 		};
+					if (is_available(isAv, 5) && !isVisited[p - width - 1])	{queue->push(p - width - 1, dimg[q - width4 - 3]);	};
+					if (is_available(isAv, 6) && !isVisited[p - 1])			{queue->push(p - 1,			dimg[q - 2]); 			};
+					if (is_available(isAv, 7) && !isVisited[p + width - 1])	{queue->push(p + width - 1, dimg[q + width4 - 1]);	};
 				}
 				else
 				{
@@ -2855,7 +2675,6 @@ FLOOD_END:
 						node[iNode].parentidx = stack_top;
 						node[iNode].rootidx = ROOTIDX;
 						parentAry[p] = iNode;
-						//prev_top = iNode;
 					}
 					else
 					parentAry[p] = stack_top;
@@ -2874,18 +2693,13 @@ FLOOD_END:
 						}
 					else
 					connectPix2Node(p, img[p], stack_top);
-					if(node[stack_top].area == imgsize)
+					if (node[stack_top].area == imgsize)
 						goto FLOOD_END;
 				}
-
-					//printf("Piep2: %d\n",(int)curSize);
-					//printf("Queue top: %d at %.3f(%lu)\n",(int)queue->top(), log2((double)queue->top_alpha()), (_uint64)queue->top_alpha());
-					//printf("--visited %d: stack_top[%d] at %.2f, area: %d\n", (int)p, (int)stack_top, log2((double)(node[stack_top].alpha)), (int)node[stack_top].area);
 	    	}
 
 			if (node[prev_top].parentidx == stack_top && node[prev_top].area == node[stack_top].area)
 			{
-				//queue->redundant(node[stack_top].alpha);
 				node[prev_top].parentidx = node[stack_top].parentidx;
 				stack_top = prev_top;
 				curSize--;
@@ -2951,10 +2765,7 @@ FLOOD_END:
 		//create hierarchical queue from dhist
 		queue = new HierarHeapQueue_cache<Imgidx, Pixel>(dhist, numlevels, nredges, a, listsize, connectivity, r); // +1 for the dummy node
 		curSize = 0;
-
 		maxSize = 1 + imgsize + dimgsize; //Do not use TSE here, becasue dhist is a logged histogram (also this algorithm is for hdr)
-		//  maxSize = TreeSizeEstimation(dhist, numlevels, imgsize, nredges);
-
 
 		dhist = 0;
 		isVisited = (_uint8*)Calloc((size_t)((imgsize)));
@@ -2970,7 +2781,6 @@ FLOOD_END:
 		current_level = (double)max_level;
 		x0 = 0; /*arbitrary starting point*/
 
-
 		Imgidx prev_top = stack_top;
 		queue->push_1stitem(x0, (Pixel)current_level);
 		while (1) //flooding
@@ -2985,32 +2795,30 @@ FLOOD_END:
 							//queue->mark(1);
 					continue;
 				}
-				//printf("++visiting %d: stack_top[%d] at %.3f, area: %d curSize: %d\n", (int)p, (int)stack_top, log2((double)(node[stack_top].alpha)), (int)node[stack_top].area, (int)curSize);
 				queue->start_pushes();
-				//queue->mark(0);
 				isVisited[p] = 1;
 
 				isAv = isAvailable[p];
 				if (connectivity == 4)
 				{
 					q = p << 1;
-					if(is_available(isAv, 0) && !isVisited[p + width])	queue->push(p + width, dimg[q]);
-					if(is_available(isAv, 1) && !isVisited[p + 1])			queue->push(p + 1, dimg[q + 1]);
-					if(is_available(isAv, 2) && !isVisited[p - 1])			queue->push(p - 1, dimg[q - 1]);
-					if(is_available(isAv, 3) && !isVisited[p - width])	queue->push(p - width, dimg[q - (width << 1)]);
+					if (is_available(isAv, 0) && !isVisited[p + width])	queue->push(p + width, dimg[q]);
+					if (is_available(isAv, 1) && !isVisited[p + 1])			queue->push(p + 1, dimg[q + 1]);
+					if (is_available(isAv, 2) && !isVisited[p - 1])			queue->push(p - 1, dimg[q - 1]);
+					if (is_available(isAv, 3) && !isVisited[p - width])	queue->push(p - width, dimg[q - (width << 1)]);
 				}
 				else if (connectivity == 8)
 				{
 					Imgidx width4 = width << 2;
 					q = p << 2;
-					if(is_available(isAv, 0) && !isVisited[p + width]) 		 {queue->push(p + width, 		dimg[q]); 							};//printf("0:pushing %d at %.3f \n",(int)(p + width),log2((double)dimg[q] + 1));}
-					if(is_available(isAv, 1) && !isVisited[p + width + 1]) {queue->push(p + width + 1, dimg[q + 1]); 					};//printf("1:pushing %d at %.3f \n",(int)(p + width + 1),log2((double)dimg[q + 1] + 1));}
-					if(is_available(isAv, 2) && !isVisited[p + 1]) 		 		 {queue->push(p + 1, 				dimg[q + 2]); 					};//printf("2:pushing %d at %.3f \n",(int)(p + 1),log2((double)dimg[q + 2] + 1));}
-					if(is_available(isAv, 3) && !isVisited[p - width + 1]) {queue->push(p - width + 1, dimg[q + 3]); 					};//printf("3:pushing %d at %.3f \n",(int)(p - width + 1),log2((double)dimg[q + 3] + 1));}
-					if(is_available(isAv, 4) && !isVisited[p - width]) 		 {queue->push(p - width, 		dimg[q - width4]); 			};//printf("4:pushing %d at %.3f \n",(int)(p - width),log2((double)dimg[q - width4] + 1));}
-					if(is_available(isAv, 5) && !isVisited[p - width - 1]) {queue->push(p - width - 1, dimg[q - width4 - 3]); };//printf("5:pushing %d at %.3f \n",(int)(p - width - 1),log2((double)dimg[q - width4 - 3] + 1));}
-					if(is_available(isAv, 6) && !isVisited[p - 1]) 				 {queue->push(p - 1, 				dimg[q - 2]); 					};//printf("6:pushing %d at %.3f \n",(int)(p - 1),log2((double)dimg[q - 2] + 1));}
-					if(is_available(isAv, 7) && !isVisited[p + width - 1]) {queue->push(p + width - 1, dimg[q + width4 - 1]); };//printf("7:pushing %d at %.3f \n",(int)(p + width - 1),log2((double)dimg[q + width4 - 1] + 1));}
+					if (is_available(isAv, 0) && !isVisited[p + width]) 		 {queue->push(p + width, 		dimg[q]); 							};//printf("0:pushing %d at %.3f \n",(int)(p + width),log2((double)dimg[q] + 1));}
+					if (is_available(isAv, 1) && !isVisited[p + width + 1]) {queue->push(p + width + 1, dimg[q + 1]); 					};//printf("1:pushing %d at %.3f \n",(int)(p + width + 1),log2((double)dimg[q + 1] + 1));}
+					if (is_available(isAv, 2) && !isVisited[p + 1]) 		 		 {queue->push(p + 1, 				dimg[q + 2]); 					};//printf("2:pushing %d at %.3f \n",(int)(p + 1),log2((double)dimg[q + 2] + 1));}
+					if (is_available(isAv, 3) && !isVisited[p - width + 1]) {queue->push(p - width + 1, dimg[q + 3]); 					};//printf("3:pushing %d at %.3f \n",(int)(p - width + 1),log2((double)dimg[q + 3] + 1));}
+					if (is_available(isAv, 4) && !isVisited[p - width]) 		 {queue->push(p - width, 		dimg[q - width4]); 			};//printf("4:pushing %d at %.3f \n",(int)(p - width),log2((double)dimg[q - width4] + 1));}
+					if (is_available(isAv, 5) && !isVisited[p - width - 1]) {queue->push(p - width - 1, dimg[q - width4 - 3]); };//printf("5:pushing %d at %.3f \n",(int)(p - width - 1),log2((double)dimg[q - width4 - 3] + 1));}
+					if (is_available(isAv, 6) && !isVisited[p - 1]) 				 {queue->push(p - 1, 				dimg[q - 2]); 					};//printf("6:pushing %d at %.3f \n",(int)(p - 1),log2((double)dimg[q - 2] + 1));}
+					if (is_available(isAv, 7) && !isVisited[p + width - 1]) {queue->push(p + width - 1, dimg[q + width4 - 1]); };//printf("7:pushing %d at %.3f \n",(int)(p + width - 1),log2((double)dimg[q + width4 - 1] + 1));}
 				}
 				else
 				{
@@ -3052,7 +2860,7 @@ FLOOD_END:
 						}
 					else
 					connectPix2Node(p, img[p], stack_top);
-					if(node[stack_top].area == imgsize)
+					if (node[stack_top].area == imgsize)
 						goto FLOOD_END;
 				}
 	    	}
@@ -3099,7 +2907,7 @@ FLOOD_END:
 
 	void Flood_HierarHeapQueue_Cache_histeq(Pixel* img, int listsize = 12, int a = 0)
 	{
-	  HierarHeapQueue_HEQ<Imgidx, Pixel>* queue;
+		HierarHeapQueue_HEQ<Imgidx, Pixel>* queue;
 
 		Imgidx imgsize, dimgsize, nredges, x0;
 		_uint64 numlevels, max_level, current_level;
@@ -3116,79 +2924,77 @@ FLOOD_END:
 		max_level = (sizeof(Pixel)==8) ? 0xffffffffffffffff : (_int64)((Pixel)(-1));
 		int bitdepth = get_bitdepth(max_level);
 
-		if(a == 0) a = 1024;
+		if (a == 0) a = 1024;
 		int eqhistsize = a;
 		double coeff = (double)eqhistsize * 10 / (double)bitdepth;
 
 		numlevels = (_uint64)(log2(1 + (double)max_level) * coeff) + 1;
 
-	  Pixel *dimg;
-	  dhist = (Imgidx*)Calloc((size_t)numlevels * sizeof(Imgidx));
-	  dimg = (Pixel*)Malloc((size_t)dimgsize * sizeof(Pixel));
-	  compute_dimg(dimg, dhist, img, coeff);//calculate pixel differences and make histogram
+		Pixel *dimg;
+		dhist = (Imgidx*)Calloc((size_t)numlevels * sizeof(Imgidx));
+		dimg = (Pixel*)Malloc((size_t)dimgsize * sizeof(Pixel));
+		compute_dimg(dimg, dhist, img, coeff);//calculate pixel differences and make histogram
 		Imgidx *eqhist = (Imgidx*)Calloc(eqhistsize * sizeof(Imgidx));
 
 		_uint32* histeqmap = (_uint32*)Malloc(numlevels * sizeof(_uint32));
 
 		cumsum(dhist, numlevels, histeqmap, eqhistsize);
 
-		for(int ii = 0;ii < (int)numlevels;ii++)
+		for (int ii = 0;ii < (int)numlevels;ii++)
 		{
 			int jj = histeqmap[ii];
 			eqhist[jj] += dhist[ii];
 		}
 
-	  queue = new HierarHeapQueue_HEQ<Imgidx, Pixel>(eqhist, histeqmap, eqhistsize, nredges, coeff, listsize); // +1 for the dummy node
-	  curSize = 0;
+		queue = new HierarHeapQueue_HEQ<Imgidx, Pixel>(eqhist, histeqmap, eqhistsize, nredges, coeff, listsize); // +1 for the dummy node
+		curSize = 0;
 
-	  maxSize = 1 + imgsize + dimgsize; //Do not use TSE here, becasue dhist is a logged histogram (also this algorithm is for hdr)
-	  //  maxSize = TreeSizeEstimation(dhist, numlevels, imgsize, nredges);
+		maxSize = 1 + imgsize + dimgsize; //Do not use TSE here, becasue dhist is a logged histogram (also this algorithm is for hdr)
 
-	  _SET_COMMON_MEMORY
+		_SET_COMMON_MEMORY
 		stack_top = NewAlphaNode();/*dummy root*/
 		AlphaNode<Imgidx, Pixel> *pNode = node + stack_top;
 		pNode->set(0, (Pixel)max_level, (double)0.0, (Pixel)max_level, (Pixel)0, pix_type);
 		pNode->parentidx = stack_top;
 		current_level = max_level;
 		x0 = 0; /*arbitrary starting point*/
-		//prev_top = stack_top;
 
-	  queue->push_1stitem(x0, current_level);
-	  while (1) //flooding
-	  {
-	    while ((_uint64)queue->top_alpha() <= (_uint64)current_level) //flood all levels below current_level
-	    {
-	      p = queue->top();
+		queue->push_1stitem(x0, current_level);
+		while (1) //flooding
+		{
+			while ((_uint64)queue->top_alpha() <= (_uint64)current_level) //flood all levels below current_level
+			{
+				p = queue->top();
 
-	      if (isVisited[p])
-	      {
-	        queue->pop(isVisited);
-	        continue;
-	      }
-				//printf("++visiting %d: stack_top[%d] at %.2f, area: %d\n", (int)p, (int)stack_top, log2((double)(node[stack_top].alpha)), (int)node[stack_top].area);
+				if (isVisited[p])
+				{
+					queue->pop(isVisited);
+					continue;
+				}
+
 				queue->start_pushes();
-	      isVisited[p] = 1;
-	      isAv = isAvailable[p];
+				isVisited[p] = 1;
+				isAv = isAvailable[p];
 				if (connectivity == 4)
 				{
 					q = p << 1;
-					if(is_available(isAv, 0) && !isVisited[p + width])	queue->push(p + width, dimg[q]);
-					if(is_available(isAv, 1) && !isVisited[p + 1])			queue->push(p + 1, dimg[q + 1]);
-					if(is_available(isAv, 2) && !isVisited[p - 1])			queue->push(p - 1, dimg[q - 1]);
-					if(is_available(isAv, 3) && !isVisited[p - width])	queue->push(p - width, dimg[q - (width << 1)]);
+					if (is_available(isAv, 0) && !isVisited[p + width])	queue->push(p + width, dimg[q]);
+					if (is_available(isAv, 1) && !isVisited[p + 1])		queue->push(p + 1, dimg[q + 1]);
+					if (is_available(isAv, 2) && !isVisited[p - 1])		queue->push(p - 1, dimg[q - 1]);
+					if (is_available(isAv, 3) && !isVisited[p - width])	queue->push(p - width, dimg[q - (width << 1)]);
 				}
 				else if (connectivity == 8)
 				{
 					Imgidx width4 = width << 2;
 					q = p << 2;
-					if(is_available(isAv, 0) && !isVisited[p + width]) 		 queue->push(p + width, 		dimg[q]);
-					if(is_available(isAv, 1) && !isVisited[p + width + 1]) queue->push(p + width + 1, dimg[q + 1]);
-					if(is_available(isAv, 2) && !isVisited[p + 1]) 		 		 queue->push(p + 1, 				dimg[q + 2]);
-					if(is_available(isAv, 3) && !isVisited[p - width + 1]) queue->push(p - width + 1, dimg[q + 3]);
-					if(is_available(isAv, 4) && !isVisited[p - width]) 		 queue->push(p - width, 		dimg[q - width4]);
-					if(is_available(isAv, 5) && !isVisited[p - width - 1]) queue->push(p - width - 1, dimg[q - width4 - 3]);
-					if(is_available(isAv, 6) && !isVisited[p - 1]) 				 queue->push(p - 1, 				dimg[q - 2]);
-					if(is_available(isAv, 7) && !isVisited[p + width - 1]) queue->push(p + width - 1, dimg[q + width4 - 1]);
+					if (is_available(isAv, 0) && !isVisited[p + width])		queue->push(p + width,		dimg[q]);
+					if (is_available(isAv, 1) && !isVisited[p + width + 1])	queue->push(p + width + 1,	dimg[q + 1]);
+					if (is_available(isAv, 2) && !isVisited[p + 1])			queue->push(p + 1,			dimg[q + 2]);
+					if (is_available(isAv, 3) && !isVisited[p - width + 1])	queue->push(p - width + 1,	dimg[q + 3]);
+					if (is_available(isAv, 4) && !isVisited[p - width])		queue->push(p - width,		dimg[q - width4]);
+					if (is_available(isAv, 5) && !isVisited[p - width - 1])	queue->push(p - width - 1,	dimg[q - width4 - 3]);
+					if (is_available(isAv, 6) && !isVisited[p - 1])			queue->push(p - 1,			dimg[q - 2]);
+					if (is_available(isAv, 7) && !isVisited[p + width - 1])	queue->push(p + width - 1,	dimg[q + width4 - 1]);
 				}
 				else
 				{
@@ -3196,10 +3002,10 @@ FLOOD_END:
 				}
 
 				queue->end_pushes(isVisited);
-	      if ((_uint64)current_level > (_uint64)queue->top_alpha()) //go to lower level
-	      {
-	        _CREATE_NEW_NODE(queue->top_alpha())
-	        if (current_level)
+				if ((_uint64)current_level > (_uint64)queue->top_alpha()) //go to lower level
+				{
+					_CREATE_NEW_NODE(queue->top_alpha())
+					if (current_level)
 					{
 						iNode = NewAlphaNode(0, node + stack_top);
 						node[iNode].parentidx = stack_top;
@@ -3207,54 +3013,49 @@ FLOOD_END:
 						parentAry[p] = iNode;
 						//prev_top = iNode;
 					}
-	        else
-	          parentAry[p] = stack_top;
-	      }
-	      else
-	      {
-	        if (current_level)
-	          _CREATE_SINGLETON_NODE_1
-	        else
-	          connectPix2Node(p, img[p], stack_top);
-					if(node[stack_top].area == imgsize)
+					else
+						parentAry[p] = stack_top;
+				}
+				else
+				{
+					if (current_level)
+						_CREATE_SINGLETON_NODE_1
+					else
+						connectPix2Node(p, img[p], stack_top);
+					if (node[stack_top].area == imgsize)
 						goto FLOOD_END;
-	      }
-				//printf("--visited %d: stack_top[%d] at %.2f, area: %d\n", (int)p, (int)stack_top, log2((double)(node[stack_top].alpha)), (int)node[stack_top].area);
-	    }
-
-	    //remove_redundant_node(prev_top, stack_top);
-
+				}
+			}
 			if (node[stack_top].area == imgsize)	// root node found...done
 				break;
 
-	    //go to higher level
-	    iNode = node[stack_top].parentidx;
-	    if ((double)queue->top_alpha() < (double)node[iNode].alpha)
+			//go to higher level
+			iNode = node[stack_top].parentidx;
+			if ((double)queue->top_alpha() < (double)node[iNode].alpha)
 			{
 				iNode = NewAlphaNode1(queue->top_alpha(), node + stack_top);
 				node[iNode].parentidx = node[stack_top].parentidx;
 				node[iNode].rootidx = ROOTIDX;
 				node[stack_top].parentidx = iNode;
 			}
-	    else //go to existing node
-	    {
-	      node[iNode].add(node + stack_top, pix_type);
-	    }
+			else //go to existing node
+			{
+				node[iNode].add(node + stack_top, pix_type);
+			}
 
-	    //prev_top = stack_top;
-	    stack_top = iNode;
-	    current_level = (_uint64)node[stack_top].alpha;
+			stack_top = iNode;
+			current_level = (_uint64)node[stack_top].alpha;
 			if (node[stack_top].area == imgsize)	// root node found...done
 				break;
-	  }
-FLOOD_END:
-	  rootidx = (node[stack_top].area == imgsize) ? stack_top : iNode; //remove redundant root
-	  node[rootidx].parentidx = ROOTIDX;
+		}
+	FLOOD_END:
+		rootidx = (node[stack_top].area == imgsize) ? stack_top : iNode; //remove redundant root
+		node[rootidx].parentidx = ROOTIDX;
 
-	  delete queue;
-	  Free(dimg);
-	  Free(isVisited);
-	  Free(isAvailable);
+		delete queue;
+		Free(dimg);
+		Free(isVisited);
+		Free(isAvailable);
 	}
 
 	Imgidx initialize_node(Pixel *img, Pixel *dimg, Pixel maxpixval)
@@ -3263,23 +3064,20 @@ FLOOD_END:
 		Imgidx maxdiffidx = 0;
 		Pixel maxdiffval = 0;
 
-	//		#pragma omp parallel for schedule(guided, 1)
 		for (p = 0; p < maxSize;p++)
 		{
-			if(p < imgsize)
+			if (p < imgsize)
 				node[p].set(1, 0, (double)img[p], img[p], img[p]);
 			else
 			{
 				Imgidx q = p - imgsize;
-				if(maxdiffval < dimg[q])
+				if (maxdiffval < dimg[q])
 				{
 					maxdiffval = dimg[q];
 					maxdiffidx = q;
 				}
 				node[p].set(0, dimg[q], 0.0, maxpixval, 0, pix_type);
 			}
-			//node[p].rootidx = node[p].parentidx = ROOTIDX;
-			//node[p].print(node);
 		}
 
 		return maxdiffidx;
@@ -3287,18 +3085,15 @@ FLOOD_END:
 
 	void initialize_node1(Pixel *img, RankItem<Imgidx, double> *rankitem, Pixel maxpixval)
 	{
-		//AlphaNode<Imgidx, Pixel> *pNode;
 		Imgidx p, imgsize = width * height;
 
-//		#pragma omp parallel for schedule(guided, 1)
 		for (p = 0; p < maxSize;p++)
 		{
-			if(p < imgsize)
+			if (p < imgsize)
 				node[p].set(1, 0, (double)img[p], img[p], img[p]);
 			else
 				node[p].set(0, rankitem[p - imgsize].alpha, 0.0, maxpixval, 0, pix_type);
 			node[p].rootidx = node[p].parentidx = ROOTIDX;
-			//node[p].print(node);
 		}
 	}
 
@@ -3306,11 +3101,10 @@ FLOOD_END:
 	{
 		Imgidx p, imgsize = width * height;
 
-//		#pragma omp parallel for schedule(guided, 1)
 		for (p = 0; p < maxSize;p++)
 		{
 			Imgidx q = p;
-			if(p < imgsize)
+			if (p < imgsize)
 				node[p].set(1, 0, (double)img[p], img[p], img[p]);
 			else
 			{
@@ -3324,33 +3118,27 @@ FLOOD_END:
 
 	void initialize_node(Pixel *img, RankItem<Imgidx, Pixel> *rankitem, Pixel maxpixval)
 	{
-		//AlphaNode<Imgidx, Pixel> *pNode;
-		//RankItem<Imgidx, Pixel> *pRank;
 		Imgidx p, imgsize = width * height;
 
-//		#pragma omp parallel for schedule(guided, 1)
 		for (p = 0; p < maxSize;p++)
 		{
-			if(p < imgsize)
+			if (p < imgsize)
 				node[p].set(1, 0, (double)img[p], img[p], img[p]);
 			else
 				node[p].set(0, rankitem[p - imgsize].alpha, 0.0, maxpixval, 0, pix_type);
 			node[p].rootidx = node[p].parentidx = ROOTIDX;
-			//node[p].print(node);
 		}
 
 	}
 
 	void initialize_node_par(Pixel *img, RankItem<Imgidx, Pixel> *rankitem, Pixel maxpixval)
 	{
-		//AlphaNode<Imgidx, Pixel> *pNode;
-		//RankItem<Imgidx, Pixel> *pRank;
 		Imgidx p, imgsize = width * height;
 
 		#pragma omp parallel for schedule(guided, 1)
 		for (p = 0; p < maxSize;p++)
 		{
-			if(p < imgsize)
+			if (p < imgsize)
 			{
 				node[p].set(1, 0, (double)img[p], img[p], img[p]);
 				node[p].parentidx = node[p].rootidx = ROOTIDX;
@@ -3368,61 +3156,51 @@ FLOOD_END:
 
 	void initialize_node_par1(Pixel *img, RankItem<Imgidx, double> *rankitem, Pixel maxpixval, Index* rank2rankitem)
 	{
-		//AlphaNode<Imgidx, Pixel> *pNode;
-		//RankItem<Imgidx, Pixel> *pRank;
 		Imgidx p, imgsize = width * height;
 
 		#pragma omp parallel for schedule(guided, 1)
 		for (p = 0; p < maxSize;p++)
 		{
-			if(p < imgsize)
+			if (p < imgsize)
 			{
 				node[p].set(1, 0, (double)img[p], img[p], img[p]);
 				node[p].parentidx = node[p].rootidx = ROOTIDX;
 			}
 			else
 			{
-				if(rank2rankitem)
+				if (rank2rankitem)
 					node[p].set(0, rankitem[rank2rankitem[p - imgsize]].alpha, 0.0, maxpixval, 0, pix_type);
 				else
 					node[p].set(0, rankitem[p - imgsize].alpha, 0.0, maxpixval, 0, pix_type);
 				node[p].parentidx = node[p].rootidx = ROOTIDX;
 			}
-			//node[p].print(node);
-
-			//node[p].thread = -1;
 		}
-	//
-	//	for (pNode = node, p = 0; pNode < node_in; pNode++, p++)
-	//		pNode->set(1, 0, (double)img[p], img[p], img[p]);		//init leaf nodes
-	//	for (pRank = rankitem; pNode < node + maxSize; pNode++, pRank++)
-	//		pNode->set(0, pRank->alpha, 0.0, maxpixval, 0, pix_type); //init inner nodes
 	}
 
 	void init_hypergraph_nodes(Pixel *dimg)
 	{
-		if(connectivity == 4)
+		if (connectivity == 4)
 		{
 			Imgidx imgsize = height * width;
 			Imgidx p = 0;
 			Imgidx wstride = width << 1;
-			for(Imgidx y = 0;y < height;y++)
+			for (Imgidx y = 0;y < height;y++)
 			{
-				for(Imgidx x = 0;x < width;x++)
+				for (Imgidx x = 0;x < width;x++)
 				{
 					Imgidx q = p << 1;
 					Pixel minalpha = (Pixel)(-1), minneighidx=0;
 
-					if((y < height - 1) && (dimg[q] < minalpha))		{minalpha = dimg[q];					 minneighidx = q;}
-					if((x < width - 1) && (dimg[q + 1] < minalpha))	{minalpha = dimg[q + 1]; 			 minneighidx = q + 1;}
-					if((x > 0) && (dimg[q - 1] < minalpha))					{minalpha = dimg[q - 1]; 			 minneighidx = q - 1;}
-					if((y > 0) && (dimg[q - wstride] < minalpha))		{minalpha = dimg[q - wstride]; minneighidx = q - wstride;}
+					if ((y < height - 1) && (dimg[q] < minalpha))		{minalpha = dimg[q];			minneighidx = q;}
+					if ((x < width - 1) && (dimg[q + 1] < minalpha))	{minalpha = dimg[q + 1]; 		minneighidx = q + 1;}
+					if ((x > 0) && (dimg[q - 1] < minalpha))			{minalpha = dimg[q - 1]; 		minneighidx = q - 1;}
+					if ((y > 0) && (dimg[q - wstride] < minalpha))		{minalpha = dimg[q - wstride];	minneighidx = q - wstride;}
 
 					node[p++].connect_to_parent(&node_in[minneighidx], minneighidx + imgsize, pix_type);
 				}
 			}
 		}
-		else//later!
+		else
 		{
 
 		}
@@ -3433,26 +3211,25 @@ FLOOD_END:
 	//easier
 	void init_hypergraph_nodes(Imgidx *rank)
 	{
-		if(connectivity == 4)
+		if (connectivity == 4)
 		{
 			Imgidx imgsize = height * width;
-			for(Imgidx p = 0; p < imgsize;p++)
+			for (Imgidx p = 0; p < imgsize;p++)
 			{
 				Imgidx q = p << 1;
 				Imgidx y = p / width;
 				Imgidx x = p % width;
-				//_int8 isAv = isAvailable[p];
 				Imgidx minRank = 2 * imgsize;
 
-				((y < height - 1) && (rank[q] < minRank)) 			? (minRank = rank[q])  							 : (Imgidx)0;
-				((x < width - 1) && (rank[q + 1] < minRank)) 		? (minRank = rank[q + 1])  					 : (Imgidx)0;
-				((x > 0) && (rank[q - 1] < minRank)) 						? (minRank = rank[q - 1])   				 : (Imgidx)0;
-				((y > 0) && (rank[q - (width << 1)] < minRank)) ? (minRank = rank[q - (width << 1)]) : (Imgidx)0;
+				((y < height - 1) && (rank[q] < minRank)) 		? (minRank = rank[q])					: (Imgidx)0;
+				((x < width - 1) && (rank[q + 1] < minRank)) 	? (minRank = rank[q + 1])				: (Imgidx)0;
+				((x > 0) && (rank[q - 1] < minRank)) 			? (minRank = rank[q - 1])				: (Imgidx)0;
+				((y > 0) && (rank[q - (width << 1)] < minRank)) ? (minRank = rank[q - (width << 1)])	: (Imgidx)0;
 
 				node[p].connect_to_parent(&node_in[minRank], minRank + imgsize, pix_type);
 			}
 		}
-		else//later!
+		else
 		{
 
 		}
@@ -3460,37 +3237,35 @@ FLOOD_END:
 
 	void set_isAvailable_hypergraph(_uint8 *isAvailable)
 	{
-		//_uint8 isAv;
-//		Imgidx dimgidx = 0;
-		if(connectivity == 4)
+		if (connectivity == 4)
 		{
 			Imgidx dimgidx;
 			Imgidx width2 = 2*width;
 			Imgidx dimgsize = width * height * 2;
 
 			//first row
-			for(dimgidx = 0;dimgidx < width2;)
+			for (dimgidx = 0;dimgidx < width2;)
 			{
 				isAvailable[dimgidx++] |= 0x20;//even neighbor 5
 				isAvailable[dimgidx++] |= 0x30;//odd neighbor 4, 5
 			}
 
-			for(dimgidx-=3;dimgidx < dimgsize;dimgidx += width2)
+			for (dimgidx-=3;dimgidx < dimgsize;dimgidx += width2)
 			{
 				isAvailable[dimgidx] |= 0x02;//odd neighbor 1
 				isAvailable[dimgidx + 1] |= 0x09;//even neighbor 0, 3
 			}
 
-			for(dimgidx = 0;dimgidx < dimgsize;dimgidx += width2)
+			for (dimgidx = 0;dimgidx < dimgsize;dimgidx += width2)
 			{
 				isAvailable[dimgidx] |= 0x12; //even neighbor 1, 4
 				isAvailable[dimgidx + 1] |= 0x08; //odd neighbor 3
 			}
 
 			//last 2 rows
-			for(dimgidx = width * (height - 2) * 2;dimgidx < dimgsize - width2;dimgidx += 2)
+			for (dimgidx = width * (height - 2) * 2;dimgidx < dimgsize - width2;dimgidx += 2)
 				isAvailable[dimgidx] |= 0x04;//even neighbor 2
-			for(dimgidx+=1;dimgidx < dimgsize;dimgidx += 2)
+			for (dimgidx+=1;dimgidx < dimgsize;dimgidx += 2)
 				isAvailable[dimgidx] |= 0x05;//odd neighbor 0, 2
 
 		}
@@ -3528,11 +3303,10 @@ FLOOD_END:
 			Imgidx imgsize, dimgsize, nredges;
 			Imgidx current_rank = 0, next_rank = 0;
 			RankItem<Imgidx, double> *rankitem, *pRank;
-			//AlphaNode<Imgidx, Pixel> *pNode;
 			Pixel maxpixval;
 			Imgidx *rank;
 			_int8 nbits;
-			_uint8 *isVisited, /**isVisited_edges,*/ *isAvailable, isAv;
+			_uint8 *isVisited, *isAvailable, isAv;
 			Imgidx p;
 			imgsize = width * height;
 			nredges = width * (height - 1) + (width - 1) * height + ((connectivity == 8) ? ((width - 1) * (height - 1) * 2) : 0);
@@ -3578,19 +3352,19 @@ FLOOD_END:
 					p = pRank->dimgidx;
 
 					_uint8 gotolowerlevel = 0;
-					if(connectivity == 4)
+					if (connectivity == 4)
 					{
 						isAv = ~isAvailable[p];
 
-						if(p & 1)	gotolowerlevel = _RANK_PUSH_NEIGHBORS_4N_HYPERGRAPH_ODD;
+						if (p & 1)	gotolowerlevel = _RANK_PUSH_NEIGHBORS_4N_HYPERGRAPH_ODD;
 						else			gotolowerlevel = _RANK_PUSH_NEIGHBORS_4N_HYPERGRAPH_EVEN;
 					}
 					else
 					{
-						//later
+						
 					}
 
-					if(!gotolowerlevel)
+					if (!gotolowerlevel)
 						break;
 				}
 
@@ -3601,7 +3375,6 @@ FLOOD_END:
 				if (node_in[next_rank].area == imgsize)
 					break;
 
-	//				prev_top = current_rank;
 				current_rank = next_rank;
 			}
 
@@ -3656,21 +3429,17 @@ FLOOD_END:
 		Imgidx hstride = height / npartition_y;
 		Imgidx hres = height % npartition_y;
 
-		//int cnt = 0;
-
-	//		Imgidx dimgidx = 0;
-		if(connectivity == 4)
+		if (connectivity == 4)
 		{
 			Imgidx dimgidx;
 			Imgidx width2 = 2*width;
 			Imgidx dimgsize = width * height * 2;
 
-
 			//subimage first rows
-			for(int y = 0;y < npartition_y;y++)
+			for (int y = 0;y < npartition_y;y++)
 			{
 				Imgidx nextrowidx = (y * hstride + 1) * width2;
-				for(dimgidx = (y * hstride) * width2;dimgidx < nextrowidx;)
+				for (dimgidx = (y * hstride) * width2;dimgidx < nextrowidx;)
 				{
 					isAvailable[dimgidx++] |= 0x20;//even neighbor 5
 					isAvailable[dimgidx++] |= 0x30;//odd neighbor 4, 5
@@ -3678,12 +3447,12 @@ FLOOD_END:
 			}
 
 			//subimage right edges
-			for(int x = 0;x < npartition_x;x++)
+			for (int x = 0;x < npartition_x;x++)
 			{
-				if(x == 0)
+				if (x == 0)
 				{
 					dimgidx = width2 - 3;
-					for(;dimgidx < dimgsize;dimgidx += width2)
+					for (;dimgidx < dimgsize;dimgidx += width2)
 					{
 						isAvailable[dimgidx] |= 0x02;//odd neighbor 1
 						isAvailable[dimgidx + 1] |= 0x09;//even neighbor 0, 3
@@ -3693,15 +3462,15 @@ FLOOD_END:
 				{
 					//edges on subblock borders belong to subblocks on the left
 					dimgidx = width2 - 1 - x * wstride - wres2;
-					for(;dimgidx < dimgsize;dimgidx += width2)
+					for (;dimgidx < dimgsize;dimgidx += width2)
 						isAvailable[dimgidx] |= 0x23;//odd neighbor 0, 1, 5
 				}
 			}
 
 			//subimage left edges
-			for(int x = 0;x < npartition_x;x++)
+			for (int x = 0;x < npartition_x;x++)
 			{
-				for(dimgidx = x * wstride;dimgidx < dimgsize;dimgidx += width2)
+				for (dimgidx = x * wstride;dimgidx < dimgsize;dimgidx += width2)
 				{
 					isAvailable[dimgidx] |= 0x12; //even neighbor 1, 4
 					isAvailable[dimgidx + 1] |= 0x08; //odd neighbor 3
@@ -3709,29 +3478,29 @@ FLOOD_END:
 			}
 
 			//last 2 rows
-			for(int y = 0;y < npartition_y;y++)
+			for (int y = 0;y < npartition_y;y++)
 			{
-				if(y == 0)
+				if (y == 0)
 				{
 
 					Imgidx subimgend = (height - 1) * width2;
-					for(dimgidx = (height - 2) * width2;dimgidx < subimgend;dimgidx += 2)
+					for (dimgidx = (height - 2) * width2;dimgidx < subimgend;dimgidx += 2)
 						isAvailable[dimgidx] |= 0x04;//even neighbor 2
 					subimgend = height * width2;
-					for(dimgidx = (height - 1) * width2 + 1;dimgidx < subimgend;dimgidx += 2)
+					for (dimgidx = (height - 1) * width2 + 1;dimgidx < subimgend;dimgidx += 2)
 						isAvailable[dimgidx] |= 0x05;//odd neighbor 0, 2
 				}
 				else
 				{
 					dimgidx = (height - 1 - y * hstride - hres) * width2;
 					Imgidx subimgend = dimgidx + width2;
-					for(;dimgidx < subimgend;dimgidx += 2)
+					for (;dimgidx < subimgend;dimgidx += 2)
 						isAvailable[dimgidx] |= 0x1c;//even neighbor 2, 3, 4
 				}
 			}
 
 		}
-		else//later
+		else
 		{
 
 		}
@@ -3741,9 +3510,9 @@ FLOOD_END:
 	{
 		Imgidx sum = hist[0], hi;
 		maxidx = 0;
-		for(Imgidx i = 1;i < size;i++)
+		for (Imgidx i = 1;i < size;i++)
 		{
-			if(hist[i])
+			if (hist[i])
 			{
 				maxidx = i;
 				sum += hist[i];
@@ -3755,15 +3524,14 @@ FLOOD_END:
 	void cumsum(Imgidx *hist, Imgidx size, _uint32 *histeqmap, int eqhistsize)
 	{
 		Imgidx sum = hist[0];
-		for(Imgidx i = 1;i < size;i++)
+		for (Imgidx i = 1;i < size;i++)
 		{
 			sum += hist[i];
-			//hist[i] = sum;
 		}
 
 		double coeff = (double)(eqhistsize - 1) / (double)sum;
 		sum = 0;
-		for(Imgidx i = 0;i < size;i++)
+		for (Imgidx i = 0;i < size;i++)
 		{
 			sum += hist[i];
 			histeqmap[i] = (_uint16)((double)sum * coeff);
@@ -3812,7 +3580,7 @@ FLOOD_END:
 
 	void Flood_HierarQueue_Hypergraph(Pixel* img)
 	{
-		if(sizeof(Pixel) > 2 || channel > 1)
+		if (sizeof(Pixel) > 2 || channel > 1)
 		{
 			printf("Error: Hierarchical queues do not work on >16 bits images or multispectral images\n");
 			printf("Try Unionfind (algorithm code %d), flooding using Heapqueue (%d), trie queue (%d) or cached trie queue (%d) \n", UNIONFIND, FLOOD_HEAPQUEUE_CACHE, FLOOD_TRIE, FLOOD_TRIE_CACHE);
@@ -3880,7 +3648,7 @@ FLOOD_END:
 				{
 					_uint8 isAv = ~isAvailable[p];
 
-					if(p & 1)	gotolowerlevel = _RANK_PUSH_NEIGHBORS_4N_HYPERGRAPH_PILOT_ODD;
+					if (p & 1)	gotolowerlevel = _RANK_PUSH_NEIGHBORS_4N_HYPERGRAPH_PILOT_ODD;
 					else      gotolowerlevel = _RANK_PUSH_NEIGHBORS_4N_HYPERGRAPH_PILOT_EVEN;
 				}
 				else
@@ -3888,7 +3656,7 @@ FLOOD_END:
 					//LATER
 				}
 
-				if(gotolowerlevel)
+				if (gotolowerlevel)
 				{
 					current_level = queue->min_level;
 					iNode = queue->top() + imgsize;
@@ -3900,7 +3668,7 @@ FLOOD_END:
 					queue->pop();
 					queue->find_minlev();
 
-					if(queue->min_level == current_level)
+					if (queue->min_level == current_level)
 					{
 						iNode = queue->top() + imgsize;
 						node[stack_top].add(node + iNode, pix_type);
@@ -3947,13 +3715,13 @@ FLOOD_END:
 		Imgidx p, q;
 
 		p = get_level_root(nidx);//for 0-ccs
-		if(p != nidx)
+		if (p != nidx)
 		 	node[nidx].parentidx = p;
 
 		while(1)
 		{
 			q = node[p].parentidx;
-			if(q == ROOTIDX)
+			if (q == ROOTIDX)
 				break;
 			q = get_level_root(q);
 			node[p].parentidx = q;
@@ -3980,12 +3748,12 @@ FLOOD_END:
 		while(npartition_x > 1 || npartition_y > 1)
 		{
 				//merge horizontal borders
-			if((npartition_x == 1 || blksz_x >= blksz_y) && npartition_y > 1)
+			if ((npartition_x == 1 || blksz_x >= blksz_y) && npartition_y > 1)
 			{
 				numblk = npartition_x * (npartition_y / 2);
 
 				#pragma omp parallel for schedule(dynamic,1)
-				for(int blk = 0;blk < numblk;blk++)
+				for (int blk = 0;blk < numblk;blk++)
 				{
 					Imgidx x, y, r, p, p0, pn, dimgidx, bx, by, bidx;
 					//Pixel qminlev;
@@ -3996,7 +3764,7 @@ FLOOD_END:
 					pn = (((blk % (int)npartition_x) == npartition_x - 1) ? y * width : p0 + blksz_x);
 
 					by = _min((p0 / blkrow), npartition_y0 - 1);
-						for(p = p0;p < pn;p++)
+						for (p = p0;p < pn;p++)
 					{
 						bx = _min(((p % width) / blksz_x0), npartition_x0 - 1);
 						bidx = by * npartition_x0 + bx;
@@ -4005,29 +3773,27 @@ FLOOD_END:
 						r = dimg[dimgidx];
 						nrbnode[bidx]++;
 
-						if(tse) connect(parentAry[p], parentAry[p + width], (Imgidx)subtree_cur[bidx]++, (Pixel)r);
+						if (tse) connect(parentAry[p], parentAry[p + width], (Imgidx)subtree_cur[bidx]++, (Pixel)r);
 						else    connect(p, p + width, (Imgidx)subtree_cur[bidx]++, (Pixel)r);
 					}
 				}
 				npartition_y = (npartition_y + 1) / 2;
 				blksz_y <<= 1;
-				if(npartition_y == 1)
+				if (npartition_y == 1)
 					blksz_y = height;
 				else
 				blksz_y = _min(blksz_y, height);
 
 			}
 
-			if((npartition_y == 1 || blksz_x <= blksz_y) && npartition_x > 1)
+			if ((npartition_y == 1 || blksz_x <= blksz_y) && npartition_x > 1)
 			{
 				numblk = npartition_y * (npartition_x / 2);
 
 				#pragma omp parallel for schedule(dynamic,1)
-				for(int blk = 0;blk < numblk;blk++)
+				for (int blk = 0;blk < numblk;blk++)
 				{
-					//printf("blk %d------------\n",(int)blk);
 					Imgidx x, y, r, p, p0, pn, dimgidx, bx, by, bidx;;
-					//Pixel qminlev;
 					x = (1 + 2 * (blk / npartition_y)) * blksz_x;
 					y = (blk % (int)npartition_y) * blksz_y;
 
@@ -4035,25 +3801,22 @@ FLOOD_END:
 					pn = ((blk % (int)npartition_y) == npartition_y - 1) ? height * width : p0 + width * blksz_y;
 
 					bx = _min(((p0 % width) / blksz_x0), npartition_x0 - 1);
-					for(p = p0;p < pn;p += width)
+					for (p = p0;p < pn;p += width)
 					{
-						//if(tmp == 20)
-							//break;
 						by = _min((p / blkrow),npartition_y0 - 1);
-						//printf("p0 / blkrow : %d/%d\n",(int)p0,(int)blkrow);
 						bidx = by * npartition_x0 + bx;
 
 						dimgidx = (p << 1) + 1;
 						r = dimg[dimgidx];
 						nrbnode[bidx]++;
 
-						if(tse) connect(parentAry[p], parentAry[p + 1], (Imgidx)subtree_cur[bidx]++, (Pixel)r);
+						if (tse) connect(parentAry[p], parentAry[p + 1], (Imgidx)subtree_cur[bidx]++, (Pixel)r);
 						else    connect(p, p + 1, (Imgidx)subtree_cur[bidx]++, (Pixel)r);
 					}
 				}
 				npartition_x = (npartition_x + 1) / 2;
 				blksz_x <<= 1;
-				if(npartition_x == 1)
+				if (npartition_x == 1)
 					blksz_x = width;
 				else
 					blksz_x = _min(blksz_x, width);
@@ -4061,7 +3824,7 @@ FLOOD_END:
 		}
 
 		Imgidx p;
-		if(tse)
+		if (tse)
 		 	p = parentAry[0];
 		else
 			p = 0;
@@ -4074,37 +3837,23 @@ FLOOD_END:
 	Imgidx merge_subtrees(_uint8 *dimg, _int64 blksz_x, _int64 blksz_y, _int16 npartition_x, _int16 npartition_y, Imgidx* subtree_cur, int tse)
 	{
 		Imgidx numblk;
-		//Imgidx imgsize = height * width, numblk;
-		//_uint numpartitions = npartition_x * npartition_y;
 		_int64 blksz_x0 = blksz_x;
 		_int64 blksz_y0 = blksz_y;
-
-
-		//Imgidx neighbor_offset = 0, shamt = 1;
-		//if(connectivity == 8)
-		//{
-		//	neighbor_offset = 1;
-		//	shamt = 2;
-		//}
-
-		//Imgidx numlv = 0, numbord = 0, numred = 0;//tmp
 
 		Imgidx npartition_x0 = npartition_x;
 		Imgidx npartition_y0 = npartition_y;
 		Imgidx blkrow = width * blksz_y0;
 		while(npartition_x > 1 || npartition_y > 1)
 		{
-			if((npartition_x == 1 || blksz_x >= blksz_y) && npartition_y > 1)
+			if ((npartition_x == 1 || blksz_x >= blksz_y) && npartition_y > 1)
 			{
 				numblk = npartition_x * (npartition_y / 2);
 
 
 				#pragma omp parallel for
-				for(int blk = 0;blk < numblk;blk++)
+				for (int blk = 0;blk < numblk;blk++)
 				{
-					//printf("blk %d------------\n",(int)blk);
 					Imgidx x, y, r, p, p0, pn, dimgidx, bx, by, bidx;
-					//Pixel qminlev;
 					y = (1 + 2 * (blk / (int)npartition_x)) * blksz_y;
 					x = (blk % (int)npartition_x) * blksz_x;
 
@@ -4112,39 +3861,35 @@ FLOOD_END:
 					pn = (((blk % (int)npartition_x) == npartition_x - 1) ? y * width : p0 + blksz_x);
 
 					by = _min((p0 / blkrow), npartition_y0 - 1);
-				for(p = p0;p < pn;p++)
+				for (p = p0;p < pn;p++)
 					{
 						bx = _min(((p % width) / blksz_x0), npartition_x0 - 1);
 						bidx = by * npartition_x0 + bx;
 
 						dimgidx = p << 1;
 						r = dimg[dimgidx];
-						//if(bidx < 0 || bidx >= numpartitions || subtree_cur[bidx] == subtree_start[bidx + 1])//tmp
-						//	 printf("blk%d: bidx indexing error\n", (int)blk);
 
-						if(tse) connect(parentAry[p], parentAry[p + width], (Imgidx)subtree_cur[bidx]++, (Pixel)r);
+						if (tse) connect(parentAry[p], parentAry[p + width], (Imgidx)subtree_cur[bidx]++, (Pixel)r);
 						else    connect(p, p + width, (Imgidx)subtree_cur[bidx]++, (Pixel)r);
 					}
 				}
 				npartition_y = (npartition_y + 1) / 2;
 				blksz_y <<= 1;
-				if(npartition_y == 1)
+				if (npartition_y == 1)
 					blksz_y = height;
 				else
 				blksz_y = _min(blksz_y, height);
 			}
 
 			//merge vertical borders
-			if((npartition_y == 1 || blksz_x <= blksz_y) && npartition_x > 1)
+			if ((npartition_y == 1 || blksz_x <= blksz_y) && npartition_x > 1)
 			{
 				numblk = npartition_y * (npartition_x / 2);
 
 				#pragma omp parallel for
-				for(int blk = 0;blk < numblk;blk++)
+				for (int blk = 0;blk < numblk;blk++)
 				{
-					//printf("blk %d------------\n",(int)blk);
 					Imgidx x, y, r, p, p0, pn, dimgidx, bx, by, bidx;;
-					//Pixel qminlev;
 					x = (1 + 2 * (blk / npartition_y)) * blksz_x;
 					y = (blk % (int)npartition_y) * blksz_y;
 
@@ -4152,25 +3897,22 @@ FLOOD_END:
 					pn = ((blk % (int)npartition_y) == npartition_y - 1) ? height * width : p0 + width * blksz_y;
 
 					bx = _min(((p0 % width) / blksz_x0), npartition_x0 - 1);
-					for(p = p0;p < pn;p += width)
+					for (p = p0;p < pn;p += width)
 					{
-						//if(tmp == 20)
-							//break;
 						by = _min((p / blkrow),npartition_y0 - 1);
-						//printf("p0 / blkrow : %d/%d\n",(int)p0,(int)blkrow);
 						bidx = by * npartition_x0 + bx;
 
 						dimgidx = (p << 1) + 1;
 						r = dimg[dimgidx];
 
-						if(tse) connect(parentAry[p], parentAry[p + 1], (Imgidx)subtree_cur[bidx]++, (Pixel)r);
-							else    connect(p, p + 1, (Imgidx)subtree_cur[bidx]++, (Pixel)r);
+						if (tse)	connect(parentAry[p], parentAry[p + 1], (Imgidx)subtree_cur[bidx]++, (Pixel)r);
+						else		connect(p, p + 1, (Imgidx)subtree_cur[bidx]++, (Pixel)r);
 
 					}
 				}
 				npartition_x = (npartition_x + 1) / 2;
 				blksz_x <<= 1;
-				if(npartition_x == 1)
+				if (npartition_x == 1)
 					blksz_x = width;
 				else
 					blksz_x = _min(blksz_x, width);
@@ -4178,7 +3920,7 @@ FLOOD_END:
 		}
 
 		Imgidx p;
-		if(tse)
+		if (tse)
 		 	p = parentAry[0];
 		else
 			p = 0;
@@ -4191,7 +3933,6 @@ FLOOD_END:
 	Imgidx merge_subtrees1(_uint8 *dimg, _int64 blksz_x, _int64 blksz_y, _int16 npartition_x, _int16 npartition_y, Imgidx* subtree_cur, int tse, Imgidx* hypernode_level)
 	{
 		Imgidx numblk;
-		//_uint numpartitions = npartition_x * npartition_y;
 		_int64 blksz_x0 = blksz_x;
 		_int64 blksz_y0 = blksz_y;
 
@@ -4200,16 +3941,14 @@ FLOOD_END:
 		Imgidx blkrow = width * blksz_y0;
 		while(npartition_x > 1 || npartition_y > 1)
 		{
-			if((npartition_x == 1 || blksz_x >= blksz_y) && npartition_y > 1)
+			if ((npartition_x == 1 || blksz_x >= blksz_y) && npartition_y > 1)
 			{
 				numblk = npartition_x * (npartition_y / 2);
 
 				#pragma omp parallel for schedule(dynamic,1)
-				for(int blk = 0;blk < numblk;blk++)
+				for (int blk = 0;blk < numblk;blk++)
 				{
-					//printf("blk %d------------\n",(int)blk);
 					Imgidx x, y, r, p, p0, pn, dimgidx, bx, by, bidx;
-					//Pixel qminlev;
 					y = (1 + 2 * (blk / (int)npartition_x)) * blksz_y;
 					x = (blk % (int)npartition_x) * blksz_x;
 
@@ -4217,7 +3956,7 @@ FLOOD_END:
 					pn = (((blk % (int)npartition_x) == npartition_x - 1) ? y * width : p0 + blksz_x);
 
 					by = _min((p0 / blkrow), npartition_y0 - 1);
-					for(p = p0;p < pn;p++)
+					for (p = p0;p < pn;p++)
 					{
 						bx = _min(((p % width) / blksz_x0), npartition_x0 - 1);
 						bidx = by * npartition_x0 + bx;
@@ -4225,31 +3964,27 @@ FLOOD_END:
 						dimgidx = p << 1;
 						r = dimg[dimgidx];
 
-						//canonicalize(p); canonicalize(p + width);
-						if(tse) hypernode_level[dimgidx] = connect(parentAry[p], parentAry[p + width], (Imgidx)subtree_cur[bidx]++, (Pixel)r);
+						if (tse) hypernode_level[dimgidx] = connect(parentAry[p], parentAry[p + width], (Imgidx)subtree_cur[bidx]++, (Pixel)r);
 						else    hypernode_level[dimgidx] = connect(p, p + width, (Imgidx)subtree_cur[bidx]++, (Pixel)r);
 					}
 				}
 				npartition_y = (npartition_y + 1) / 2;
 				blksz_y <<= 1;
-				if(npartition_y == 1)
+				if (npartition_y == 1)
 					blksz_y = height;
 				else
 				blksz_y = _min(blksz_y, height);
 
 			}
 
-			//merge vertical borders
-			if((npartition_y == 1 || blksz_x <= blksz_y) && npartition_x > 1)
+			if ((npartition_y == 1 || blksz_x <= blksz_y) && npartition_x > 1)
 			{
 				numblk = npartition_y * (npartition_x / 2);
 
 				#pragma omp parallel for schedule(dynamic,1)
-				for(int blk = 0;blk < numblk;blk++)
+				for (int blk = 0;blk < numblk;blk++)
 				{
-					//printf("blk %d------------\n",(int)blk);
 					Imgidx x, y, r, p, p0, pn, dimgidx, bx, by, bidx;;
-					//Pixel qminlev;
 					x = (1 + 2 * (blk / npartition_y)) * blksz_x;
 					y = (blk % (int)npartition_y) * blksz_y;
 
@@ -4257,25 +3992,22 @@ FLOOD_END:
 					pn = ((blk % (int)npartition_y) == npartition_y - 1) ? height * width : p0 + width * blksz_y;
 
 					bx = _min(((p0 % width) / blksz_x0), npartition_x0 - 1);
-					for(p = p0;p < pn;p += width)
+					for (p = p0;p < pn;p += width)
 					{
-						//if(tmp == 20)
-							//break;
 						by = _min((p / blkrow),npartition_y0 - 1);
-						//printf("p0 / blkrow : %d/%d\n",(int)p0,(int)blkrow);
 						bidx = by * npartition_x0 + bx;
 
 						dimgidx = (p << 1) + 1;
 						r = dimg[dimgidx];
 
-						if(tse) hypernode_level[dimgidx] =  connect(parentAry[p], parentAry[p + 1], (Imgidx)subtree_cur[bidx]++, (Pixel)r);
+						if (tse) hypernode_level[dimgidx] =  connect(parentAry[p], parentAry[p + 1], (Imgidx)subtree_cur[bidx]++, (Pixel)r);
 						else    hypernode_level[dimgidx] =  connect(p, p + 1, (Imgidx)subtree_cur[bidx]++, (Pixel)r);
 
 					}
 				}
 				npartition_x = (npartition_x + 1) / 2;
 				blksz_x <<= 1;
-				if(npartition_x == 1)
+				if (npartition_x == 1)
 					blksz_x = width;
 				else
 					blksz_x = _min(blksz_x, width);
@@ -4283,7 +4015,7 @@ FLOOD_END:
 		}
 
 		Imgidx p;
-		if(tse)
+		if (tse)
 		 	p = parentAry[0];
 		else
 			p = 0;
@@ -4297,7 +4029,7 @@ FLOOD_END:
 		Imgidx & blkts, char *blkflooddone, Imgidx *subtree_cur, Imgidx *subtree_start, Imgidx *subtree_nborderedges,
 		omp_lock_t *locks, int &numbusythr, int &numblkproc, int &outofmemory)
 	{
-		if(omp_get_num_threads() == 1)
+		if (omp_get_num_threads() == 1)
 			outofmemory = 1;
 
 		subtree_cur[nidxblk] = nidx;
@@ -4306,28 +4038,24 @@ FLOOD_END:
 
 		omp_set_lock(locks + numpartitions);
 		numbusythr--;
-		//printf("th%d-- (%d/%d)\n", omp_get_thread_num(), numbusythr, omp_get_num_threads());
 		omp_unset_lock(locks + numpartitions);
 		omp_unset_lock(locks + nidxblk);
 
 		while(1)
 		{
-			if(outofmemory || (!numbusythr))// && numblkproc >= omp_get_num_threads()))
+			if (outofmemory || (!numbusythr))// && numblkproc >= omp_get_num_threads()))
 			{
-				//printf("thr%d: outofmem: %d / numbusythr: %d\n", (int)omp_get_thread_num(), (int)outofmemory, (int)numbusythr);
 				outofmemory = 1;
-				//printf("thr%d: memory overflow detected (%d/%d) - migrate_subtree returning 0\n", (int)omp_get_thread_num(), (int)nidx, (int)nidx_lim);
 				return 0;
 			}
 
-			for(int newblkidx = 0;newblkidx < numpartitions;newblkidx++)
+			for (int newblkidx = 0;newblkidx < numpartitions;newblkidx++)
 			{
-				if(blkflooddone[newblkidx] && (subtree_cur[newblkidx] + subtree_nborderedges[newblkidx] < subtree_start[newblkidx + 1]) && !omp_test_lock(locks + newblkidx))
+				if (blkflooddone[newblkidx] && (subtree_cur[newblkidx] + subtree_nborderedges[newblkidx] < subtree_start[newblkidx + 1]) && !omp_test_lock(locks + newblkidx))
 				{
-					//omp_set_lock(locks + nidxblk);
 					omp_set_lock(locks + numpartitions);
 
-					if(blkflooddone[newblkidx])
+					if (blkflooddone[newblkidx])
 					{
 						blkflooddone[newblkidx] = 0;
 						numbusythr++;
@@ -4338,8 +4066,6 @@ FLOOD_END:
 						omp_unset_lock(locks + numpartitions);
 						continue;
 					}
-					//printf("th%d++ (%d/%d)\n", omp_get_thread_num(), numbusythr, omp_get_num_threads());
-					//printf("th%d: subtree for blk %d: migrating from %d to %d (locking %d)\n", omp_get_thread_num(), (int)blk, (int)nidxblk, (int)newblkidx, (int)newblkidx);
 					nidxblk = newblkidx;
 					nidx = subtree_cur[nidxblk];
 					blkts -= subtree_cur[nidxblk] - subtree_start[nidxblk];
@@ -4353,14 +4079,13 @@ FLOOD_END:
 	Imgidx parflood_node_alloc(Imgidx *subtree_size, Imgidx *subtree_start, Imgidx *blkws, Imgidx *blkhs, int numpartitions, double sizemult)
 	{
 		subtree_start[0] = 0;
-		for(int blk = 0;blk < numpartitions;blk++)
+		for (int blk = 0;blk < numpartitions;blk++)
 		{
 			Imgidx blkmaxsize = 1 + 3 * blkws[blk] * blkhs[blk];
 			subtree_start[blk + 1] = _min(blkmaxsize, (Imgidx)((double)subtree_size[blk] * sizemult)) + subtree_start[blk];
-			//subtree_start[blk + 1] = blkmaxsize;
 		}
 		maxSize = subtree_start[numpartitions];
-		if(node)	Free(node);
+		if (node)	Free(node);
 		node = (AlphaNode<Imgidx, Pixel>*)Calloc((size_t)(maxSize) * sizeof(AlphaNode<Imgidx, Pixel>));
 
 		return maxSize;
@@ -4448,7 +4173,7 @@ FLOOD_END:
 
 	void Flood_Hierarqueue_par(Pixel *img, int numthreads)
 	{
-		if(sizeof(Pixel) > 2 || channel > 1)
+		if (sizeof(Pixel) > 2 || channel > 1)
 		{
 			printf("Error: Hierarchical queues do not work on >16 bits images or multispectral images\n");
 			printf("Try Unionfind (algorithm code %d), flooding using Heapqueue (%d), trie queue (%d) or cached trie queue (%d) \n", UNIONFIND, FLOOD_HEAPQUEUE_CACHE, FLOOD_TRIE, FLOOD_TRIE_CACHE);
@@ -4470,13 +4195,13 @@ FLOOD_END:
 		{
 			_int16 optpart = 1;
 			double optborderlength = (double)numthreads * (double)imgsize;
-			for(int px = 2;px < numthreads; px++)
+			for (int px = 2;px < numthreads; px++)
 			{
-				if(numthreads % px == 0)
+				if (numthreads % px == 0)
 				{
 					int py = numthreads / px;
 
-					if(((double)px * (double)height + (double)py * (double)width) < optborderlength)
+					if (((double)px * (double)height + (double)py * (double)width) < optborderlength)
 					{
 						optpart = px;
 						optborderlength = ((double)px * (double)height + (double)py * (double)width);
@@ -4506,12 +4231,12 @@ FLOOD_END:
 		Imgidx *blkhs = (Imgidx*)Malloc(numpartitions * sizeof(Imgidx));
 		Imgidx *dhist = (Imgidx*)Calloc((size_t)numlevels * (size_t)numpartitions * sizeof(Imgidx));
 
-		for(_int16 y = 0; y < npartition_y; y++)
+		for (_int16 y = 0; y < npartition_y; y++)
 		{
 			q = y * width * (Imgidx)blksz_y;
 			bool lastrow = (y == npartition_y - 1);
 			Imgidx blkh = lastrow ? blksz_yn : blksz_y;
-			for(_int16 x = 0; x < npartition_x; x++)
+			for (_int16 x = 0; x < npartition_x; x++)
 			{
 				startpidx[p] = q + (Imgidx)x * (Imgidx)blksz_x;
 				bool lastcol = (x == npartition_x - 1);
@@ -4524,7 +4249,7 @@ FLOOD_END:
 		}
 
 		subtree_start[0] = startpidx[0] + imgsize;
-		for(int blk = 1; blk < numpartitions;blk++)
+		for (int blk = 1; blk < numpartitions;blk++)
 		{
 			subtree_start[blk] = subtree_start[blk - 1] + (blkws[blk - 1] * blkhs[blk - 1] * 2);
 		}
@@ -4533,7 +4258,7 @@ FLOOD_END:
 
 		HierarQueue<Imgidx>** queues;
 		queues = (HierarQueue<Imgidx>**)Calloc(numpartitions * sizeof(HierarQueue<Imgidx>*));
-		for(int blk = 0;blk < numpartitions;blk++)
+		for (int blk = 0;blk < numpartitions;blk++)
 			queues[blk] = new HierarQueue<Imgidx>((_uint64)blocksize[blk] + 1);
 
 		//singletons + inners + dummies
@@ -4541,7 +4266,7 @@ FLOOD_END:
 		node_in = node + imgsize;
 
 		#pragma omp parallel for private(p, q) schedule(dynamic,1)
-		for(int blk = 0; blk < numpartitions; blk++)
+		for (int blk = 0; blk < numpartitions; blk++)
 		{
 			Imgidx bwidth = blkws[blk];
 			Imgidx bheight = blkhs[blk];
@@ -4554,18 +4279,18 @@ FLOOD_END:
 			Pixel maxdiff = 0;
 
 
-			for(Imgidx i = 0;i < bheight;i++)
+			for (Imgidx i = 0;i < bheight;i++)
 			{
 				Pixel diff;
 				p = spidx + i * width;
 				bool notlastrow = i < bheight - 1;
-				for(Imgidx j = 0;j < bwidth - 1;j++)
+				for (Imgidx j = 0;j < bwidth - 1;j++)
 				{
 					q = p << 1;
 					node[p].set(1, 0, (double)img[p], img[p], img[p]);
 					node[p].parentidx = node[p].rootidx = ROOTIDX;
 
-					if(notlastrow)
+					if (notlastrow)
 					{
 						diff = abs_diff(img[p], img[p + width]);
 						dimg[q] = diff;
@@ -4581,7 +4306,7 @@ FLOOD_END:
 				q = p << 1;
 				node[p].set(1, 0, (double)img[p], img[p], img[p]);
 				node[p].parentidx = node[p].rootidx = ROOTIDX;
-				if(notlastrow)
+				if (notlastrow)
 				{
 					diff = abs_diff(img[p], img[p + width]);
 					dimg[q] = diff;
@@ -4683,7 +4408,7 @@ FLOOD_END:
 		Free(isVisited);
 		Free(isAvailable);
 
-		for(int blk = 0;blk < numpartitions;blk++)
+		for (int blk = 0;blk < numpartitions;blk++)
 			delete queues[blk];
 		Free(queues);
 		Free(dimg);
@@ -4698,7 +4423,7 @@ FLOOD_END:
 
 	void Flood_Hierarqueue_par_tse(Pixel *img, int numthreads, int tse)
 	{
-		if(sizeof(Pixel) > 2 || channel > 1)
+		if (sizeof(Pixel) > 2 || channel > 1)
 		{
 			printf("Error: Hierarchical queues do not work on >16 bits images or multispectral images\n");
 			printf("Try Unionfind (algorithm code %d), flooding using Heapqueue (%d), trie queue (%d) or cached trie queue (%d) \n", UNIONFIND, FLOOD_HEAPQUEUE_CACHE, FLOOD_TRIE, FLOOD_TRIE_CACHE);
@@ -4720,13 +4445,13 @@ FLOOD_END:
 		{
 			_int16 optpart = 1;
 			double optborderlength = (double)numthreads * (double)imgsize;
-			for(int px = 2;px < numthreads; px++)
+			for (int px = 2;px < numthreads; px++)
 			{
-				if(numthreads % px == 0)
+				if (numthreads % px == 0)
 				{
 					int py = numthreads / px;
 
-					if(((double)px * (double)height + (double)py * (double)width) < optborderlength)
+					if (((double)px * (double)height + (double)py * (double)width) < optborderlength)
 					{
 						optpart = px;
 						optborderlength = ((double)px * (double)height + (double)py * (double)width);
@@ -4764,16 +4489,16 @@ FLOOD_END:
 
 		omp_set_num_threads(_min(numpartitions, omp_get_num_procs()));
 
-		for(p = 0;p < numpartitions + 1;p++)
+		for (p = 0;p < numpartitions + 1;p++)
 			omp_init_lock(locks + p);
 
 		p = q = 0;
-		for(_int8 y = 0; y < npartition_y; y++)
+		for (_int8 y = 0; y < npartition_y; y++)
 		{
 			q = y * width * (Imgidx)blksz_y;
 			bool lastrow = (y == npartition_y - 1);
 			Imgidx blkh = lastrow ? blksz_yn : blksz_y;
-			for(_int8 x = 0; x < npartition_x; x++)
+			for (_int8 x = 0; x < npartition_x; x++)
 			{
 				startpidx[p] = q + (Imgidx)x * (Imgidx)blksz_x;
 				bool lastcol = (x == npartition_x - 1);
@@ -4786,7 +4511,7 @@ FLOOD_END:
 		}
 
 		#pragma omp parallel for private(p, q)
-		for(int blk = 0; blk < numpartitions; blk++)
+		for (int blk = 0; blk < numpartitions; blk++)
 		{
 			Imgidx bwidth = blkws[blk];
 			Imgidx bheight = blkhs[blk];
@@ -4796,21 +4521,21 @@ FLOOD_END:
 			Imgidx spidx = startpidx[blk];
 			Pixel maxdiff = 0;
 
-			for(Imgidx i = 0;i < bheight;i++)
+			for (Imgidx i = 0;i < bheight;i++)
 			{
 				Pixel diff;
 				p = spidx + i * width;
 				bool blklastrow = (i == bheight - 1);
-				for(Imgidx j = 0;j < bwidth - 1;j++)
+				for (Imgidx j = 0;j < bwidth - 1;j++)
 				{
 					q = p << 1;
 
-					if(i < bheight - 1 || !lastrow)
+					if (i < bheight - 1 || !lastrow)
 					{
 						diff = abs_diff(img[p], img[p + width]);
 						dimg[q] = diff;
 						bhist[diff]++;
-						if(!blklastrow)
+						if (!blklastrow)
 							maxdiff = _max(maxdiff, diff);
 					}
 					diff = abs_diff(img[p], img[p + 1]);
@@ -4820,15 +4545,15 @@ FLOOD_END:
 					p++;
 				}
 				q = p << 1;
-				if(i < bheight - 1 || !lastrow)
+				if (i < bheight - 1 || !lastrow)
 				{
 					diff = abs_diff(img[p], img[p + width]);
 					dimg[q] = diff;
 					bhist[diff]++;
-					if(!blklastrow)
+					if (!blklastrow)
 						maxdiff = _max(maxdiff, diff);
 				}
-				if(!lastcol)
+				if (!lastcol)
 				{
 					diff = abs_diff(img[p], img[p + 1]);
 					dimg[q + 1] = diff;
@@ -4841,7 +4566,7 @@ FLOOD_END:
 
 
 			Imgidx bhistsum = 0;
-			for(int ii = 0;ii <= (int)maxdiff;ii++)
+			for (int ii = 0;ii <= (int)maxdiff;ii++)
 			{
 				bhistsum += bhist[ii];
 			}
@@ -4850,16 +4575,16 @@ FLOOD_END:
 			Imgidx nrboderedges = (bheight + bwidth) * 2;
 			subtree_nborderedges[blk] = nrboderedges;
 
-			if(tse && imgsize > 1e5)
+			if (tse && imgsize > 1e5)
 			{
 				Imgidx est = TreeSizeEstimation(bhist, maxdiff + 1, bwidth * bheight, bhistsum, 0.5);
-				if(est < 0)
+				if (est < 0)
 				{
 					printf("ERR: TSE yielded <0\n");
 					Imgidx bhistsum = 0;
-					for(int ii = 0;ii <= (int)maxdiff;ii++)
+					for (int ii = 0;ii <= (int)maxdiff;ii++)
 					{
-						if(bhist[ii] < 0)
+						if (bhist[ii] < 0)
 						{
 							printf("bhist[%d] = %d\n", (int)ii, (int)bhist[ii]);
 						}
@@ -4876,7 +4601,7 @@ FLOOD_END:
 
 		HierarQueue<Imgidx>** queues;
 		queues = (HierarQueue<Imgidx>**)Calloc(numpartitions * sizeof(HierarQueue<Imgidx>*));
-		for(int blk = 0;blk < numpartitions;blk++)
+		for (int blk = 0;blk < numpartitions;blk++)
 		{
 			queues[blk] = new HierarQueue<Imgidx>((_uint64)blocksize[blk] + 1, (_int32)(subtree_max[blk] + 1));
 		}
@@ -4892,9 +4617,9 @@ FLOOD_END:
 			int outofmemory = 0;
 			int numblkproc = 0;
 
-			for(int blk = 0;blk < numpartitions;blk++)
+			for (int blk = 0;blk < numpartitions;blk++)
 				queues[blk]->reset_queue();
-			for(int i = 0;i < imgsize;i++)
+			for (int i = 0;i < imgsize;i++)
 				isVisited[i] = 0;
 
 			flooddone = 1;
@@ -4902,39 +4627,29 @@ FLOOD_END:
 			maxSize = parflood_node_alloc(subtree_size, subtree_start, blkws, blkhs, numpartitions, treesizemult);
 			curSize = maxSize;//doesnt do anything. only for debug
 
-			//for(int blkblk = 0; blkblk < numpartitions; blkblk++)
-			{
-			//	printf("blk %d: ESTSUB = %d\n", (int)blkblk, (int)subtree_start[blkblk + 1] - (int)subtree_start[blkblk] - (int)subtree_nborderedges[blkblk]);
-			}
-
-			for(p = 0;p < numpartitions;p++)
+			for (p = 0;p < numpartitions;p++)
 				omp_unset_lock(locks + p);
 			omp_unset_lock(locks + numpartitions);
 			numbusythr = 0;
 
 
 			#pragma omp parallel for private(p, q)
-			for(int blk = 0; blk < numpartitions; blk++)
+			for (int blk = 0; blk < numpartitions; blk++)
 			{
-				if(outofmemory)
+				if (outofmemory)
 					continue;
 
 				omp_set_lock(locks + blk);
 				omp_set_lock(locks + numpartitions);
 				numbusythr++;
 				numblkproc++;
-				//printf("th%d++ (%d/%d)\n", omp_get_thread_num(), numbusythr, omp_get_num_threads());
 				omp_unset_lock(locks + numpartitions);
 
 				Imgidx bwidth = blkws[blk];
 				Imgidx bheight = blkhs[blk];
-				//Imgidx blksize = blocksize[blk];
 				Imgidx bareasum = bwidth * bheight;
 				Imgidx *bhist = dhist + numlevels * blk;
 				HierarQueue<Imgidx> *queue = queues[blk];
-				//bool lastcol = (blk % npartition_x) == (npartition_x - 1);
-				//bool lastrow = (blk / npartition_x) == (npartition_y - 1);
-				//Imgidx spidx = startpidx[blk];
 				Imgidx nidx = subtree_start[blk];
 				Imgidx blkts = 0;
 				int nidxblk = blk;
@@ -4942,22 +4657,16 @@ FLOOD_END:
 				Imgidx iNode = 0;
 				Pixel maxdiff = subtree_max[blk];
 
-				//printf("thr%d: flood start - (%d/%d), size %d\n", (int)omp_get_thread_num(), (int)nidx, (int)nidx_lim, (int)(nidx_lim - nidx));
-
 				queue->set_queue(bhist);
 
-				//BLOCK FLOOD START
-				//_SET_COMMON_MEMORY
-				//_INIT_FLOOD
 				Imgidx stack_top = nidx++;//imgsize + dimgsize + blk;
-				//printf("blk%d - Dummy %d\n", (int)blk, (int)(stack_top));
 				Imgidx prev_top = stack_top;
 				AlphaNode<Imgidx, Pixel> *pNode = node + stack_top;
 				pNode->set(0, maxdiff, (double)0.0, (Pixel)-1, (Pixel)0, pix_type);
 				pNode->parentidx = ROOTIDX;
 				Pixel current_level = maxdiff;
 				queue->push(startpidx[blk], current_level);
-				if(outofmemory)
+				if (outofmemory)
 					continue;
 				while (1) //flooding
 				{
@@ -4965,7 +4674,7 @@ FLOOD_END:
 					{
 						p = queue->pop();
 
-						if(nidx < 0)
+						if (nidx < 0)
 						{
 							printf("thr%d: nidx < 0 (%d)\n", omp_get_thread_num(), (int)nidx);
 						}
@@ -4987,9 +4696,9 @@ FLOOD_END:
 							current_level = queue->min_level;
 
 							{
-								if(nidx == nidx_lim)
+								if (nidx == nidx_lim)
 								{
-									if(!migrate_subtree(blk, numpartitions, nidx, nidx_lim, nidxblk, blkts,	blkflooddone, subtree_cur, subtree_start, subtree_nborderedges, locks, numbusythr, numblkproc, outofmemory))
+									if (!migrate_subtree(blk, numpartitions, nidx, nidx_lim, nidxblk, blkts,	blkflooddone, subtree_cur, subtree_start, subtree_nborderedges, locks, numbusythr, numblkproc, outofmemory))
 										break;
 								}
 								iNode = nidx++;
@@ -4999,12 +4708,12 @@ FLOOD_END:
 							node[iNode].rootidx = ROOTIDX;
 							stack_top = iNode;
 
-							if(current_level)
+							if (current_level)
 							{
 								{
-									if(nidx == nidx_lim)
+									if (nidx == nidx_lim)
 									{
-										if(!migrate_subtree(blk, numpartitions, nidx, nidx_lim, nidxblk, blkts,	blkflooddone, subtree_cur, subtree_start, subtree_nborderedges, locks, numbusythr, numblkproc, outofmemory))
+										if (!migrate_subtree(blk, numpartitions, nidx, nidx_lim, nidxblk, blkts,	blkflooddone, subtree_cur, subtree_start, subtree_nborderedges, locks, numbusythr, numblkproc, outofmemory))
 											break;
 									}
 									iNode = nidx++;
@@ -5021,13 +4730,13 @@ FLOOD_END:
 						{
 							queue->find_minlev();
 
-							if(current_level)
+							if (current_level)
 							{
 								Pixel pix_val = img[p];
 								{
-									if(nidx == nidx_lim)
+									if (nidx == nidx_lim)
 									{
-										if(!migrate_subtree(blk, numpartitions, nidx, nidx_lim, nidxblk, blkts,	blkflooddone, subtree_cur, subtree_start, subtree_nborderedges, locks, numbusythr, numblkproc, outofmemory))
+										if (!migrate_subtree(blk, numpartitions, nidx, nidx_lim, nidxblk, blkts,	blkflooddone, subtree_cur, subtree_start, subtree_nborderedges, locks, numbusythr, numblkproc, outofmemory))
 											break;
 									}
 									iNode = nidx++;
@@ -5044,10 +4753,10 @@ FLOOD_END:
 								node[stack_top].add(img[p], pix_type);
 							}
 						}
-						//if(stack_top == ROOTIDX) printf("SQEEEEAK\n");
+						//if (stack_top == ROOTIDX) printf("SQEEEEAK\n");
 					}
 
-					if(outofmemory)
+					if (outofmemory)
 						break;
 
 					remove_redundant_node(node, nidx, prev_top, stack_top);
@@ -5061,9 +4770,9 @@ FLOOD_END:
 					{
 						//_CREATE_NEW_STACKTOP(queue->min_level)
 						{
-							if(nidx == nidx_lim)
+							if (nidx == nidx_lim)
 							{
-								if(!migrate_subtree(blk, numpartitions, nidx, nidx_lim, nidxblk, blkts,	blkflooddone, subtree_cur, subtree_start, subtree_nborderedges, locks, numbusythr, numblkproc, outofmemory))
+								if (!migrate_subtree(blk, numpartitions, nidx, nidx_lim, nidxblk, blkts,	blkflooddone, subtree_cur, subtree_start, subtree_nborderedges, locks, numbusythr, numblkproc, outofmemory))
 									break;
 							}
 							iNode = nidx++;
@@ -5090,7 +4799,7 @@ FLOOD_END:
 					current_level = node[stack_top].alpha;
 				}
 
-				if(!outofmemory)
+				if (!outofmemory)
 				{
 					stack_top = (node[stack_top].area == bareasum) ? stack_top : iNode; //remove redundant root
 					node[stack_top].parentidx = ROOTIDX;
@@ -5099,14 +4808,14 @@ FLOOD_END:
 
 					blkts += nidx - subtree_start[nidxblk];
 
-					if(nidx == nidx_lim)//this should be really rare
+					if (nidx == nidx_lim)//this should be really rare
 					{
 						blkflooddone[nidxblk] = 2; // flood done (at least for the native block), no free memory
 					}
 					else
 					{
 						blkflooddone[nidxblk] = 1; // flood done AND free memory available
-						//if(blk != nidxblk)//not at the native block
+						//if (blk != nidxblk)//not at the native block
 						//printf("thr%d: subtree for blk %d: blkflooddone[%d] = 1\n", omp_get_thread_num(), (int)blk, (int)nidxblk);
 					}
 
@@ -5116,7 +4825,7 @@ FLOOD_END:
 					omp_unset_lock(locks + numpartitions);
 				}
 
-				if(outofmemory)
+				if (outofmemory)
 				{
 					printf("thr%d: subtree for blk %d: memory overflow - releasing lock %d\n", omp_get_thread_num(), (int)blk, (int)nidxblk);
 					flooddone = 0;
@@ -5136,12 +4845,12 @@ FLOOD_END:
 		Free(isVisited);
 		Free(isAvailable);
 
-		for(p = 0;p < numpartitions;p++)
+		for (p = 0;p < numpartitions;p++)
 			omp_destroy_lock(locks + p);
 		Free(locks);
 		Free(blkflooddone);
 
-		for(int blk = 0;blk < numpartitions;blk++)
+		for (int blk = 0;blk < numpartitions;blk++)
 			delete queues[blk];
 		Free(queues);
 		Free(dimg);
@@ -5160,7 +4869,7 @@ FLOOD_END:
 
 	void Flood_Hierarqueue_cache_par_tse(Pixel *img, int numthreads, int tse)
 	{
-		if(sizeof(Pixel) > 2 || channel > 1)
+		if (sizeof(Pixel) > 2 || channel > 1)
 		{
 			printf("Error: Hierarchical queues do not work on >16 bits images or multispectral images\n");
 			printf("Try Unionfind (algorithm code %d), flooding using Heapqueue (%d), trie queue (%d) or cached trie queue (%d) \n", UNIONFIND, FLOOD_HEAPQUEUE_CACHE, FLOOD_TRIE, FLOOD_TRIE_CACHE);
@@ -5184,13 +4893,13 @@ FLOOD_END:
 		{
 			_int16 optpart = 1;
 			double optborderlength = (double)numthreads * (double)imgsize;
-			for(int px = 2;px < numthreads; px++)
+			for (int px = 2;px < numthreads; px++)
 			{
-				if(numthreads % px == 0)
+				if (numthreads % px == 0)
 				{
 					int py = numthreads / px;
 
-					if(((double)px * (double)height + (double)py * (double)width) < optborderlength)
+					if (((double)px * (double)height + (double)py * (double)width) < optborderlength)
 					{
 						optpart = px;
 						optborderlength = ((double)px * (double)height + (double)py * (double)width);
@@ -5228,16 +4937,16 @@ FLOOD_END:
 
 		omp_set_num_threads(_min(numpartitions, omp_get_num_procs()));
 
-		for(p = 0;p < numpartitions + 1;p++)
+		for (p = 0;p < numpartitions + 1;p++)
 			omp_init_lock(locks + p);
 
 		p = q = 0;
-		for(_int8 y = 0; y < npartition_y; y++)
+		for (_int8 y = 0; y < npartition_y; y++)
 		{
 			q = y * width * (Imgidx)blksz_y;
 			bool lastrow = (y == npartition_y - 1);
 			Imgidx blkh = lastrow ? blksz_yn : blksz_y;
-			for(_int8 x = 0; x < npartition_x; x++)
+			for (_int8 x = 0; x < npartition_x; x++)
 			{
 				startpidx[p] = q + (Imgidx)x * (Imgidx)blksz_x;
 				bool lastcol = (x == npartition_x - 1);
@@ -5250,7 +4959,7 @@ FLOOD_END:
 		}
 
 		#pragma omp parallel for private(p, q)
-		for(int blk = 0; blk < numpartitions; blk++)
+		for (int blk = 0; blk < numpartitions; blk++)
 		{
 			Imgidx bwidth = blkws[blk];
 			Imgidx bheight = blkhs[blk];
@@ -5260,21 +4969,21 @@ FLOOD_END:
 			Imgidx spidx = startpidx[blk];
 			Pixel maxdiff = 0;
 
-			for(Imgidx i = 0;i < bheight;i++)
+			for (Imgidx i = 0;i < bheight;i++)
 			{
 				Pixel diff;
 				p = spidx + i * width;
 				bool blklastrow = (i == bheight - 1);
-				for(Imgidx j = 0;j < bwidth - 1;j++)
+				for (Imgidx j = 0;j < bwidth - 1;j++)
 				{
 					q = p << 1;
 
-					if(i < bheight - 1 || !lastrow)
+					if (i < bheight - 1 || !lastrow)
 					{
 						diff = abs_diff(img[p], img[p + width]);
 						dimg[q] = diff;
 						bhist[diff]++;
-						if(!blklastrow)
+						if (!blklastrow)
 							maxdiff = _max(maxdiff, diff);
 					}
 					diff = abs_diff(img[p], img[p + 1]);
@@ -5284,15 +4993,15 @@ FLOOD_END:
 					p++;
 				}
 				q = p << 1;
-				if(i < bheight - 1 || !lastrow)
+				if (i < bheight - 1 || !lastrow)
 				{
 					diff = abs_diff(img[p], img[p + width]);
 					dimg[q] = diff;
 					bhist[diff]++;
-					if(!blklastrow)
+					if (!blklastrow)
 						maxdiff = _max(maxdiff, diff);
 				}
-				if(!lastcol)
+				if (!lastcol)
 				{
 					diff = abs_diff(img[p], img[p + 1]);
 					dimg[q + 1] = diff;
@@ -5305,7 +5014,7 @@ FLOOD_END:
 
 
 			Imgidx bhistsum = 0;
-			for(int ii = 0;ii <= (int)maxdiff;ii++)
+			for (int ii = 0;ii <= (int)maxdiff;ii++)
 			{
 				bhistsum += bhist[ii];
 			}
@@ -5314,16 +5023,16 @@ FLOOD_END:
 			Imgidx nrboderedges = (bheight + bwidth) * 2;
 			subtree_nborderedges[blk] = nrboderedges;
 
-			if(tse && imgsize > 1e5)
+			if (tse && imgsize > 1e5)
 			{
 				Imgidx est = TreeSizeEstimation(bhist, maxdiff + 1, bwidth * bheight, bhistsum, 0.5);
-				if(est < 0)
+				if (est < 0)
 				{
 					printf("ERR: TSE yielded <0\n");
 					Imgidx bhistsum = 0;
-					for(int ii = 0;ii <= (int)maxdiff;ii++)
+					for (int ii = 0;ii <= (int)maxdiff;ii++)
 					{
-						if(bhist[ii] < 0)
+						if (bhist[ii] < 0)
 						{
 							printf("bhist[%d] = %d\n", (int)ii, (int)bhist[ii]);
 						}
@@ -5341,7 +5050,7 @@ FLOOD_END:
 
 		HierarQueueCache<Imgidx,Pixel>** queues;
 		queues = (HierarQueueCache<Imgidx,Pixel>**)Calloc(numpartitions * sizeof(HierarQueueCache<Imgidx,Pixel>*));
-		for(int blk = 0;blk < numpartitions;blk++)
+		for (int blk = 0;blk < numpartitions;blk++)
 		{
 			queues[blk] = new HierarQueueCache<Imgidx,Pixel>((_uint64)blocksize[blk] + 1, (_int32)(subtree_max[blk] + 1));
 		}
@@ -5357,14 +5066,14 @@ FLOOD_END:
 			int outofmemory = 0;
 			int numblkproc = 0;
 
-			for(int blk = 0;blk < numpartitions;blk++)
+			for (int blk = 0;blk < numpartitions;blk++)
 				queues[blk]->reset_queue();
 			//	delete queues[blk];
 			//Free(queues);
 			//queues = (HierarQueue<Imgidx>**)Calloc(numpartitions * sizeof(HierarQueue<Imgidx>*));
-			//for(int blk = 0;blk < numpartitions;blk++)
+			//for (int blk = 0;blk < numpartitions;blk++)
 			//	queues[blk] = new HierarQueue<Imgidx>((_uint64)blocksize[blk] + 1);
-			for(int i = 0;i < imgsize;i++)
+			for (int i = 0;i < imgsize;i++)
 				isVisited[i] = 0;
 
 			flooddone = 1;
@@ -5372,39 +5081,34 @@ FLOOD_END:
 			maxSize = parflood_node_alloc(subtree_size, subtree_start, blkws, blkhs, numpartitions, treesizemult);
 			curSize = maxSize;//doesnt do anything. only for debug
 
-			//for(int blkblk = 0; blkblk < numpartitions; blkblk++)
+			//for (int blkblk = 0; blkblk < numpartitions; blkblk++)
 			{
 			//	printf("blk %d: ESTSUB = %d\n", (int)blkblk, (int)subtree_start[blkblk + 1] - (int)subtree_start[blkblk] - (int)subtree_nborderedges[blkblk]);
 			}
 
-			for(p = 0;p < numpartitions;p++)
+			for (p = 0;p < numpartitions;p++)
 				omp_unset_lock(locks + p);
 			omp_unset_lock(locks + numpartitions);
 			numbusythr = 0;
 
 
 			#pragma omp parallel for private(p, q)
-			for(int blk = 0; blk < numpartitions; blk++)
+			for (int blk = 0; blk < numpartitions; blk++)
 			{
-				if(outofmemory)
+				if (outofmemory)
 					continue;
 
 				omp_set_lock(locks + blk);
 				omp_set_lock(locks + numpartitions);
 				numbusythr++;
 				numblkproc++;
-				//printf("th%d++ (%d/%d)\n", omp_get_thread_num(), numbusythr, omp_get_num_threads());
 				omp_unset_lock(locks + numpartitions);
 
 				Imgidx bwidth = blkws[blk];
 				Imgidx bheight = blkhs[blk];
-				//Imgidx blksize = blocksize[blk];
 				Imgidx bareasum = bwidth * bheight;
 				Imgidx *bhist = dhist + numlevels * blk;
 				HierarQueueCache<Imgidx,Pixel> *queue = queues[blk];
-				//bool lastcol = (blk % npartition_x) == (npartition_x - 1);
-				//bool lastrow = (blk / npartition_x) == (npartition_y - 1);
-				//Imgidx spidx = startpidx[blk];
 				Imgidx nidx = subtree_start[blk], startingidx = nidx;
 				Imgidx blkts = 0;
 				int nidxblk = blk;
@@ -5412,22 +5116,17 @@ FLOOD_END:
 				Imgidx iNode = 0;
 				Pixel maxdiff = subtree_max[blk];
 
-				//printf("thr%d: flood start - (%d/%d), size %d\n", (int)omp_get_thread_num(), (int)nidx, (int)nidx_lim, (int)(nidx_lim - nidx));
 
 				queue->set_queue(bhist);
 
-				//BLOCK FLOOD START
-				//_SET_COMMON_MEMORY
-				//_INIT_FLOOD
 				Imgidx stack_top = nidx++;//imgsize + dimgsize + blk;
-				//printf("blk%d - Dummy %d\n", (int)blk, (int)(stack_top));
 				Imgidx prev_top = stack_top;
 				AlphaNode<Imgidx, Pixel> *pNode = node + stack_top;
 				pNode->set(0, maxdiff, (double)0.0, (Pixel)-1, (Pixel)0, pix_type);
 				pNode->parentidx = ROOTIDX;
 				Pixel current_level = maxdiff;
 				queue->push(startpidx[blk], current_level);
-				if(outofmemory)
+				if (outofmemory)
 					continue;
 				while (1) //flooding
 				{
@@ -5435,7 +5134,7 @@ FLOOD_END:
 					{
 						p = queue->pop();
 
-						if(nidx < 0)
+						if (nidx < 0)
 						{
 							printf("thr%d: nidx < 0 (%d)\n", omp_get_thread_num(), (int)nidx);
 						}
@@ -5457,9 +5156,9 @@ FLOOD_END:
 							current_level = queue->min_level;
 
 							{
-								if(nidx == nidx_lim)
+								if (nidx == nidx_lim)
 								{
-									if(!migrate_subtree(blk, numpartitions, nidx, nidx_lim, nidxblk, blkts,	blkflooddone, subtree_cur, subtree_start, subtree_nborderedges, locks, numbusythr, numblkproc, outofmemory))
+									if (!migrate_subtree(blk, numpartitions, nidx, nidx_lim, nidxblk, blkts,	blkflooddone, subtree_cur, subtree_start, subtree_nborderedges, locks, numbusythr, numblkproc, outofmemory))
 										break;
 								}
 								iNode = nidx++;
@@ -5469,12 +5168,12 @@ FLOOD_END:
 							node[iNode].rootidx = ROOTIDX;
 							stack_top = iNode;
 
-							if(current_level)
+							if (current_level)
 							{
 								{
-									if(nidx == nidx_lim)
+									if (nidx == nidx_lim)
 									{
-										if(!migrate_subtree(blk, numpartitions, nidx, nidx_lim, nidxblk, blkts,	blkflooddone, subtree_cur, subtree_start, subtree_nborderedges, locks, numbusythr, numblkproc, outofmemory))
+										if (!migrate_subtree(blk, numpartitions, nidx, nidx_lim, nidxblk, blkts,	blkflooddone, subtree_cur, subtree_start, subtree_nborderedges, locks, numbusythr, numblkproc, outofmemory))
 											break;
 									}
 									iNode = nidx++;
@@ -5491,13 +5190,13 @@ FLOOD_END:
 						{
 							queue->find_minlev();
 
-							if(current_level)
+							if (current_level)
 							{
 								Pixel pix_val = img[p];
 								{
-									if(nidx == nidx_lim)
+									if (nidx == nidx_lim)
 									{
-										if(!migrate_subtree(blk, numpartitions, nidx, nidx_lim, nidxblk, blkts,	blkflooddone, subtree_cur, subtree_start, subtree_nborderedges, locks, numbusythr, numblkproc, outofmemory))
+										if (!migrate_subtree(blk, numpartitions, nidx, nidx_lim, nidxblk, blkts,	blkflooddone, subtree_cur, subtree_start, subtree_nborderedges, locks, numbusythr, numblkproc, outofmemory))
 											break;
 									}
 									iNode = nidx++;
@@ -5514,10 +5213,10 @@ FLOOD_END:
 								node[stack_top].add(img[p], pix_type);
 							}
 						}
-						//if(stack_top == ROOTIDX) printf("SQEEEEAK\n");
+						//if (stack_top == ROOTIDX) printf("SQEEEEAK\n");
 					}
 
-					if(outofmemory)
+					if (outofmemory)
 						break;
 
 					remove_redundant_node(node, nidx, prev_top, stack_top);
@@ -5531,9 +5230,9 @@ FLOOD_END:
 					{
 						//_CREATE_NEW_STACKTOP(queue->min_level)
 						{
-							if(nidx == nidx_lim)
+							if (nidx == nidx_lim)
 							{
-								if(!migrate_subtree(blk, numpartitions, nidx, nidx_lim, nidxblk, blkts,	blkflooddone, subtree_cur, subtree_start, subtree_nborderedges, locks, numbusythr, numblkproc, outofmemory))
+								if (!migrate_subtree(blk, numpartitions, nidx, nidx_lim, nidxblk, blkts,	blkflooddone, subtree_cur, subtree_start, subtree_nborderedges, locks, numbusythr, numblkproc, outofmemory))
 									break;
 							}
 							iNode = nidx++;
@@ -5560,7 +5259,7 @@ FLOOD_END:
 					current_level = node[stack_top].alpha;
 				}
 
-				if(!outofmemory)
+				if (!outofmemory)
 				{
 					stack_top = (node[stack_top].area == bareasum) ? stack_top : iNode; //remove redundant root
 					node[stack_top].parentidx = ROOTIDX;
@@ -5569,7 +5268,7 @@ FLOOD_END:
 
 					blkts += nidx - subtree_start[nidxblk];
 
-					if(nidx == nidx_lim)//this should be really rare
+					if (nidx == nidx_lim)//this should be really rare
 					{
 						blkflooddone[nidxblk] = 2; // flood done (at least for the native block), no free memory
 					}
@@ -5583,7 +5282,7 @@ FLOOD_END:
 					omp_unset_lock(locks + numpartitions);
 				}
 
-				if(outofmemory)
+				if (outofmemory)
 				{
 
 					printf("thr%d: subtree for blk %d: memory overflow - releasing lock %d\n", omp_get_thread_num(), (int)blk, (int)nidxblk);
@@ -5603,12 +5302,12 @@ FLOOD_END:
 		Free(isVisited);
 		Free(isAvailable);
 
-		for(p = 0;p < numpartitions;p++)
+		for (p = 0;p < numpartitions;p++)
 			omp_destroy_lock(locks + p);
 		Free(locks);
 		Free(blkflooddone);
 
-		for(int blk = 0;blk < numpartitions;blk++)
+		for (int blk = 0;blk < numpartitions;blk++)
 			delete queues[blk];
 		Free(queues);
 		Free(dimg);
@@ -5628,19 +5327,19 @@ FLOOD_END:
 	void quantize_dimg(_uint8 *qimg, Pixel *dimg, _int64 dimgsize, _int64 binsize)
 	{
 		#pragma omp parallel for
-		for(Imgidx i = 0;i < dimgsize;i++)
+		for (Imgidx i = 0;i < dimgsize;i++)
 			qimg[i] = QUANTIZE_RANK(dimg[i],binsize);
 	}
 
 	//Find subtree root and do path compression
 	inline Imgidx find_root(Imgidx p)
 	{
-		if(p == ROOTIDX)
+		if (p == ROOTIDX)
 			return ROOTIDX;
 
 		Imgidx r, q;
 
-		for(r = p;node[r].rootidx != ROOTIDX;r = node[r].rootidx)
+		for (r = p;node[r].rootidx != ROOTIDX;r = node[r].rootidx)
 			;
 
 		while(p != r)
@@ -5655,12 +5354,12 @@ FLOOD_END:
 
 	inline Imgidx find_root_in(Imgidx p)
 	{
-		if(p == ROOTIDX)
+		if (p == ROOTIDX)
 			return ROOTIDX;
 
 		Imgidx r, q;
 
-		for(r = p;node_in[r].rootidx != ROOTIDX;r = node_in[r].rootidx)
+		for (r = p;node_in[r].rootidx != ROOTIDX;r = node_in[r].rootidx)
 				;
 
 		while(p != r)
@@ -5690,8 +5389,6 @@ FLOOD_END:
 		//initialize_node(img, rankitem, maxpixval);
 		maxSize = imgsize + nredges;
 		node = (AlphaNode<Imgidx, Pixel>*)Malloc((size_t)maxSize * sizeof(AlphaNode<Imgidx, Pixel>));
-		//node_in = node + imgsize;
-//		initialize_node1(img, rankitem, maxpixval);
 		for (Imgidx p = 0; p < imgsize;p++)
 		{
 			node[p].set(1, 0, (double)img[p], img[p], img[p]);
@@ -5701,13 +5398,10 @@ FLOOD_END:
 		bool unionbyrank = 0;//(sizeof(Pixel) <= 2);
 		Imgidx *treedepth = 0;
 
-		if(unionbyrank) treedepth = (Imgidx*)Calloc(maxSize * sizeof(Imgidx));
-
-
-		//double t_findroot = 0, t_unionbyrank = 0;
+		if (unionbyrank) treedepth = (Imgidx*)Calloc(maxSize * sizeof(Imgidx));
 
 		Imgidx curSize = 0;
-		for(Imgidx r = 0; r < nredges; r++)
+		for (Imgidx r = 0; r < nredges; r++)
 		{
 			pRank = rankitem + r;
 
@@ -5722,12 +5416,12 @@ FLOOD_END:
 			x = find_root(x0);
 			y = find_root(y0);
 
-			if(x == y) //already connected, nothing to do
+			if (x == y) //already connected, nothing to do
 				continue;
 
-			if(x < y) {z = x;x = y;y = z;}
+			if (x < y) {z = x;x = y;y = z;}
 
-			if(!unionbyrank || node[x].alpha != pRank->alpha)
+			if (!unionbyrank || node[x].alpha != pRank->alpha)
 			{
 				curSize++;
 				//node_in[r].set(0, pRank->alpha, 0.0, maxpixval, 0, pix_type);
@@ -5738,9 +5432,9 @@ FLOOD_END:
 				node[x].parentidx = node[x].rootidx = nodeaddr;
 				node[nodeaddr].add(node + y, pix_type);
 				node[y].parentidx = node[y].rootidx = nodeaddr;
-				if(unionbyrank) treedepth[nodeaddr] = _max(treedepth[x],treedepth[y]) + 1;
+				if (unionbyrank) treedepth[nodeaddr] = _max(treedepth[x],treedepth[y]) + 1;
 
-				if(node[nodeaddr].area == imgsize)
+				if (node[nodeaddr].area == imgsize)
 				{
 					rootidx = nodeaddr;
 					break;
@@ -5748,19 +5442,19 @@ FLOOD_END:
 			}
 			else
 			{
-				if(node[x].alpha == node[y].alpha && treedepth[x] < treedepth[y]) {z = x;x = y;y = z;}
+				if (node[x].alpha == node[y].alpha && treedepth[x] < treedepth[y]) {z = x;x = y;y = z;}
 				node[x].add(node + y, pix_type);
 				node[y].parentidx = node[y].rootidx = x;
 				treedepth[x] = _max(treedepth[x],treedepth[y] + 1);
 
-				if(node[x].area == imgsize)
+				if (node[x].area == imgsize)
 				{
 					rootidx = x;
 					break;
 				}
 			}
 		}
-		if(unionbyrank) Free(treedepth);
+		if (unionbyrank) Free(treedepth);
 		Free(rankitem);
 //		Free(isVisited);
 //		Free(isAvailable);
@@ -5771,7 +5465,7 @@ FLOOD_END:
 		_int64 numpartitions = (_int64)npartition_x * (_int64)npartition_y;
 		Pixel maxdiff;
 
-		for(int blk = 0; blk < numpartitions; blk++)
+		for (int blk = 0; blk < numpartitions; blk++)
 		{
 			maxdiff = subtree_max[blk];
 			Imgidx *bhist = dhist + numbins * blk;
@@ -5781,7 +5475,7 @@ FLOOD_END:
 			//bool lastcol = (blk % npartition_x) == (npartition_x - 1);
 			//bool lastrow = (blk / npartition_x) == (npartition_y - 1);
 
-			for(int ii = 0;ii <= (int)maxdiff;ii++)
+			for (int ii = 0;ii <= (int)maxdiff;ii++)
 				bhistsum += bhist[ii];
 
 			double nrmsd_blk = 0;
@@ -5807,7 +5501,7 @@ FLOOD_END:
 		_int64 numpartitions = (_int64)npartition_x * (_int64)npartition_y;
 
 		#pragma omp parallel for
-		for(int blk = 0; blk < numpartitions; blk++)
+		for (int blk = 0; blk < numpartitions; blk++)
 		{
 			Imgidx p, q;
 			Imgidx bwidth = blkws[blk];
@@ -5818,22 +5512,22 @@ FLOOD_END:
 			Imgidx spidx = startpidx[blk];
 			Pixel maxdiff = 0;
 
-			for(Imgidx i = 0;i < bheight;i++)
+			for (Imgidx i = 0;i < bheight;i++)
 			{
 				Imgidx r;
 				_uint8 qr;
 				p = spidx + i * width;
 				bool blklastrow = (i == bheight - 1);
-				for(Imgidx j = 0;j < bwidth - 1;j++)
+				for (Imgidx j = 0;j < bwidth - 1;j++)
 				{
 					q = p << 1;
-					if(i < bheight - 1 || !lastrow)
+					if (i < bheight - 1 || !lastrow)
 					{
 						r = rank[q];
 						qr = QUANTIZE_RANK(r, binsize);
 						qrank[q] = qr;
 						bhist[qr]++;
-						if(!blklastrow)
+						if (!blklastrow)
 							maxdiff = _max(maxdiff, qr);
 					}
 					r = rank[q + 1];
@@ -5845,16 +5539,16 @@ FLOOD_END:
 				}
 
 				q = p << 1;
-				if(i < bheight - 1 || !lastrow)
+				if (i < bheight - 1 || !lastrow)
 				{
 					r = rank[q];
 					qr = QUANTIZE_RANK(r, binsize);
 					qrank[q] = qr;
 					bhist[qr]++;
-					if(!blklastrow)
+					if (!blklastrow)
 						maxdiff = _max(maxdiff, qr);
 				}
-				if(!lastcol)
+				if (!lastcol)
 				{
 					r = rank[q + 1];
 					qr = QUANTIZE_RANK(r, binsize);
@@ -5872,7 +5566,7 @@ FLOOD_END:
 	void quantize_ranks(_uint8 *qrank, Imgidx *rank, _int64 dimgsize, _int64 binsize)
 	{
 		#pragma omp parallel for
-		for(Imgidx i = 0;i < dimgsize;i++)
+		for (Imgidx i = 0;i < dimgsize;i++)
 			qrank[i] = QUANTIZE_RANK(rank[i],binsize);
 	}
 
@@ -5884,7 +5578,7 @@ FLOOD_END:
 	void pow_quantize_ranks(_uint8 *qrank, Imgidx *rank, _int64 dimgsize, _int64 qint)
 	{
 		#pragma omp parallel for
-		for(Imgidx i = 0;i < dimgsize;i++)
+		for (Imgidx i = 0;i < dimgsize;i++)
 			qrank[i] = pow_quantization(rank[i],qint);
 	}
 
@@ -5922,12 +5616,12 @@ FLOOD_END:
 		Imgidx rank_end = min(nredges - 1,((Imgidx)qlevel + 1) * (Imgidx)binsize - 1);
 		Imgidx imgsize = width * height;
 
-		if(qlevel)
+		if (qlevel)
 		{
-			for(Imgidx r = rank_start; r <= rank_end; r++)
+			for (Imgidx r = rank_start; r <= rank_end; r++)
 			{
 				Imgidx ridx = r;
-				if(rank2rankitem)
+				if (rank2rankitem)
 					ridx = (Imgidx)rank2rankitem[r];
 
 				pRank = rankitem + ridx;
@@ -5938,7 +5632,7 @@ FLOOD_END:
 
 				Imgidx nodeaddr = r + imgsize;
 
-				if(redundant_edge[rankitem[ridx].dimgidx])
+				if (redundant_edge[rankitem[ridx].dimgidx])
 				{
 					//printf("[skip]qlevel %d / rank %d(%d) - refining %d-%d\n", (int)qlevel, (int)r, (int)pRank->alpha, (int)pRank->get_pidx0(connectivity), (int)pRank->get_pidx1(width,connectivity));
 					continue;
@@ -5947,12 +5641,12 @@ FLOOD_END:
 				//printf("qlevel %d / rank %d(%d) - refining %d-%d\n", (int)qlevel, (int)r, (int)pRank->alpha, (int)pRank->get_pidx0(connectivity), (int)pRank->get_pidx1(width,connectivity));
 
 				//non-zero level
-				//if(qlevel)
+				//if (qlevel)
 				{
 					x0 = find_root(pilottree, pRank->get_pidx0(connectivity), qlevel);
 					y0 = find_root(pilottree, pRank->get_pidx1(width,connectivity), qlevel);
 
-					if(x0 == y0) //already connected, nothing to do
+					if (x0 == y0) //already connected, nothing to do
 					{
 						continue;
 					}
@@ -5963,14 +5657,14 @@ FLOOD_END:
 
 
 
-				if((x!= ROOTIDX) && (x == y)) //already connected, nothing to do
+				if ((x!= ROOTIDX) && (x == y)) //already connected, nothing to do
 				{
 					continue;
 				}
 
 				//add the new node to the refined tree
 				{
-					if(x == ROOTIDX)
+					if (x == ROOTIDX)
 					{
 						{
 							node_in[r].copy(pilottree + x0);
@@ -5986,9 +5680,9 @@ FLOOD_END:
 					}
 
 					//attach to y
-					if(y == ROOTIDX)
+					if (y == ROOTIDX)
 					{
-						//if(qlevel)
+						//if (qlevel)
 						{
 							node_in[r].add(pilottree + y0, pix_type);
 							pilottree[y0].rootidx = nodeaddr;
@@ -6000,15 +5694,13 @@ FLOOD_END:
 						node[y].parentidx = node[y].rootidx = nodeaddr;
 					}
 				}
-				//print_all_trees(pilottree);
-				//getchar();
 			}
 		}
 		else
 		{
-			for(Imgidx r = rank_start; r <= rank_end; r++)
+			for (Imgidx r = rank_start; r <= rank_end; r++)
 			{
-				if(rank2rankitem)
+				if (rank2rankitem)
 					pRank = rankitem + rank2rankitem[r];
 				else
 					pRank = rankitem + r;
@@ -6026,19 +5718,17 @@ FLOOD_END:
 					x0 = pRank->get_pidx0(connectivity);
 					y0 = pRank->get_pidx1(width,connectivity);
 
-					//printf("qlevel %d / rank %d(%d) - refining %d-%d\n", (int)qlevel, (int)r, (int)pRank->alpha, (int)pRank->get_pidx0(connectivity), (int)pRank->get_pidx1(width,connectivity));
 					x = find_root(node[x0].rootidx);
 					y = find_root(node[y0].rootidx);
 				}
 
 
-				if((x!= ROOTIDX) && (x == y)) //already connected, nothing to do
+				if ((x!= ROOTIDX) && (x == y)) //already connected, nothing to do
 					continue;
 
-				//add the new node to the refined tree
 				{
 					//attach to x
-					if(x == ROOTIDX)
+					if (x == ROOTIDX)
 					{
 						//else
 						{
@@ -6055,7 +5745,7 @@ FLOOD_END:
 					}
 
 					//attach to y
-					if(y == ROOTIDX)
+					if (y == ROOTIDX)
 					{
 						//else
 						{
@@ -6069,8 +5759,6 @@ FLOOD_END:
 						node[y].parentidx = node[y].rootidx = nodeaddr;
 					}
 				}
-				//print_all_trees(pilottree);
-				//getchar();
 			}
 		}
 
@@ -6081,15 +5769,15 @@ FLOOD_END:
 	//In the hypergraph implementation, edges on the subblock borders are also counted.
 	void compute_dhist_par(_uint8 *qrank, Imgidx *dhist, Imgidx *startpidx, _int32 numbins, _int8 npartition_x, _int8 npartition_y, _int64 blksz_x, _int64 blksz_y, _int64 blksz_xn, _int64 blksz_yn)
 	{
-		if(connectivity == 4)
+		if (connectivity == 4)
 		{
 			//gdhist = edge histogram for edges on the subblock borders
 			Imgidx *gdhist = dhist + (int)npartition_x * (int)npartition_y * numbins;
 			//Imgidx blk = 0;
-			//for(Imgidx y = 0;y < (Imgidx)npartition_y;y++)
-			//for(Imgidx x = 0;x < (Imgidx)npartition_x;x++)
+			//for (Imgidx y = 0;y < (Imgidx)npartition_y;y++)
+			//for (Imgidx x = 0;x < (Imgidx)npartition_x;x++)
 		  #pragma omp parallel for
-			for(Imgidx blk = 0;blk < (int)npartition_x * (int)npartition_y;blk++)
+			for (Imgidx blk = 0;blk < (int)npartition_x * (int)npartition_y;blk++)
 			{
 				Imgidx x = blk % npartition_x;
 				Imgidx y = blk / npartition_y;
@@ -6103,41 +5791,41 @@ FLOOD_END:
 				//Imgidx maxval = qrank[p0];
 				//Imgidx maxpidx;
 
-				for(Imgidx i = 0;i < yn - 1;i++)
+				for (Imgidx i = 0;i < yn - 1;i++)
 				{
 					p = p0 + width * (i << 1);
-					for(Imgidx j = 0;j < xn - 1;j++)
+					for (Imgidx j = 0;j < xn - 1;j++)
 					{
 						pdhist[qrank[p++]]++;
 						pdhist[qrank[p++]]++;
 					}
 					pdhist[qrank[p++]]++;
-					if(!lastcol)
+					if (!lastcol)
 						gdhist[qrank[p++]]++;
 				}
 
 				//the last row of the subblock is...
-				if(lastrow)
+				if (lastrow)
 				{//the last row of the image
 					p = p0 + width * ((yn - 1) << 1) + 1;
-					for(Imgidx j = 0;j < xn - 1;j++)
+					for (Imgidx j = 0;j < xn - 1;j++)
 					{
 						pdhist[qrank[p]]++;
 						p += 2;
 					}
-					if(!lastcol)
+					if (!lastcol)
 						gdhist[qrank[p++]]++;
 				}
 				else
 				{
 					p = p0 + width * ((yn - 1) << 1);
-					for(Imgidx j = 0;j < xn - 1;j++)
+					for (Imgidx j = 0;j < xn - 1;j++)
 					{
 						gdhist[qrank[p++]]++;
 						pdhist[qrank[p++]]++;
 					}
 					gdhist[qrank[p++]]++;
-					if(!lastcol)
+					if (!lastcol)
 						gdhist[qrank[p]]++;
 				}
 				//blk++;
@@ -6151,16 +5839,10 @@ FLOOD_END:
 
 	void compute_dhist_par_hypergraph(_uint8 *qrank, Imgidx *dhist, Imgidx *startpidx, _int32 numbins, _int8 npartition_x, _int8 npartition_y, _int64 blksz_x, _int64 blksz_y, _int64 blksz_xn, _int64 blksz_yn, Imgidx *blkmaxpidx)
 	{
-		if(connectivity == 4)
+		if (connectivity == 4)
 		{
-			//gdhist = edge histogram for edges on the subblock borders
-			//Imgidx *gdhist = dhist + (int)npartition_x * (int)npartition_y * numbins;
-			//Imgidx blk = 0;
-			//for(Imgidx y = 0;y < (Imgidx)npartition_y;y++)
-			//for(Imgidx x = 0;x < (Imgidx)npartition_x;x++)
-			//for(Imgidx blk = 0;blk < 6;blk++)
 			#pragma omp parallel for
-			for(Imgidx blk = 0;blk < (int)npartition_x * (int)npartition_y;blk++)
+			for (Imgidx blk = 0;blk < (int)npartition_x * (int)npartition_y;blk++)
 			{
 				Imgidx x = blk % npartition_x;
 				Imgidx y = blk / npartition_y;
@@ -6171,63 +5853,60 @@ FLOOD_END:
 				Imgidx p0 = startpidx[blk] << 1, p;
 				Imgidx *pdhist = dhist + blk * numbins;
 
-				//in hypergraph implementation edges on the border belong to blocks on the top/left
-				//gdhist = pdhist;
-
 				Imgidx maxval = qrank[p0];
 				Imgidx maxpidx = p0;
 
-				for(Imgidx i = 0;i < yn - 1;i++) //for subimage rows (except for the last)
+				for (Imgidx i = 0;i < yn - 1;i++) //for subimage rows (except for the last)
 				{
 					p = p0 + width * (i << 1);
-					for(Imgidx j = 0;j < xn - 1;j++) //for subimage cols (except for the last)
+					for (Imgidx j = 0;j < xn - 1;j++) //for subimage cols (except for the last)
 					{
-						if(maxval < qrank[p]) {maxval = qrank[p]; maxpidx = p;}
+						if (maxval < qrank[p]) {maxval = qrank[p]; maxpidx = p;}
 						pdhist[qrank[p++]]++;
-						if(maxval < qrank[p]) {maxval = qrank[p]; maxpidx = p;}
+						if (maxval < qrank[p]) {maxval = qrank[p]; maxpidx = p;}
 						pdhist[qrank[p++]]++;
 					}
-					if(maxval < qrank[p]) {maxval = qrank[p]; maxpidx = p;}
+					if (maxval < qrank[p]) {maxval = qrank[p]; maxpidx = p;}
 					pdhist[qrank[p++]]++;
-					if(!lastcol)
+					if (!lastcol)
 					{
-						if(maxval < qrank[p]) {maxval = qrank[p]; maxpidx = p;}
+						if (maxval < qrank[p]) {maxval = qrank[p]; maxpidx = p;}
 						pdhist[qrank[p++]]++;
 					}
 				}
 
 				//the last row of the subblock is...
-				if(lastrow)
+				if (lastrow)
 				{//the last row of the image
 					p = p0 + width * ((yn - 1) << 1) + 1;
-					for(Imgidx j = 0;j < xn - 1;j++)
+					for (Imgidx j = 0;j < xn - 1;j++)
 					{
-						if(maxval < qrank[p]) {maxval = qrank[p]; maxpidx = p;}
+						if (maxval < qrank[p]) {maxval = qrank[p]; maxpidx = p;}
 						pdhist[qrank[p]]++;
 						p += 2;
 					}
-					if(!lastcol)
+					if (!lastcol)
 					{
-						if(maxval < qrank[p]) {maxval = qrank[p]; maxpidx = p;}
+						if (maxval < qrank[p]) {maxval = qrank[p]; maxpidx = p;}
 						pdhist[qrank[p++]]++;
 					}
 				}
 				else
 				{
 					p = p0 + width * ((yn - 1) << 1);
-					for(Imgidx j = 0;j < xn - 1;j++)
+					for (Imgidx j = 0;j < xn - 1;j++)
 					{
-						if(maxval < qrank[p]) {maxval = qrank[p]; maxpidx = p;}
+						if (maxval < qrank[p]) {maxval = qrank[p]; maxpidx = p;}
 						pdhist[qrank[p++]]++;
-						if(maxval < qrank[p]) {maxval = qrank[p]; maxpidx = p;}
+						if (maxval < qrank[p]) {maxval = qrank[p]; maxpidx = p;}
 						pdhist[qrank[p++]]++;
 					}
 
-					if(maxval < qrank[p]) {maxval = qrank[p]; maxpidx = p;}
+					if (maxval < qrank[p]) {maxval = qrank[p]; maxpidx = p;}
 					pdhist[qrank[p++]]++;
-					if(!lastcol)
+					if (!lastcol)
 					{
-						if(maxval < qrank[p]) {maxval = qrank[p]; maxpidx = p;}
+						if (maxval < qrank[p]) {maxval = qrank[p]; maxpidx = p;}
 						pdhist[qrank[p]]++;
 					}
 				}
@@ -6250,9 +5929,9 @@ FLOOD_END:
 			//queues = new Trie_Cache<Imgidx, trieidx>*[npartition * npartition];//(nredges, listsize);
 			Imgidx p = 0;
 			Imgidx *dh = dhist;
-			for(Imgidx y = 0;y < npartition_y; y++)
+			for (Imgidx y = 0;y < npartition_y; y++)
 			{
-				for(Imgidx x = 0;x < npartition_x; x++)
+				for (Imgidx x = 0;x < npartition_x; x++)
 				{
 					Q[p++] = new HierarQueue<Imgidx>(dh, numbins);
 					//Q[p++]->push(nredges);
@@ -6264,7 +5943,7 @@ FLOOD_END:
 	//obsolete code (subtree nodes are now indexed based on their level)
 	void fix_subtreeidx(Imgidx *subtreestart, Imgidx *startpidx, Imgidx *cursizes, _int8 npartition_x, _int8 npartition_y, int numpartitions, _int64 blksz_x, _int64 blksz_y, _int64 blksz_xn, _int64 blksz_yn)
 	{
-		for(int b = 0;b < numpartitions;b++)
+		for (int b = 0;b < numpartitions;b++)
 		{
 			Imgidx poffset = subtreestart[b];
 
@@ -6272,9 +5951,9 @@ FLOOD_END:
 			Imgidx bx = ((b % npartition_x) == npartition_x - 1) ? blksz_xn : blksz_x;
 			Imgidx by = ((b / npartition_x) == npartition_y - 1) ? blksz_yn : blksz_y;
 			Imgidx pidx = startpidx[b];
-			for(Imgidx p = 0;p < by;p++)
+			for (Imgidx p = 0;p < by;p++)
 			{
-				for(Imgidx q = 0;q < bx;q++)
+				for (Imgidx q = 0;q < bx;q++)
 				{
 					parentAry[pidx++] += poffset;
 				}
@@ -6283,8 +5962,8 @@ FLOOD_END:
 
 			//fix node parentidxs
 			AlphaNode<Imgidx, Pixel> *ptree = node + poffset;
-			for(Imgidx p = 0;p < cursizes[b];p++)
-				if(ptree[p].parentidx != ROOTIDX)
+			for (Imgidx p = 0;p < cursizes[b];p++)
+				if (ptree[p].parentidx != ROOTIDX)
 					ptree[p].parentidx += poffset;
 		}
 	}
@@ -6296,10 +5975,10 @@ FLOOD_END:
 		Imgidx imgsize = height * width;
 
 		//merging border(hor)
-		for(y = blksz_y;y <= blksz_y * (npartition_y - 1); y += blksz_y)
+		for (y = blksz_y;y <= blksz_y * (npartition_y - 1); y += blksz_y)
 		{
 			q = y * width;
-			for(p = q - width;p < q;p++)
+			for (p = q - width;p < q;p++)
 			{
 				dimgidx = (p << shamt) + neighbor_offset;
 				r = qrank[dimgidx];
@@ -6310,10 +5989,10 @@ FLOOD_END:
 		neighbor_offset = (connectivity == 4) ? 1 : 3;
 
 		//merging border(ver)
-		for(x = blksz_x - 1;x <= blksz_x * (npartition_x - 1); x += blksz_x)
+		for (x = blksz_x - 1;x <= blksz_x * (npartition_x - 1); x += blksz_x)
 		{
 			q = x + imgsize;
-			for(p = x;p < q;p += width)
+			for (p = x;p < q;p += width)
 			{
 				dimgidx = (p << shamt) + neighbor_offset;
 				r = qrank[dimgidx];
@@ -6323,11 +6002,11 @@ FLOOD_END:
 		}
 
 		//reset rootidxs
-		for(p = 0;p < maxSize;p++)
-			if(node[p].area) node[p].rootidx = ROOTIDX;
+		for (p = 0;p < maxSize;p++)
+			if (node[p].area) node[p].rootidx = ROOTIDX;
 
 		//Look for the root
-		for(p = parentAry[0];node[p].area != imgsize;p = node[p].parentidx)
+		for (p = parentAry[0];node[p].area != imgsize;p = node[p].parentidx)
 			;
 		node[p].rootidx = node[p].parentidx = ROOTIDX;
 		rootidx = p;
@@ -6339,10 +6018,10 @@ FLOOD_END:
 		Imgidx imgsize = height * width;
 
 		//merging border(hor)
-		for(y = blksz_y;y <= blksz_y * (npartition_y - 1); y += blksz_y)
+		for (y = blksz_y;y <= blksz_y * (npartition_y - 1); y += blksz_y)
 		{
 			q = y * width;
-			for(p = q - width;p < q;p++)
+			for (p = q - width;p < q;p++)
 			{
 				dimgidx = (p << shamt) + neighbor_offset;
 				r = qrank[dimgidx];
@@ -6354,10 +6033,10 @@ FLOOD_END:
 		neighbor_offset = (connectivity == 4) ? 1 : 3;
 
 		//merging border(ver)
-		for(x = blksz_x - 1;x <= blksz_x * (npartition_x - 1); x += blksz_x)
+		for (x = blksz_x - 1;x <= blksz_x * (npartition_x - 1); x += blksz_x)
 		{
 			q = x + imgsize;
-			for(p = x;p < q;p += width)
+			for (p = x;p < q;p += width)
 			{
 				dimgidx = (p << shamt) + neighbor_offset;
 				r = qrank[dimgidx];
@@ -6368,13 +6047,13 @@ FLOOD_END:
 		}
 
 		//reset rootidxs
-		for(p = 0;p < curSize;p++)
+		for (p = 0;p < curSize;p++)
 			node[p].rootidx = ROOTIDX;
 
 		//Make sure that the root has the highest
-		for(p = parentAry[0];node[p].parentidx != ROOTIDX;p = node[p].parentidx)
+		for (p = parentAry[0];node[p].parentidx != ROOTIDX;p = node[p].parentidx)
 			;
-		if(node[p].alpha != (Pixel)(numbins - 1))
+		if (node[p].alpha != (Pixel)(numbins - 1))
 		{
 			q = curSize++;
 			node[q].copy(node + p);
@@ -6388,34 +6067,34 @@ FLOOD_END:
 	{
 		//curSize = maxSize;
 		Imgidx *rootindexcand = (Imgidx*)Calloc(omp_get_max_threads() * sizeof(Imgidx));
-		for(int i = 0;i < omp_get_max_threads();i++)
+		for (int i = 0;i < omp_get_max_threads();i++)
 			rootindexcand[i] = ROOTIDX;
 
 		#pragma omp parallel for schedule(guided,1)
-		for(Imgidx p = 0; p < maxSize; p++)
+		for (Imgidx p = 0; p < maxSize; p++)
 		{
 			Imgidx q,r,s;
 			//printf("p: %d\n",(int)p);
-			if(p < imgsize)
+			if (p < imgsize)
 			{
 				q = parentAry[p];
-				if(node[p].parentidx == ROOTIDX && pilottree[q].area == 1)
+				if (node[p].parentidx == ROOTIDX && pilottree[q].area == 1)
 					node[p].parentidx = pilottree[q].rootidx;
 			}
 			else
 			{
-				if(node[p].rootidx == ROOTIDX && node[p].area)
+				if (node[p].rootidx == ROOTIDX && node[p].area)
 				{
-					if(node[p].area == imgsize)
+					if (node[p].area == imgsize)
 					{
-						if(rootindexcand[omp_get_thread_num()] == ROOTIDX)
+						if (rootindexcand[omp_get_thread_num()] == ROOTIDX)
 						{
 							rootindexcand[omp_get_thread_num()] = p;
 						}
 						continue;
 					}
 					q = node[p].parentidx;
-					for(r = q;pilottree[r].rootidx == ROOTIDX;r = pilottree[r].parentidx)
+					for (r = q;pilottree[r].rootidx == ROOTIDX;r = pilottree[r].parentidx)
 						;
 
 					s = pilottree[r].rootidx;
@@ -6430,10 +6109,10 @@ FLOOD_END:
 		}
 
 		rootidx = ROOTIDX;
-		for(int i = 0;i < omp_get_max_threads();i++)
+		for (int i = 0;i < omp_get_max_threads();i++)
 		{
-			if(rootidx == ROOTIDX) rootidx = rootindexcand[i];
-			else if(rootindexcand[i] != ROOTIDX)
+			if (rootidx == ROOTIDX) rootidx = rootindexcand[i];
+			else if (rootindexcand[i] != ROOTIDX)
 				rootidx = _min(rootidx, rootindexcand[i]);
 		}
 
@@ -6446,10 +6125,10 @@ FLOOD_END:
 		//add rooms for singleton nodes
 		{
 			int p = 0;
-			for(int x = 0; x < npartition_x;x++)
+			for (int x = 0; x < npartition_x;x++)
 			{
 				Imgidx sx = (x == npartition_x - 1) ? blksz_xn : blksz_x;
-				for(int y = 0;y < npartition_y;y++)
+				for (int y = 0;y < npartition_y;y++)
 				{
 					Imgidx sy = (y == npartition_y - 1) ? blksz_yn : blksz_y;
 					Imgidx blksize = sx * sy;
@@ -6460,22 +6139,22 @@ FLOOD_END:
 		}
 
 		//compute cumulative distribution
-		for(int p = 0;p < numpartitions;p++)
+		for (int p = 0;p < numpartitions;p++)
 		{
 			Imgidx *pdhist = dhist + p * numbins;
-			for(int q = 0;q < numbins;q++)
+			for (int q = 0;q < numbins;q++)
 			{
 				pdhist[q + numbins] += pdhist[q];
 			}
 		}
 
 		Imgidx *cdhist = dhist + numpartitions * numbins;//histogram of the edges on the subblock borders
-		for(int p = 0;p < numbins - 1;p++)
+		for (int p = 0;p < numbins - 1;p++)
 			cdhist[p + 1] += cdhist[p];
-		for(int p = 0;p < numbins;p++)
+		for (int p = 0;p < numbins;p++)
 		{
 			Imgidx hp = ((p > 0) ? cdhist[p - 1] : 0);
-			for(int q = 0;q < numpartitions + 1;q++)
+			for (int q = 0;q < numpartitions + 1;q++)
 				qindex[p + numbins * q] = hp + ((q > 0) ? dhist[(q - 1) * numbins + p] : 0);
 		}
 	}
@@ -6483,21 +6162,21 @@ FLOOD_END:
 	void set_qindex(Imgidx *qindex, Imgidx *dhist, _int64 numpartitions, _int32 numbins)
 	{
 		Imgidx imgsize = width * height;
-		for(int p = 0;p < numpartitions;p++)
+		for (int p = 0;p < numpartitions;p++)
 		{
 			Imgidx *pdhist = dhist + p * numbins;
-			for(int q = 0;q < numbins;q++)
+			for (int q = 0;q < numbins;q++)
 			{
 				pdhist[q + numbins] += pdhist[q];
 			}
 		}
 		Imgidx *cdhist = dhist + numpartitions * numbins;
-		for(int p = 0;p < numbins - 1;p++)
+		for (int p = 0;p < numbins - 1;p++)
 			cdhist[p + 1] += cdhist[p];
-		for(int p = 0;p < numbins;p++)
+		for (int p = 0;p < numbins;p++)
 		{
 			Imgidx hp = imgsize + ((p > 0) ? cdhist[p - 1] : 0);
-			for(int q = 0;q < numpartitions + 1;q++)
+			for (int q = 0;q < numpartitions + 1;q++)
 				qindex[p + numbins * q] = hp + ((q > 0) ? dhist[(q - 1) * numbins + p] : 0);
 		}
 	}
@@ -6505,7 +6184,7 @@ FLOOD_END:
 	void set_subtree_root(Imgidx** subtreerootary, Imgidx *strary, Imgidx nonzero_nodeidx_start, Imgidx rootlevel_nodeidx_start)
 	{
 			Imgidx imgsize = width * height;
-			if(node[rootidx].alpha < 2)
+			if (node[rootidx].alpha < 2)
 			{
 				cout << "Pilottree root node level lower than 2" << endl;
 				return;
@@ -6513,22 +6192,22 @@ FLOOD_END:
 
 		{
 
-			for(Imgidx p = 1;p < (int)node[rootidx].alpha;p++)
+			for (Imgidx p = 1;p < (int)node[rootidx].alpha;p++)
 				subtreerootary[p] = strary + (p - 1) * imgsize;
 
-			for(Imgidx p = 0;p <= rootidx;p++)
+			for (Imgidx p = 0;p <= rootidx;p++)
 				node[p].rootidx = ROOTIDX;
 
-			for(Imgidx p = 0;p < imgsize;p++)
+			for (Imgidx p = 0;p < imgsize;p++)
 			{
 				Imgidx q = parentAry[p];
 				node[node[q].parentidx].rootidx = 1;
 			}
 
 			_int64 areasum = 0;
-			for(Imgidx p = nonzero_nodeidx_start;p < rootlevel_nodeidx_start;p++)
+			for (Imgidx p = nonzero_nodeidx_start;p < rootlevel_nodeidx_start;p++)
 			{
-				if(node[p].rootidx != ROOTIDX)
+				if (node[p].rootidx != ROOTIDX)
 				{
 					node[node[p].parentidx].rootidx = 0;
 					areasum += node[p].area;
@@ -6537,22 +6216,22 @@ FLOOD_END:
 			}
 
 			Imgidx *pixelindex = (Imgidx*)Malloc(areasum * sizeof(Imgidx));
-			for(Imgidx p = 0;p < imgsize;p++) //1-CCs
+			for (Imgidx p = 0;p < imgsize;p++) //1-CCs
 			{
 				Imgidx q = node[parentAry[p]].parentidx;
-				if(q < rootlevel_nodeidx_start)
+				if (q < rootlevel_nodeidx_start)
 					pixelindex[--node[q].rootidx] = p;
 
 			}
 
-			for(Imgidx p = nonzero_nodeidx_start;p < rootlevel_nodeidx_start;p++)
+			for (Imgidx p = nonzero_nodeidx_start;p < rootlevel_nodeidx_start;p++)
 			{
-				if(node[p].rootidx == ROOTIDX)
+				if (node[p].rootidx == ROOTIDX)
 					continue;
 				{
 
 					Imgidx q = node[p].parentidx;
-					if(q >= rootlevel_nodeidx_start)
+					if (q >= rootlevel_nodeidx_start)
 						continue;
 					Imgidx r = node[p].rootidx;
 					Imgidx s = r + node[p].area;
@@ -6569,14 +6248,14 @@ FLOOD_END:
 				}
 			}
 
-			for(Imgidx p = 0;p < (int)((node[rootidx].alpha - 1) * imgsize);p++)
+			for (Imgidx p = 0;p < (int)((node[rootidx].alpha - 1) * imgsize);p++)
 				strary[p] = -1;
 
-			for(Imgidx p = 0;p < imgsize;p++)
+			for (Imgidx p = 0;p < imgsize;p++)
 				strary[p] = parentAry[p];
-			for(Imgidx p = nonzero_nodeidx_start;p < rootlevel_nodeidx_start;p++)
+			for (Imgidx p = nonzero_nodeidx_start;p < rootlevel_nodeidx_start;p++)
 			{
-				if(!node[p].area)
+				if (!node[p].area)
 					continue;
 
 				Imgidx r = node[p].rootidx;
@@ -6589,13 +6268,13 @@ FLOOD_END:
 				}
 			}
 
-			for(Imgidx level = 2;level < (int)node[rootidx].alpha;level++)
+			for (Imgidx level = 2;level < (int)node[rootidx].alpha;level++)
 			{
 				Imgidx *pstrary_prev = &subtreerootary[level - 1][0];
 				Imgidx *pstrary = &subtreerootary[level][0];
-				for(Imgidx p = 0;p < imgsize;p++)
+				for (Imgidx p = 0;p < imgsize;p++)
 				{
-					if(pstrary[p] == -1)
+					if (pstrary[p] == -1)
 						pstrary[p] = pstrary_prev[p];
 				}
 			}
@@ -6607,12 +6286,12 @@ FLOOD_END:
 	//void init_hypergraph_nodes(_uint8* is_redundant, Imgidx *rank, RankItem<Imgidx, Pixel>* rankitem)
 	void find_redundant_nodes(_uint8* is_redundant, Imgidx *rank)
 	{
-		if(connectivity == 4)
+		if (connectivity == 4)
 		{
 			Imgidx imgsize = height * width;
 			Imgidx imgsize2 = imgsize * 2;
 			Imgidx width2 = width << 1;
-			for(Imgidx p = 0; p < imgsize;p++)
+			for (Imgidx p = 0; p < imgsize;p++)
 			{
 				Imgidx q = p << 1;
 				Imgidx y = p / width;
@@ -6639,12 +6318,12 @@ FLOOD_END:
 	void set_subblock_properties(Imgidx* startpidx, Imgidx *blkws, Imgidx *blkhs, Imgidx *blocksize, _int8 npartition_x, _int8 npartition_y, _int64 blksz_x, _int64 blksz_y, _int64 blksz_xn, _int64 blksz_yn)
 	{
 		Imgidx p = 0, q;
-		for(_int8 y = 0; y < npartition_y; y++)
+		for (_int8 y = 0; y < npartition_y; y++)
 		{
 			q = y * width * (Imgidx)blksz_y;
 			bool lastrow = (y == npartition_y - 1);
 			Imgidx blkh = lastrow ? blksz_yn : blksz_y;
-			for(_int8 x = 0; x < npartition_x; x++)
+			for (_int8 x = 0; x < npartition_x; x++)
 			{
 				startpidx[p] = q + (Imgidx)x * (Imgidx)blksz_x;
 				bool lastcol = (x == npartition_x - 1);
@@ -6661,7 +6340,7 @@ FLOOD_END:
 	{
 		//preallocate hqueues
 		*queues = (HierarQueue<Imgidx>**)Calloc(numpartitions * sizeof(HierarQueue<Imgidx>*));
-		for(int blk = 0;blk < numpartitions;blk++)
+		for (int blk = 0;blk < numpartitions;blk++)
 		{
 			//printf("blk%d max = %d\n", blk, (int)subtree_max[blk]);
 			(*queues)[blk] = new HierarQueue<Imgidx>((_uint64)blocksize[blk] + 1, (_int32)(subtree_max[blk] + 1));
@@ -6671,7 +6350,7 @@ FLOOD_END:
 
 	void compute_dimg_and_rank2index(RankItem<Imgidx, double>*& rankitem, Pixel* img, Imgidx nredges, Index* rank2rankitem)
 	{
-		if(channel == 1)
+		if (channel == 1)
 		{
 			SortValue<Pixel>* vals;// = new pmt::SortValue<Value>[N];
 			vals = (SortValue<Pixel>*)Malloc(nredges * sizeof(SortValue<Pixel>));
@@ -6758,7 +6437,7 @@ FLOOD_END:
 
 
 		_int64 numpartitions;
-		if(numthreads > 2)
+		if (numthreads > 2)
 		 	numpartitions = _min(imgsize/2, _min(256, numthreads * 4));
 		else
 			numpartitions = 2;
@@ -6767,13 +6446,13 @@ FLOOD_END:
 		{
 			int optpart = 1;
 			double optborderlength = (double)numpartitions * (double)imgsize;
-			for(int px = 2;px < numpartitions; px++)
+			for (int px = 2;px < numpartitions; px++)
 			{
-				if(numpartitions % px == 0)
+				if (numpartitions % px == 0)
 				{
 					int py = numpartitions / px;
 
-					if(((double)px * (double)height + (double)py * (double)width) < optborderlength)
+					if (((double)px * (double)height + (double)py * (double)width) < optborderlength)
 					{
 						optpart = px;
 						optborderlength = ((double)px * (double)height + (double)py * (double)width);
@@ -6813,7 +6492,7 @@ FLOOD_END:
 		char *blkflooddone = (char*)Calloc(numpartitions * sizeof(char));
 		omp_lock_t *locks = (omp_lock_t*)Malloc((numpartitions + 1) * sizeof(omp_lock_t));
 
-		for(p = 0;p < numpartitions;p++)
+		for (p = 0;p < numpartitions;p++)
 			omp_init_lock(locks + p);
 
 		double *nrmsds = (double*)Malloc(numpartitions * sizeof(double));
@@ -6850,15 +6529,15 @@ FLOOD_END:
 			Imgidx wstride_d = width << shamt;
 
 			//reset queue, isvisited array, hypernode levels
-			for(int blk = 0;blk < numpartitions;blk++)
+			for (int blk = 0;blk < numpartitions;blk++)
 				queues[blk]->reset_queue();
 
 			#pragma omp parallel for private(p, q)
-			for(int i = 0;i < imgsize;i++)
+			for (int i = 0;i < imgsize;i++)
 				isVisited[i] = 0;
 
 			#pragma omp parallel for private(p, q)
-			for(Imgidx i = 0; i < dimgsize;i++)
+			for (Imgidx i = 0; i < dimgsize;i++)
 			{
 				hypernode_level[i] = ROOTIDX;
 				redundant_edge[i] = 0;
@@ -6870,16 +6549,16 @@ FLOOD_END:
 			//(re)allocate node array (expand size when reallocate)
 			maxSize = parflood_node_alloc(subtree_size, subtree_start, blkws, blkhs, numpartitions, treesizemult);
 
-			for(p = 0;p < numpartitions;p++)
+			for (p = 0;p < numpartitions;p++)
 				omp_unset_lock(locks + p);
 			omp_unset_lock(locks + numpartitions);
 			numbusythr = 0;
 
 
 			#pragma omp parallel for private(p, q) schedule(dynamic,1)
-			for(int blk = 0; blk < numpartitions; blk++) //flooding is somehow slower than the one without tse...
+			for (int blk = 0; blk < numpartitions; blk++) //flooding is somehow slower than the one without tse...
 			{
-				if(outofmemory)
+				if (outofmemory)
 					continue;
 
 				omp_set_lock(locks + blk);
@@ -6907,7 +6586,7 @@ FLOOD_END:
 				Pixel maxdiff = subtree_max[blk];
 
 				_int8 *plr = levelroots + blk * numbins;
-				for(p = 0;p < numbins;p++)
+				for (p = 0;p < numbins;p++)
 					plr[p] = 0;
 
 				//printf("th%d: subtree for blk %d: setting queue\n", omp_get_thread_num(), (int)blk);
@@ -6928,7 +6607,7 @@ FLOOD_END:
 				prev_top = stack_top; /*to find redundant node*/
 				int firstpix = 1;
 
-				if(outofmemory)
+				if (outofmemory)
 					continue;
 				while (1) //flooding
 				{
@@ -6941,18 +6620,18 @@ FLOOD_END:
 						p = didx >> shamt;
 
 						_uint8 isAv;
-						if(firstpix)
+						if (firstpix)
 						{
 							isAv = isAvailable[p];
 							firstpix = 0;
 						}
 						else
 						{
-							if((qitem & 1)) //pixel at another end of the edge?
+							if ((qitem & 1)) //pixel at another end of the edge?
 							{
-								if(connectivity == 4)
+								if (connectivity == 4)
 								{
-									if(didx & 1)//horizontal edge
+									if (didx & 1)//horizontal edge
 									{
 											p++;
 											isAv = isAvailable[p];
@@ -6972,7 +6651,7 @@ FLOOD_END:
 							}
 							else
 							{
-								if(didx & 1)//horizontal edge
+								if (didx & 1)//horizontal edge
 								{
 										isAv = isAvailable[p];
 										isAv &= ~0x2;
@@ -6998,35 +6677,35 @@ FLOOD_END:
 						{
 							q = p << shamt;
 							Imgidx q1;
-							if(is_available(isAv, 0))
+							if (is_available(isAv, 0))
 							{
-								if(isVisited[p + width]) //neighbor alread visited - which means this edge might be on lower level than the alpha value of the edge corresponds to
+								if (isVisited[p + width]) //neighbor alread visited - which means this edge might be on lower level than the alpha value of the edge corresponds to
 								{
-									//if(!plr[qrank[q]]) redundant_edge[q] = 1;
+									//if (!plr[qrank[q]]) redundant_edge[q] = 1;
 									//else
 									connected_neighbor |= 0x1;
 								}
 								else//push new neighbor
 									queue->push((q << 1) | 1, qrank[q]);
 							}
-							if(is_available(isAv, 1))
+							if (is_available(isAv, 1))
 							{
 								q1 = q + 1;
-								if(isVisited[p + 1])
+								if (isVisited[p + 1])
 								{
-									//if(!plr[qrank[q1]]) redundant_edge[q1] = 1;
+									//if (!plr[qrank[q1]]) redundant_edge[q1] = 1;
 									//else
 									connected_neighbor |= 0x2;
 								}
 								else
 									queue->push(((q1) << 1) | 1, qrank[q1]);
 							}
-							if(is_available(isAv, 2))
+							if (is_available(isAv, 2))
 							{
 								q1 = q - 1;
-								if(isVisited[p - 1])
+								if (isVisited[p - 1])
 								{
-									//if(!plr[qrank[q1]]) redundant_edge[q1] = 1;
+									//if (!plr[qrank[q1]]) redundant_edge[q1] = 1;
 									//else
 									connected_neighbor |= 0x4;
 								}
@@ -7034,12 +6713,12 @@ FLOOD_END:
 									queue->push(((q1) << 1) & lsbclearmask, qrank[q1]);
 							}
 
-							if(is_available(isAv, 3))
+							if (is_available(isAv, 3))
 							{
 								q1 = q - wstride_d;
-								if(isVisited[p - width])
+								if (isVisited[p - width])
 								{
-									//if(!plr[qrank[q1]]) redundant_edge[q1] = 1;
+									//if (!plr[qrank[q1]]) redundant_edge[q1] = 1;
 									//else
 									connected_neighbor |= 0x8;
 								}
@@ -7055,9 +6734,9 @@ FLOOD_END:
 							current_level = queue->min_level;
 
 							{
-								if(nidx == nidx_lim)
+								if (nidx == nidx_lim)
 								{
-									if(!migrate_subtree(blk, numpartitions, nidx, nidx_lim, nidxblk, blkts,	blkflooddone, subtree_cur, subtree_start, subtree_nborderedges, locks, numbusythr, numblkproc, outofmemory))
+									if (!migrate_subtree(blk, numpartitions, nidx, nidx_lim, nidxblk, blkts,	blkflooddone, subtree_cur, subtree_start, subtree_nborderedges, locks, numbusythr, numblkproc, outofmemory))
 										break;
 								}
 								iNode = nidx++;
@@ -7067,12 +6746,12 @@ FLOOD_END:
 							node[iNode].rootidx = ROOTIDX;
 							stack_top = iNode;
 
-							if(current_level)
+							if (current_level)
 							{
 								{
-									if(nidx == nidx_lim)
+									if (nidx == nidx_lim)
 									{
-										if(!migrate_subtree(blk, numpartitions, nidx, nidx_lim, nidxblk, blkts,	blkflooddone, subtree_cur, subtree_start, subtree_nborderedges, locks, numbusythr, numblkproc, outofmemory))
+										if (!migrate_subtree(blk, numpartitions, nidx, nidx_lim, nidxblk, blkts,	blkflooddone, subtree_cur, subtree_start, subtree_nborderedges, locks, numbusythr, numblkproc, outofmemory))
 											break;
 									}
 									iNode = nidx++;
@@ -7089,13 +6768,13 @@ FLOOD_END:
 						{
 							queue->find_minlev();
 
-							if(current_level)
+							if (current_level)
 							{
 								Pixel pix_val = img[p];
 								{
-									if(nidx == nidx_lim)
+									if (nidx == nidx_lim)
 									{
-										if(!migrate_subtree(blk, numpartitions, nidx, nidx_lim, nidxblk, blkts,	blkflooddone, subtree_cur, subtree_start, subtree_nborderedges, locks, numbusythr, numblkproc, outofmemory))
+										if (!migrate_subtree(blk, numpartitions, nidx, nidx_lim, nidxblk, blkts,	blkflooddone, subtree_cur, subtree_start, subtree_nborderedges, locks, numbusythr, numblkproc, outofmemory))
 											break;
 									}
 									iNode = nidx++;
@@ -7112,51 +6791,51 @@ FLOOD_END:
 								node[stack_top].add(img[p], pix_type);
 							}
 						}
-						//if(stack_top == ROOTIDX) printf("SQEEEEAK\n");
+						//if (stack_top == ROOTIDX) printf("SQEEEEAK\n");
 
-						if(connected_neighbor)
+						if (connected_neighbor)
 						{
 							// mark from the leaf to the stack_top node to help finding hypernode levelroots
 							Imgidx squirrel, leaf1 = parentAry[p], leaf2;
-							for(squirrel = leaf1;node[squirrel].parentidx != squirrel;squirrel = node[squirrel].parentidx)
+							for (squirrel = leaf1;node[squirrel].parentidx != squirrel;squirrel = node[squirrel].parentidx)
 								node[squirrel].rootidx = p;
 							node[squirrel].rootidx = p;
 
 							q = p << shamt;
-							if(connected_neighbor & 0x1)
+							if (connected_neighbor & 0x1)
 							{
 								leaf2 = parentAry[p + width];
-								if(qrank[q] > get_nearest_common_ancestor_level(p, leaf2))
+								if (qrank[q] > get_nearest_common_ancestor_level(p, leaf2))
 									redundant_edge[q] = 1;
 							}
-							if(connected_neighbor & 0x2)
+							if (connected_neighbor & 0x2)
 							{
 								leaf2 = parentAry[p + 1];
 								//printf("q = %d\n", (int)q);
-								if(qrank[q + 1] > get_nearest_common_ancestor_level(p, leaf2))
+								if (qrank[q + 1] > get_nearest_common_ancestor_level(p, leaf2))
 									redundant_edge[q + 1] = 1;
 							}
-							if(connected_neighbor & 0x4)
+							if (connected_neighbor & 0x4)
 							{
 								leaf2 = parentAry[p - 1];
-								if(qrank[q - 1] > get_nearest_common_ancestor_level(p, leaf2))
+								if (qrank[q - 1] > get_nearest_common_ancestor_level(p, leaf2))
 									redundant_edge[q - 1] = 1;
 							}
-							if(connected_neighbor & 0x8)
+							if (connected_neighbor & 0x8)
 							{
 								leaf2 = parentAry[p - width];
-								if(qrank[q - wstride_d] > get_nearest_common_ancestor_level(p, leaf2))
+								if (qrank[q - wstride_d] > get_nearest_common_ancestor_level(p, leaf2))
 									redundant_edge[q - wstride_d] = 1;
 							}
 
 							//cleanup pawprints
-							for(squirrel = leaf1;node[squirrel].parentidx != squirrel;squirrel = node[squirrel].parentidx)
+							for (squirrel = leaf1;node[squirrel].parentidx != squirrel;squirrel = node[squirrel].parentidx)
 								node[squirrel].rootidx = ROOTIDX;
 							node[squirrel].rootidx = ROOTIDX;
 						}
 					}
 
-					if(outofmemory)
+					if (outofmemory)
 						break;
 
 					//remove_redundant_node(node, nidx, prev_top, stack_top);
@@ -7178,9 +6857,9 @@ FLOOD_END:
 						//plr[queue->min_level] = 1;
 						//_CREATE_NEW_STACKTOP(queue->min_level)
 						{
-							if(nidx == nidx_lim)
+							if (nidx == nidx_lim)
 							{
-								if(!migrate_subtree(blk, numpartitions, nidx, nidx_lim, nidxblk, blkts,	blkflooddone, subtree_cur, subtree_start, subtree_nborderedges, locks, numbusythr, numblkproc, outofmemory))
+								if (!migrate_subtree(blk, numpartitions, nidx, nidx_lim, nidxblk, blkts,	blkflooddone, subtree_cur, subtree_start, subtree_nborderedges, locks, numbusythr, numblkproc, outofmemory))
 									break;
 							}
 							iNode = nidx++;
@@ -7207,7 +6886,7 @@ FLOOD_END:
 					current_level = node[stack_top].alpha;
 				}
 
-				if(!outofmemory)
+				if (!outofmemory)
 				{
 					stack_top = (node[stack_top].area == bareasum) ? stack_top : iNode; //remove redundant root
 					node[stack_top].parentidx = ROOTIDX;
@@ -7216,7 +6895,7 @@ FLOOD_END:
 
 					blkts += nidx - subtree_start[nidxblk];
 
-					if(nidx == nidx_lim)//this should be really rare
+					if (nidx == nidx_lim)//this should be really rare
 					{
 						blkflooddone[nidxblk] = 2; // flood done (at least for the native block), no free memory
 					}
@@ -7232,7 +6911,7 @@ FLOOD_END:
 					omp_unset_lock(locks + nidxblk);
 				}
 
-				if(outofmemory)
+				if (outofmemory)
 				{
 					printf("thr%d: subtree for blk %d: memory overflow - releasing lock %d\n", omp_get_thread_num(), (int)blk, (int)nidxblk);
 					flooddone = 0;
@@ -7245,7 +6924,7 @@ FLOOD_END:
 			}//flood_end
 		}
 
-		if(numpartitions > 1)
+		if (numpartitions > 1)
 			rootidx = merge_subtrees1(qrank, blksz_x, blksz_y, npartition_x, npartition_y, subtree_cur, 1, hypernode_level);
 		else
 		{
@@ -7259,7 +6938,7 @@ FLOOD_END:
 		////////////////////////////////////////////////////////////////////////
 
 		#pragma omp parallel for
-		for(p = 0;p < maxSize;p++)
+		for (p = 0;p < maxSize;p++)
 			node[p].rootidx = ROOTIDX;
 
 		maxSize = imgsize + nredges;
@@ -7280,9 +6959,9 @@ FLOOD_END:
 		double *timeperthread = (double*)Calloc((numbins + 1) * sizeof(double));
 
 		#pragma omp parallel for schedule(dynamic,1)
-		for(_int64 qlevel = 0; qlevel < numbins; qlevel++) //this part is to be parallelised
+		for (_int64 qlevel = 0; qlevel < numbins; qlevel++) //this part is to be parallelised
 		{
-			if(qlevel > (_int64)pilottree[rootidx].alpha)
+			if (qlevel > (_int64)pilottree[rootidx].alpha)
 			{
 				continue;
 			}
@@ -7298,12 +6977,12 @@ FLOOD_END:
 
 		Free(levelperthread);
 		Free(timeperthread);
-		if(rank2rankitem)		Free(rank2rankitem);
+		if (rank2rankitem)		Free(rank2rankitem);
 
-		for(p = 0;p < numpartitions;p++)
+		for (p = 0;p < numpartitions;p++)
 				omp_destroy_lock(locks + p);
 		Free(locks);
-		for(int blk = 0;blk < numpartitions;blk++)
+		for (int blk = 0;blk < numpartitions;blk++)
 			delete queues[blk];
 		Free(queues);
 		Free(nrmsds);
@@ -7375,10 +7054,10 @@ FLOOD_END:
 	{
 		Imgidx q, r;
 
-		if(p == ROOTIDX)
+		if (p == ROOTIDX)
 			return ROOTIDX;
 
-	//		if(!path_compression)
+	//		if (!path_compression)
 	//		{
 	//		while((q = node[p].parentidx) != ROOTIDX)
 	//			p = q;
@@ -7412,7 +7091,7 @@ FLOOD_END:
 		qh[numbins - 1] = nredges - binsize;
 		Q[0] = new HierarQueue<Imgidx>(nredges, qh + numbins - 2, numbins);
 		//Q[0] = new HierarQueue<Imgidx>(numbins, nredges);
-		for(_int32 q = 1;q < numbins;q++)
+		for (_int32 q = 1;q < numbins;q++)
 		{
 			qh[numbins - 2] = binsize * q;
 			qh[numbins - 1] = (q == numbins - 1) ? nredges - qh[0] : binsize;
@@ -7428,9 +7107,9 @@ FLOOD_END:
 		Imgidx x, y;
 		Imgidx p = 0;
 		printf("%s: \n",name);
-		for(y = 0;y < height;y++)
+		for (y = 0;y < height;y++)
 		{
-			for(x = 0;x < width;x++)
+			for (x = 0;x < width;x++)
 			{
 				printf("%2d ",(int)arr[p++]);
 			}
@@ -7444,12 +7123,12 @@ FLOOD_END:
 		Imgidx x, y;
 		Imgidx p;
 		printf("%s: \n",name);
-		if(indexing)
+		if (indexing)
 		{
-			for(y = 0;y < height;y++)
+			for (y = 0;y < height;y++)
 			{
 				Imgidx p = y * 2 * width - y + (y < height - 1);
-				for(x = 0;x < width - 2;x++)
+				for (x = 0;x < width - 2;x++)
 				{
 						printf(". %d ", (int)arr[p]);
 						p += 1 + (y < height - 1);
@@ -7457,10 +7136,10 @@ FLOOD_END:
 				}
 				printf(". %d .\n", (int)arr[p]);
 
-				if(y < height - 1)
+				if (y < height - 1)
 				{
 					p = y * 2 * width - y;
-					for(x = 0;x < width;x++)
+					for (x = 0;x < width;x++)
 					{
 						printf("%d   ", (int)arr[p]);
 						p += 2;
@@ -7472,10 +7151,10 @@ FLOOD_END:
 		}
 		else
 		{
-			for(y = 0;y < height;y++)
+			for (y = 0;y < height;y++)
 			{
 				p = y * 2 * width;
-				for(x = 0;x < width - 2;x++)
+				for (x = 0;x < width - 2;x++)
 				{
 						printf(". %-2d ", (int)arr[p+1]);
 						p += 2;
@@ -7484,10 +7163,10 @@ FLOOD_END:
 				printf(". %-2d .\n", (int)arr[p+1]);
 
 
-				if(y < height - 1)
+				if (y < height - 1)
 				{
 					p = y * 2 * width;
-					for(x = 0;x < width;x++)
+					for (x = 0;x < width;x++)
 					{
 						printf("%-2d   ", (int)arr[p]);
 						p += 2;
@@ -7543,12 +7222,12 @@ FLOOD_END:
 
 		//manually visit the first pixel
 		isVisited[0] = 1;
-		if(connectivity == 4)
+		if (connectivity == 4)
 		{
 			queue->push(rank[0]);
 			queue->push(rank[1]);
 		}
-		else if(connectivity == 8)
+		else if (connectivity == 8)
 		{
 			queue->push(rank[0]);
 			queue->push(rank[1]);
@@ -7579,23 +7258,23 @@ FLOOD_END:
 				if (connectivity == 4)
 				{
 					q = p << 1;
-					if(is_available(isAv, 0) && !isVisited[p + width])	queue->push(rank[q]);
-					if(is_available(isAv, 1) && !isVisited[p + 1])			queue->push(rank[q + 1]);
-					if(is_available(isAv, 2) && !isVisited[p - 1])			queue->push(rank[q - 1]);
-					if(is_available(isAv, 3) && !isVisited[p - width])	queue->push(rank[q - (width << 1)]);
+					if (is_available(isAv, 0) && !isVisited[p + width])	queue->push(rank[q]);
+					if (is_available(isAv, 1) && !isVisited[p + 1])			queue->push(rank[q + 1]);
+					if (is_available(isAv, 2) && !isVisited[p - 1])			queue->push(rank[q - 1]);
+					if (is_available(isAv, 3) && !isVisited[p - width])	queue->push(rank[q - (width << 1)]);
 				}
 				else if (connectivity == 8)
 				{
 					Imgidx width4 = width << 2;
 					q = p << 2;
-					if(is_available(isAv, 0) && !isVisited[p + width]) 		 queue->push(rank[q]);// printf("0:pushing %d \n",(int)rank[q]);}
-					if(is_available(isAv, 1) && !isVisited[p + width + 1]) queue->push(rank[q + 1]);// printf("1:pushing %d \n",(int)rank[q+1]);}
-					if(is_available(isAv, 2) && !isVisited[p + 1]) 		 		 queue->push(rank[q + 2]);// printf("2:pushing %d \n",(int)rank[q+2]);}
-					if(is_available(isAv, 3) && !isVisited[p - width + 1]) queue->push(rank[q + 3]);// printf("3:pushing %d \n",(int)rank[q+3]);}
-					if(is_available(isAv, 4) && !isVisited[p - width]) 		 queue->push(rank[q - width4]);// printf("4:pushing %d \n",(int)rank[q-width4]);}
-					if(is_available(isAv, 5) && !isVisited[p - width - 1]) queue->push(rank[q - width4 - 3]);// printf("5:pushing %d \n",(int)rank[q-width4-3]);}
-					if(is_available(isAv, 6) && !isVisited[p - 1]) 				 queue->push(rank[q - 2]);//  printf("6:pushing %d \n",(int)rank[q-2]);}
-					if(is_available(isAv, 7) && !isVisited[p + width - 1]) queue->push(rank[q + width4 - 1]);// printf("7:pushing %d \n",(int)rank[q+width4-1]);}
+					if (is_available(isAv, 0) && !isVisited[p + width]) 		 queue->push(rank[q]);// printf("0:pushing %d \n",(int)rank[q]);}
+					if (is_available(isAv, 1) && !isVisited[p + width + 1]) queue->push(rank[q + 1]);// printf("1:pushing %d \n",(int)rank[q+1]);}
+					if (is_available(isAv, 2) && !isVisited[p + 1]) 		 		 queue->push(rank[q + 2]);// printf("2:pushing %d \n",(int)rank[q+2]);}
+					if (is_available(isAv, 3) && !isVisited[p - width + 1]) queue->push(rank[q + 3]);// printf("3:pushing %d \n",(int)rank[q+3]);}
+					if (is_available(isAv, 4) && !isVisited[p - width]) 		 queue->push(rank[q - width4]);// printf("4:pushing %d \n",(int)rank[q-width4]);}
+					if (is_available(isAv, 5) && !isVisited[p - width - 1]) queue->push(rank[q - width4 - 3]);// printf("5:pushing %d \n",(int)rank[q-width4-3]);}
+					if (is_available(isAv, 6) && !isVisited[p - 1]) 				 queue->push(rank[q - 2]);//  printf("6:pushing %d \n",(int)rank[q-2]);}
+					if (is_available(isAv, 7) && !isVisited[p + width - 1]) queue->push(rank[q + width4 - 1]);// printf("7:pushing %d \n",(int)rank[q+width4-1]);}
 				}
 				else
 				{
@@ -7614,7 +7293,7 @@ FLOOD_END:
 			next_rank = queue->top();
 
 			//remove redundant node
-			if(node_in[prev_top].parentidx == current_rank + imgsize && node_in[prev_top].area == node_in[current_rank].area)
+			if (node_in[prev_top].parentidx == current_rank + imgsize && node_in[prev_top].area == node_in[current_rank].area)
 				current_rank = prev_top;
 
 			node_in[current_rank].connect_to_parent(&node_in[next_rank], next_rank + imgsize, pix_type);
@@ -7660,13 +7339,13 @@ FLOOD_END:
 
 	inline Imgidx get_level_root(Imgidx p, AlphaNode<Imgidx, Pixel> *tree)
 	{
-		if(p == ROOTIDX)
+		if (p == ROOTIDX)
 			return ROOTIDX;
 		Pixel a = tree[p].alpha;
 		while(1)
 		{
 			Imgidx parent = tree[p].parentidx;
-			if(parent == ROOTIDX || tree[parent].alpha > a)
+			if (parent == ROOTIDX || tree[parent].alpha > a)
 				break;
 			p = parent;
 			//cntcnt++;
@@ -7692,11 +7371,11 @@ FLOOD_END:
 	inline Imgidx get_nearest_common_ancestor(Imgidx x, Imgidx y)
 	{
 		Imgidx p;
-		for(p = y;p != ROOTIDX;p = node[p].parentidx)
+		for (p = y;p != ROOTIDX;p = node[p].parentidx)
 			node[p].rootidx = ROOTIDX;
-		for(p = x;p != ROOTIDX;p = node[p].parentidx)
+		for (p = x;p != ROOTIDX;p = node[p].parentidx)
 			node[p].rootidx = x;
-		for(p = y;p != ROOTIDX && node[p].rootidx != x;p = node[p].parentidx)
+		for (p = y;p != ROOTIDX && node[p].rootidx != x;p = node[p].parentidx)
 			;
 		return p;
 	}
@@ -7704,7 +7383,7 @@ FLOOD_END:
 	inline Pixel get_nearest_common_ancestor_level(Imgidx x, Imgidx y)
 	{
 		Imgidx p;
-		for(p = y;node[p].rootidx != x;p = node[p].parentidx)
+		for (p = y;node[p].rootidx != x;p = node[p].parentidx)
 			;
 		return node[p].alpha;
 	}
@@ -7722,7 +7401,7 @@ FLOOD_END:
 		x = get_level_root(x, alpha);
 		y = get_level_root(y, alpha);
 
-		if(x == y)
+		if (x == y)
 		{
 			return node[x].alpha;
 		}
@@ -7742,9 +7421,9 @@ FLOOD_END:
 		node[x0].parentidx = newidx;
 		node[y0].parentidx = newidx;
 
-		if(x == y)
+		if (x == y)
 		{
-			if(x == ROOTIDX && y == ROOTIDX)
+			if (x == ROOTIDX && y == ROOTIDX)
 			{
 				x = newidx;
 			}
@@ -7758,7 +7437,7 @@ FLOOD_END:
 		//compxy = parentAry ? node[x].alpha > node[y].alpha : x > y;
 
 		//y always has bigger alpha, or the same alpha but bigger area (for shorter path to level roots)
-		if(x == ROOTIDX ||
+		if (x == ROOTIDX ||
 			(y != ROOTIDX && ((node[x].alpha > node[y].alpha) ||
 			(node[x].alpha == node[y].alpha && node[x].area > node[y].area))))
 		{
@@ -7774,13 +7453,13 @@ FLOOD_END:
 
 		while(1)
 		{
-			if(y == ROOTIDX)
+			if (y == ROOTIDX)
 			{
 				while(node[x].parentidx != ROOTIDX)
 				{
 					x = (node[x].parentidx);
 					node[x].add(q, pix_type);
-					if(node[x].area == imgsize)
+					if (node[x].area == imgsize)
 					{
 						node[x].parentidx = ROOTIDX;
 						break;
@@ -7790,18 +7469,18 @@ FLOOD_END:
 				break;
 			}
 
-			if(y == z)//y is a common ancestor
+			if (y == z)//y is a common ancestor
 			{
 
-				if(x != y)
+				if (x != y)
 				{
 					while(1)
 					{
 						x = (node[x].parentidx);
-						if(x == y)
+						if (x == y)
 							break;
 						node[x].add(q, pix_type);
-						if(node[x].area == imgsize)
+						if (node[x].area == imgsize)
 						{
 							node[x].parentidx = ROOTIDX;
 							break;
@@ -7814,13 +7493,13 @@ FLOOD_END:
 			while(1)
 			{
 				x0 = get_level_root(node[x].parentidx);
-				if(x0 != ROOTIDX && (node[x0].alpha < node[y].alpha))
+				if (x0 != ROOTIDX && (node[x0].alpha < node[y].alpha))
 				{
 					x = x0;
 					x0 = get_level_root(node[x0].parentidx);
 					p->copy(node + x);
 					node[x].add(q, pix_type);
-					if(node[x].area == imgsize)
+					if (node[x].area == imgsize)
 					{
 						node[x].parentidx = ROOTIDX;
 						break;
@@ -7835,7 +7514,7 @@ FLOOD_END:
 			q->copy(node + y);
 			node[y].add(p, pix_type);
 
-			if(node[y].area == imgsize)
+			if (node[y].area == imgsize)
 			{
 				node[y].parentidx = ROOTIDX;
 				break;
@@ -7863,7 +7542,7 @@ FLOOD_END:
 		y = get_level_root(y, newidx);
 		z = get_nearest_common_ancestor(x, y);
 
-		if(x == y)
+		if (x == y)
 		{
 			return node[x].alpha;
 		}
@@ -7881,9 +7560,9 @@ FLOOD_END:
 		node[x0].parentidx = newidx;
 		node[y0].parentidx = newidx;
 
-		if(x == y)
+		if (x == y)
 		{
-			if(x == ROOTIDX && y == ROOTIDX)
+			if (x == ROOTIDX && y == ROOTIDX)
 			{
 
 			}
@@ -7895,7 +7574,7 @@ FLOOD_END:
 		}
 
 		//compxy = parentAry ? node[x].alpha > node[y].alpha : x > y;
-		if(x == ROOTIDX || (y != ROOTIDX && (x > y)))
+		if (x == ROOTIDX || (y != ROOTIDX && (x > y)))
 		{
 			q->copy(node + x0);
 			swap(x,y);
@@ -7909,34 +7588,32 @@ FLOOD_END:
 
 		while(1)
 		{
-			if(y == ROOTIDX)
+			if (y == ROOTIDX)
 			{
 				while(node[x].parentidx != ROOTIDX)
 				{
 					x = node[x].parentidx;
-				  //node[x].print(node,pix_type);
 					node[x].add(q, pix_type);
-					if(node[x].area == imgsize)
+					if (node[x].area == imgsize)
 					{
 						node[x].parentidx = ROOTIDX;
 						break;
 					}
-					//node[x].print(node,pix_type);
 				}
 				break;
 			}
 
-			if(y == z)//y is a common ancestor
+			if (y == z)//y is a common ancestor
 			{
-				if(x != y)
+				if (x != y)
 				{
 					while(1)
 					{
 						x = node[x].parentidx;
-						if(x == y)
+						if (x == y)
 							break;
 						node[x].add(q, pix_type);
-						if(node[x].area == imgsize)
+						if (node[x].area == imgsize)
 						{
 							node[x].parentidx = ROOTIDX;
 							break;
@@ -7949,13 +7626,13 @@ FLOOD_END:
 			while(1)
 			{
 				x0 = node[x].parentidx;
-				if(x0 != ROOTIDX && (x0 < y))
+				if (x0 != ROOTIDX && (x0 < y))
 				{
 					x = x0;
 					x0 = node[x0].parentidx;
 					p->copy(node + x);
 					node[x].add(q, pix_type);
-					if(node[x].area == imgsize)
+					if (node[x].area == imgsize)
 					{
 						node[x].parentidx = ROOTIDX;
 						break;
@@ -7970,7 +7647,7 @@ FLOOD_END:
 			q->copy(node + y);
 			node[y].add(p, pix_type);
 
-			if(node[y].area == imgsize)
+			if (node[y].area == imgsize)
 			{
 				node[y].parentidx = ROOTIDX;
 				break;
@@ -7990,20 +7667,16 @@ FLOOD_END:
 		Imgidx numcan = 0;
 		Imgidx imgsize = height * width;
 
-		for(p = 0;p < imgsize;p++)
+		for (p = 0;p < imgsize;p++)
 		{
 			Imgidx q = parentAry[p];
 			Imgidx r = q;
 
 			//Canonicalize leaf nodes
-			if(r != ROOTIDX && node[q].alpha == node[node[q].parentidx].alpha)
+			if (r != ROOTIDX && node[q].alpha == node[node[q].parentidx].alpha)
 			{
-				//node[q].parentidx = node[q].rootidx = ROOTIDX;
-				//node[q].area = 0; node[q].rootidx = node[p].parentidx = ROOTIDX; //remove redunant node
 				while(node[r].alpha == node[node[r].parentidx].alpha)
 				{
-					//Imgidx s = node[r].parentidx;
-					//node[r].parentidx = node[r].rootidx = ROOTIDX;
 					node[r].area = 0;
 					r = node[r].parentidx;
 				}
@@ -8012,29 +7685,25 @@ FLOOD_END:
 			}
 		}
 
-		for(p = maxSize - 1;p >= 0; p--)
+		for (p = maxSize - 1;p >= 0; p--)
 		{
-			if(node[p].area && node[p].parentidx != ROOTIDX && node[node[p].parentidx].parentidx != ROOTIDX &&
+			if (node[p].area && node[p].parentidx != ROOTIDX && node[node[p].parentidx].parentidx != ROOTIDX &&
 				node[node[p].parentidx].alpha == node[node[node[p].parentidx].parentidx].alpha)
 			{
 				Imgidx q = node[p].parentidx;
 				Imgidx r = node[q].parentidx;
-				//node[q].area = 0; node[q].rootidx = node[p].parentidx = ROOTIDX; //remove redunant node
-				//node[q].parentidx = node[q].rootidx = ROOTIDX;
 				node[p].parentidx = r;
 				numcan++;
 			}
 		}
 
-		for(p = maxSize;p < maxSize;p++)
+		for (p = maxSize;p < maxSize;p++)
 		{
 			Imgidx q = p;
-			if(p < imgsize)
+			if (p < imgsize)
 				q = parentAry[p];
 
-			//Imgidx r = node[q].parentidx;
-
-			if(node[q].area == 0 && (node[p].parentidx != ROOTIDX || node[p].rootidx != ROOTIDX))
+			if (node[q].area == 0 && (node[p].parentidx != ROOTIDX || node[p].rootidx != ROOTIDX))
 			{
 				node[q].parentidx = node[q].rootidx = ROOTIDX;
 			}
@@ -8047,22 +7716,20 @@ FLOOD_END:
 		Imgidx imgsize = height * width, numblk;
 		while(npartition_x > 1 || npartition_y > 1)
 		{
-			if((npartition_x == 1 || blksz_x >= blksz_y) && npartition_y > 1)
+			if ((npartition_x == 1 || blksz_x >= blksz_y) && npartition_y > 1)
 			{
 				numblk = npartition_x * (npartition_y / 2);
 				#pragma omp parallel for
-				for(int blk = 0;blk < numblk;blk++)
+				for (int blk = 0;blk < numblk;blk++)
 				{
-					//printf("blk %d------------\n",(int)blk);
 					Imgidx x, y, r, p, p0, pn, dimgidx;
-					//Pixel qminlev;
 					y = (1 + 2 * (blk / (int)npartition_x)) * blksz_y;
 					x = (blk % (int)npartition_x) * blksz_x;
 
 
 					p0 = (y - 1) * width + x;
 					pn = (((blk % (int)npartition_x) == npartition_x - 1) ? y * width : p0 + blksz_x);
-					for(p = p0;p < pn;p++)
+					for (p = p0;p < pn;p++)
 					{
 						dimgidx = p << 1;
 						r = rank[dimgidx];
@@ -8072,30 +7739,28 @@ FLOOD_END:
 				}
 				npartition_y = (npartition_y + 1) / 2;
 				blksz_y <<= 1;
-				if(npartition_y == 1)
+				if (npartition_y == 1)
 					blksz_y = height;
 				else
 				blksz_y = _min(blksz_y, height);
 			}
 
-			if((npartition_y == 1 || blksz_x <= blksz_y) && npartition_x > 1)
+			if ((npartition_y == 1 || blksz_x <= blksz_y) && npartition_x > 1)
 			{
 				double t0 = get_cpu_time(), t;
 				numblk = npartition_y * (npartition_x / 2);
 
 				#pragma omp parallel for
-				for(int blk = 0;blk < numblk;blk++)
+				for (int blk = 0;blk < numblk;blk++)
 				{
-					//printf("blk %d------------\n",(int)blk);
 					Imgidx x, y, r, p, p0, pn, dimgidx;
-					//Pixel qminlev;
 					x = (1 + 2 * (blk / npartition_y)) * blksz_x;
 					y = (blk % (int)npartition_y) * blksz_y;
 
 					p0 = y * width + x - 1;
 					pn = ((blk % (int)npartition_y) == npartition_y - 1) ? height * width : p0 + width * blksz_y;
 
-					for(p = p0;p < pn;p += width)
+					for (p = p0;p < pn;p += width)
 					{
 						dimgidx = (p << 1) + 1;
 						r = rank[dimgidx];
@@ -8105,7 +7770,7 @@ FLOOD_END:
 				}
 				npartition_x = (npartition_x + 1) / 2;
 				blksz_x <<= 1;
-				if(npartition_x == 1)
+				if (npartition_x == 1)
 					blksz_x = width;
 				else
 					blksz_x = _min(blksz_x, width);
@@ -8118,11 +7783,10 @@ FLOOD_END:
 			*queues = new Trie_Cache<Imgidx, trieidx>*[(int)npartition_x * (int)npartition_y];
 			Trie_Cache<Imgidx, trieidx> **Q = *queues;
 
-			//queues = new Trie_Cache<Imgidx, trieidx>*[npartition * npartition];//(nredges, listsize);
 			Imgidx p = 0;
-			for(Imgidx y = 0;y < npartition_y - 1; y++)
+			for (Imgidx y = 0;y < npartition_y - 1; y++)
 			{
-				for(Imgidx x = 0;x < npartition_x - 1; x++)
+				for (Imgidx x = 0;x < npartition_x - 1; x++)
 				{
 					Q[p] = new Trie_Cache<Imgidx, trieidx>(nredges + 1, listsize);
 					Q[p++]->push(nredges);
@@ -8130,7 +7794,7 @@ FLOOD_END:
 				Q[p] = new Trie_Cache<Imgidx, trieidx>(nredges + 1, listsize);
 				Q[p++]->push(nredges);
 			}
-			for(Imgidx x = 0;x < npartition_x - 1; x++)
+			for (Imgidx x = 0;x < npartition_x - 1; x++)
 			{
 				Q[p] = new Trie_Cache<Imgidx, trieidx>(nredges + 1, listsize);
 				Q[p++]->push(nredges);
@@ -8144,13 +7808,13 @@ FLOOD_END:
 		*subimgsizes = (Imgidx*)Malloc((int)npartition_x * (int)npartition_y * sizeof(Imgidx));
 		Imgidx *sizes = *subimgsizes;
 		Imgidx p = 0;
-		for(Imgidx y = 0;y < npartition_y - 1; y++)
+		for (Imgidx y = 0;y < npartition_y - 1; y++)
 		{
-			for(Imgidx x = 0;x < npartition_x - 1; x++)
+			for (Imgidx x = 0;x < npartition_x - 1; x++)
 				sizes[p++] = blksz;
 			sizes[p++] = blksz_lastcol;
 		}
-		for(Imgidx x = 0;x < npartition_x - 1; x++)
+		for (Imgidx x = 0;x < npartition_x - 1; x++)
 			sizes[p++] = blksz_lastrow;
 		sizes[p++] = blksz_last;
 	}
@@ -8164,7 +7828,6 @@ public:
 	AlphaTree() : tree(0) {}
 	~AlphaTree()
 	{
-		//cout << "deleteing AlphaTree..." << endl;
 		clear();
 	}
 
@@ -8197,13 +7860,13 @@ public:
 	#define BUILD_ALPHATREE(pixeltype, pixeltype_in_tree, float) void BuildAlphaTree(pixeltype *img, int height, int width, int channel, int connectivity, int algorithm, int numthreads, int tse, double fparam1, double fparam2, int iparam1) \
 	{ \
 		pix_type = sizeof(pixeltype); \
-		if(float) \
+		if (float) \
 			pix_type <<= 2; \
 		bit_depth = sizeof(pixeltype) << 3; \
 		/*determine index size based on the max alphatree size	*/\
 		double number_of_node_max = (double)(1 + (connectivity >> 1)) * (double)width * (double)height;\
 		double directional_edge = 2.0; /*some algorithms need to assign directions on edges*/\
-		if(number_of_node_max * directional_edge < (double)0xefffffff) \
+		if (number_of_node_max * directional_edge < (double)0xefffffff) \
 		{ \
 			imgidx = IMGIDX_32BITS; \
 			tree = new ATree<_int32, _uint32, pixeltype_in_tree>(pix_type, bit_depth); \
@@ -8220,17 +7883,17 @@ public:
 	#define BUILD_ALPHATREE_DEFAULT(pixeltype, pixeltype_in_tree, float) void BuildAlphaTree(pixeltype *img, int height, int width, int channel) \
 	{ \
 		pix_type = sizeof(pixeltype); \
-		if(float) \
+		if (float) \
 			pix_type <<= 2; \
 		bit_depth = sizeof(pixeltype) << 3; \
 		int algorithm;\
-		if(bit_depth <= 12)\
+		if (bit_depth <= 12)\
 			algorithm = FLOOD_HIERARQUEUE;\
-		else if(bit_depth < 32)\
+		else if (bit_depth < 32)\
 			algorithm = FLOOD_HIERARQUEUE_CACHE;\
 		else \
 			algorithm = FLOOD_HIERARHEAPQUEUE_CACHE;	\
-		if((_int64)height * (_int64)width < (_int64)0xefffffff) \
+		if ((_int64)height * (_int64)width < (_int64)0xefffffff) \
 		{ \
 			imgidx = IMGIDX_32BITS; \
 			tree = new ATree<_int32, _uint32, pixeltype_in_tree>(pix_type, bit_depth); \
