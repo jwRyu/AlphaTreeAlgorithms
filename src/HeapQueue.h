@@ -13,7 +13,7 @@ using namespace std;
 #include "walltime.h"//tmp
 
 
-template<class Imgidx, class Pixel>
+template<class Pixel>
 class HQentry
 {
 public:
@@ -31,14 +31,14 @@ public:
 
 //Heap-based priority queue
 //uses push buffer to minimize push() and pop() call and time
-template<class Imgidx, class Pixel>
+template<class Pixel>
 class HeapQueue
 {
 	Imgidx maxsize;
-	HQentry<Imgidx, Pixel> *arr;
+	HQentry<Pixel> *arr;
 	Pixel pop_level;
 	Pixel max_level;
-	HQentry<Imgidx, Pixel> pushlist[7];//Connectivity - 1
+	HQentry<Pixel> pushlist[7];//Connectivity - 1
 	_uint8 flags[7];
 	_int8 pushlistidx;
 
@@ -55,7 +55,7 @@ public:
 //	Pixel min_level;
 	HeapQueue(Imgidx maxsize_in) : maxsize(maxsize_in), cursize(0), qtime(0), timing(0)
 	{
-		arr = new HQentry<Imgidx, Pixel>[maxsize + 1];
+		arr = new HQentry<Pixel>[maxsize + 1];
 		pushlistidx = 0;
 #if HEAPQ_STAT
 		this->f.open("D:/RUG/2019/TTMA_ISMM/qstat.dat", ofstream::out);
@@ -253,14 +253,14 @@ public:
 };
 
 //Heap-based priority queue
-template<class Imgidx, class Pixel>
+template<class Pixel>
 class HeapQueue_naive
 {
 	Imgidx cursize;
 	Imgidx maxsize;
-	HQentry<Imgidx, Pixel> *arr;
+	HQentry<Pixel> *arr;
 	Pixel pop_level;
-	//HQentry<Imgidx, Pixel> pushlist[7];//Connectivity - 1
+	//HQentry<Pixel> pushlist[7];//Connectivity - 1
 	//_int8 pushlistidx;
 
 #if HEAPQ_STAT
@@ -273,7 +273,7 @@ public:
 //	Pixel min_level;
 	HeapQueue_naive(Imgidx maxsize_in) : cursize(0), maxsize(maxsize_in), qtime(0)
 	{
-		arr = new HQentry<Imgidx, Pixel>[maxsize + 1];
+		arr = new HQentry<Pixel>[maxsize + 1];
 #if HEAPQ_STAT
 		this->f.open("D:/RUG/2019/TTMA_ISMM/qstat.dat", ofstream::out);
 		popcnt = 0;
@@ -416,14 +416,14 @@ public:
 };
 
 //Heap-based priority queue
-template<class Imgidx, class Pixel>
+template<class Pixel>
 class HeapQueue_naive_quad
 {
 	Imgidx cursize;
 	Imgidx maxsize;
-	HQentry<Imgidx, Pixel> *arr;
+	HQentry<Pixel> *arr;
 	Pixel pop_level;
-	//HQentry<Imgidx, Pixel> pushlist[7];//Connectivity - 1
+	//HQentry<Pixel> pushlist[7];//Connectivity - 1
 	//_int8 pushlistidx;
 
 #if HEAPQ_STAT
@@ -437,8 +437,8 @@ public:
 	inline Imgidx get_cursize(){return cursize;}
 	HeapQueue_naive_quad(Imgidx maxsize_in) : cursize(0), maxsize(maxsize_in), qtime(0)
 	{
-		//arr = new HQentry<Imgidx, Pixel>[maxsize + 2];
-		arr = (HQentry<Imgidx, Pixel>*)Malloc(sizeof(HQentry<Imgidx, Pixel>) * (maxsize + 2));
+		//arr = new HQentry<Pixel>[maxsize + 2];
+		arr = (HQentry<Pixel>*)Malloc(sizeof(HQentry<Pixel>) * (maxsize + 2));
 #if HEAPQ_STAT
 		this->f.open("D:/RUG/2019/TTMA_ISMM/qstat.dat", ofstream::out);
 		popcnt = 0;
@@ -582,7 +582,6 @@ MIN_NEXT_FOUND:
 };
 
 //Heap-based priority queue
-template<class Imgidx>
 class HeapQueue_rank
 {
 

@@ -7,12 +7,10 @@
 #define HQUEUE_DEBUG 0
 #if HQUEUE_DEBUG
 #include <iostream>
-using namespace std;
 #endif
 
 //Do not use beyond 20-bit image
-template <class Imgidx>
-class HierarQueue//: public PriorityQueue<Imgidx>
+class HierarQueue//: public PriorityQueue
 {
 public://tmp
 	Imgidx *queue;
@@ -280,12 +278,6 @@ public://tmp
 #endif
 		queue[cur[level]++] = pidx;
 
-		//#if HQUEUE_DEBUG
-		//	if(cur[level] > curmax[level])
-		//		curmax[level] = cur[level];
-		//#endif
-
-
 		if (level < min_level)
 		{
 #if HQUEUE_DEBUG
@@ -296,26 +288,16 @@ public://tmp
 		}
 		else
 			return 0;
-		//min_level = min(level, min_level);
 	}
 
-//pop operated as stack for the classic alpha tree implementation (i.e. non-hypergraph)... but in max tree it has to be changed.
 	inline Imgidx pop()
 	{
 #if HQUEUE_DEBUG
 		//cout << "  pop " << queue[bottom[min_level]] << " at " << min_level << " bottom[" << min_level << "] = " << bottom[min_level]+1 << "(minlev= " << min_level << ")" << endl;
 #endif
 		return queue[bottom[min_level]++];
-		//return queue[bottom[min_level]++]; //alternative implementation
 	}
 
-//inline Imgidx pop()
-//{
-//#if HQUEUE_DEBUG
-//cout << "pop " << queue[cur[min_level] - 1] << " at " << min_level << endl;
-//#endif
-//	return queue[--cur[min_level]];
-//}
 	inline Imgidx top()
 	{
 		return queue[bottom[min_level]];
@@ -331,7 +313,6 @@ public://tmp
 	}
 };
 
-template <class Imgidx>
 class HQueue_l1idx
 {
 public://tmp
@@ -385,10 +366,8 @@ public://tmp
 			return 1;
 		}
 		return 0;
-		//		min_level = min(level, min_level);
 	}
 
-//stack -> queue. should change later
 	inline Imgidx pop()
 	{
 		Imgidx popidx = --cur[min_level];
@@ -433,17 +412,9 @@ public://tmp
 		}
 
 		min_level = ((qidx << 6) + widx);
-//
-// 		while (bottom[min_level] == cur[min_level])
-// 			min_level++;
-//
-//
-// 		if ( != min_level)
-// 			qidx = qidx;
 	}
 };
 
-template <class Imgidx>
 class HQueue_l2idx
 {
 	Imgidx *queue;
@@ -502,14 +473,9 @@ public:
 		if (level < min_level)
 		{
 			min_level = level;
-			//return 1;
 		}
-		//		else
-					//return 0;
-		//		min_level = min(level, min_level);
 	}
 
-//stack -> queue. should change later
 	inline Imgidx pop()
 	{
 		Imgidx popidx = --cur[min_level];
@@ -574,17 +540,9 @@ public:
 		}
 
 		min_level = ((qidx << 6) + widx);
-		//
-		// 		while (bottom[min_level] == cur[min_level])
-		// 			min_level++;
-		//
-		//
-		// 		if ( != min_level)
-		// 			qidx = qidx;
 	}
 };
 
-template <class Imgidx>
 class HQueue_l1idx_rank
 {
 	struct hqueue_word
@@ -597,12 +555,8 @@ class HQueue_l1idx_rank
 public:
 	_int64 qsize, seekersize;
 	_int64 min_level;
-//	double jumpdist, jumpnum;
 	HQueue_l1idx_rank(_int64 qsize_in)
 	{
-// 		jumpnum = 0;
-// 		jumpdist = 0;
-		//tmp
 		qsize = (qsize_in + (1<<12)) >> 12;
 		queue = (hqueue_word *)Calloc((size_t)qsize * sizeof(hqueue_word));
 
@@ -624,7 +578,6 @@ public:
 		min_level = min_level < pidx ? min_level : pidx;
 	}
 
-//stack -> queue. should change later
 	inline void pop()
 	{
 		_int64 qidx = min_level >> 12;
@@ -636,7 +589,6 @@ public:
 		if(!queue[qidx].qword[widx])
 			queue[qidx].seeker &= ~((_int64)1 << (widx));
 
-		//find_min_level
 		for (qidx = min_level >> 12; !queue[qidx].seeker; qidx++)
 			;
 
@@ -655,9 +607,6 @@ public:
 		bitpos += ((w >> bitpos) & 0xf) ? 0 : 4;
 		bitpos += ((w >> bitpos) & 0x3) ? 0 : 2;
 		bitpos += ((w >> bitpos) & 0x1) ? 0 : 1;
-
-// 		jumpdist += (double)((qidx << 12) + (widx << 6) + bitpos) - (double)min_level;
-// 		jumpnum++;
 
 		min_level = (qidx << 12) + (widx << 6) + bitpos;
 	}
@@ -698,158 +647,3 @@ public:
 		min_level = (qidx << 12) + (widx << 6) + bitpos;
  	}
 };
-
-
-
-
-/*
-template <class Imgidx>
-class HQueue_ubr
-{
-	_int8 *queue;
-//	Imgidx *bottom, *cur;
-public:
-	_uint64 qsize;
-	Imgidx min_level;
-	HQueue_ubr(_uint64 qsize)
-	{
-		//tmp
-		queue = (_int8*)Malloc((size_t)(qsize + 1) * sizeof(_int8));
-		min_level = (Imgidx)(qsize);
-
-		for (_uint64 i = 0; i < qsize; i++)
-			queue[i] = 0;
-		//queue[qsize] = 1;
-//		bottom = (Imgidx*)Malloc((size_t)(numlevels + 1) * sizeof(Imgidx), 1);
-	//	cur = (Imgidx*)Malloc((size_t)(numlevels + 1) * sizeof(Imgidx), 1);
-
-
-		// 		qsize = qsize_in;
-		// 		min_level = numlevels - 1;
-		//
-		// 		Imgidx sum_hist = 0;
-		// 		for (_int32 i = 0; i < numlevels; i++)
-		// 		{
-		// 			bottom[i] = cur[i] = sum_hist;
-		// 			sum_hist += dhist[i];
-		// 		}
-		// 		bottom[numlevels] = 0;
-		// 		cur[numlevels] = 1;
-	}
-	~HQueue_ubr()
-	{
-		Free(queue);
-		//Free(bottom, 1);
-		//Free(cur, 1);
-	}
-
-	inline void push(Imgidx pidx)
-	{
-		min_level = min(pidx, min_level);
-		queue[pidx] = 1;
-	}
-
-	inline Imgidx top()
-	{
-		return min_level;
-	}
-
-	inline void pop()
-	{
-		queue[min_level] = 0;
-		//std::cout << "popping from" << min_level << std::endl;
-		while (!queue[min_level])
-			min_level++;
-	}
-
-	inline void find_minlev()
-	{
-
-	}
-};
-*/
-
-/*
-
-struct neighbouridx {
-	//  -  3  -
-	//  2  p  1
-	//  -  0  -
-	_uint8 neighbour;
-	_uint32 pidx;
-};
-template <>
-class HQueue <neighbouridx>
-{
-	neighbouridx *queue;
-	_uint64 *bottom, *cur;
-	_uint64 qsize;
-	_uint64 min_level, max_level;
-public:
-	HQueue(_uint64 qsize, _uint64 *dhist, _uint32 dhistsize, _uint8 neighbours)
-	{
-		_uint64 nn = neighbours >> 1;
-		int shamt;
-		queue = (neighbouridx*)Malloc((size_t)qsize * nn * sizeof(neighbouridx));
-		bottom = (_uint64*)Malloc((size_t)(dhistsize + 1) * sizeof(_uint64));
-		cur = (_uint64*)Malloc((size_t)(dhistsize + 1) * sizeof(_uint64));
-
-		this->qsize = qsize;
-		min_level = max_level = dhistsize;
-
-		for (shamt = -1; nn; nn >>= 1)
-			shamt++;
-
-		_uint64 sum_hist = 0;
-		for (_uint64 i = 0; i < dhistsize; i++)
-		{
-			bottom[i] = cur[i] = sum_hist;
-			sum_hist += dhist[i] << shamt;
-		}
-		bottom[dhistsize] = 0;
-		cur[dhistsize] = 1;
-}
-	~HQueue()
-	{
-		Free(queue);
-		Free(bottom);
-		Free(cur);
-	}
-
-	inline void hqueue_push(_uint64 pidx, _uint64 level)
-	{
-		min_level = min(level, min_level);
-#if HQUEUE_DEBUG
-		assert(level < max_level);
-		assert(cur[level] < qsize);
-#endif
-		queue[cur[level]++] = pidx;
-	}
-
-	inline T hqueue_pop()
-	{
-		return queue[--cur[min_level]];
-	}
-
-	inline void hqueue_find_min_level()
-	{
-		while (bottom[min_level] == cur[min_level])
-			min_level++;
-	}
-};
-inline void hqueue_push(HQueue<neighidx>* hqueue, _uint32 idx, _uint8 neighbor, _uint32 level)
-{
-	hqueue->min_level = min(level, hqueue->min_level);
-#if HQUEUE_DEBUG
-	assert(level < hqueue->max_level);
-	assert(hqueue->cur[level] < hqueue->qsize);
-#endif
-	hqueue->queue[hqueue->cur[level]].pidx = idx;
-	hqueue->queue[hqueue->cur[level]++].neighbour = neighbor;
-}
-*/
-
-/*
-void hqueue_new(HQueue<_uint32>** hqueue, _uint64 qsize, _uint32 *dhist, _uint32 dhistsize);
-void hqueue_new(HQueue<neighidx>** hqueue, _uint64 qsize, _uint32 *dhist, _uint32 dhistsize, _uint8 neighbours);
-*/
