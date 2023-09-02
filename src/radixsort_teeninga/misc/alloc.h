@@ -1,3 +1,5 @@
+#pragma once
+
 extern "C" {
 #include <sys/mman.h>
 }
@@ -23,7 +25,7 @@ struct AllocatedMemory
   size_t length_ = 0U;
 };
 
-size_t aligned_length(size_t length, unsigned n_bits)
+inline size_t aligned_length(size_t length, unsigned n_bits)
 {
   size_t mask = (size_t(1) << n_bits) - size_t(1);
   size_t aligned = length & ~size_t(mask);

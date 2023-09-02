@@ -154,7 +154,7 @@ void iterate_block_range(F const& f, R range, D dims, unsigned thread_nr)
 }
 
 template <typename D>
-void distribute_range_to_slots(BlockRange<D> range, D const&dims, ParallelSlot<D>* slots, unsigned n_slots)
+void distribute_range_to_slots(BlockRange<D> range, D const&dims, ParallelSlot<D>* slots, signed n_slots)
 {
   using index_t = typename D::index_t;
 
@@ -162,7 +162,7 @@ void distribute_range_to_slots(BlockRange<D> range, D const&dims, ParallelSlot<D
   index_t blocks_per_slot = n_blocks / n_slots;
   index_t blocks_remainder = n_blocks % n_slots;
 
-  for (unsigned s = 0; s < n_slots; ++s)
+  for (signed s = 0; s < n_slots; ++s)
   {
     index_t n_split = blocks_per_slot + (blocks_remainder > s);
     range.split_n(slots[s].range_, dims, n_split);
@@ -247,7 +247,7 @@ void parallel_for(
     index_t begin = block.index(dims) * block_size;
     index_t end = begin + block_size;
 
-    if (block.index(dims) == n_blocks - 1U)
+    if (block.index(dims) == n_blocks - 1)
     {
       end = n;
     }

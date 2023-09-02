@@ -21,8 +21,8 @@ template<
 class RadixSortParallel
 {
 public:
-  static constexpr unsigned histo_sz = 1U << histo_sz_log2;
-  static constexpr unsigned histo_mask = histo_sz - 1U;
+  static constexpr signed histo_sz = 1U << histo_sz_log2;
+  static constexpr signed histo_mask = histo_sz - 1U;
 
   using Histogram = Index[histo_sz];
   using Data = typename std::iterator_traits<DataRAI>::value_type;

@@ -5,7 +5,6 @@
 #if (HEAPQ_STAT || HEAPQ_DEBUG)
 #include <iostream>
 #include <fstream>
-using namespace std;
 #endif
 
 

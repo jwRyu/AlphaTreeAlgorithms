@@ -18,11 +18,6 @@
 #define OUTPUT_FNAME "./AlphaTree.dat"
 #define OUTIMG_FNAME "./outimg.jpg"
 
-
-_uint64 *qrecord;
-
-
-
 #if DEBUG
 void* buf;
 _uint64 bufsize;

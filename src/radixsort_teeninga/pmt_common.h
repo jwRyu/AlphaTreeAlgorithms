@@ -35,11 +35,11 @@ NAMESPACE_PMT
 constexpr unsigned parallel_block_size = 1024 * 16;
 
 constexpr unsigned max_threads = 12U;
-unsigned n_threads =
-  std::min(std::thread::hardware_concurrency(), max_threads);
+constexpr unsigned n_threads = 8;
+  // std::min(std::thread::hardware_concurrency(), max_threads);
 
-unsigned const page_size = sysconf(_SC_PAGESIZE);
-unsigned const mem_alignment = std::min(page_size, 4096U);
+constexpr unsigned const page_size = 4096U; // sysconf(_SC_PAGESIZE);
+constexpr unsigned const mem_alignment = 4096U; // std::min(page_size, 4096U);
 
 NAMESPACE_PMT_END
 

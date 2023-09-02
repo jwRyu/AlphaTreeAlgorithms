@@ -3,11 +3,9 @@
 #include <cstring>
 #include <cstdlib>
 
-using namespace std;
-
-void read_pgm(string fname, int &height, int &width, int &gmax, unsigned short **gval){
-	ifstream file(fname.c_str());
-	string str;
+void read_pgm(std::string fname, int &height, int &width, int &gmax, unsigned short **gval){
+	std::ifstream file(fname.c_str());
+	std::string str;
 	char arr[128];
 	char *pstr;
 
@@ -20,7 +18,7 @@ void read_pgm(string fname, int &height, int &width, int &gmax, unsigned short *
     {
 			if(arr[0] != 'P' || arr[1] != '5')
 			{
-				cout << "Error in read_pgm: not a pgm file" << endl;
+				std::cout << "Error in read_pgm: not a pgm file" << std::endl;
 				return;
 			}
 			char *p;
@@ -69,7 +67,7 @@ void read_pgm(string fname, int &height, int &width, int &gmax, unsigned short *
 			}
 			else
 			{
-				cout << "gmax error" << endl;
+				std::cout << "gmax error" << std::endl;
 				return;
 			}
 			break;
