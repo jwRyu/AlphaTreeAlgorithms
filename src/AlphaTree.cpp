@@ -3458,14 +3458,14 @@ void AlphaTree<Pixel>::canonicalize(Imgidx nidx)
 }
 
 template<class Pixel>
-Imgidx AlphaTree<Pixel>::merge_subtrees(Pixel *dimg, _int64 blksz_x, _int64 blksz_y, Imgidx npartition_x, Imgidx npartition_y, Imgidx* subtree_cur, Imgidx* subtree_start, Imgidx *blkhs, Imgidx *blkws, Imgidx *nrbnode, Imgidx *subtree_nborderedges)
+Imgidx AlphaTree<Pixel>::merge_subtrees(Pixel *dimg, _int64 blksz_x, _int64 blksz_y, Imgidx npartition_x, Imgidx npartition_y, Imgidx* subtree_cur, Imgidx* subtree_start, Imgidx *blkhs, Imgidx *blkws)
 {
-    return merge_subtrees(dimg, blksz_x, blksz_y, npartition_x, npartition_y, subtree_cur, 0, subtree_start, blkhs, blkws);
+    return merge_subtrees(dimg, blksz_x, blksz_y, npartition_x, npartition_y, subtree_cur, 0);
 }
 
 //returns root node index
 template<class Pixel>
-Imgidx AlphaTree<Pixel>::merge_subtrees(Pixel *dimg, _int64 blksz_x, _int64 blksz_y, Imgidx npartition_x, Imgidx npartition_y, Imgidx* subtree_cur, int tse, Imgidx* subtree_start, Imgidx *blkhs, Imgidx *blkws, Imgidx *nrbnode, Imgidx *subtree_nborderedges)
+Imgidx AlphaTree<Pixel>::merge_subtrees(Pixel *dimg, _int64 blksz_x, _int64 blksz_y, Imgidx npartition_x, Imgidx npartition_y, Imgidx* subtree_cur, int tse, Imgidx *nrbnode)
 {
     Imgidx numblk;
     _int64 blksz_x0 = blksz_x;
@@ -4757,26 +4757,6 @@ void AlphaTree<Pixel>::compute_dhist_par_hypergraph(_uint8 *qrank, Imgidx *dhist
     }
 }
 
-template<class Pixel>
-void AlphaTree<Pixel>::create_queues(HierarQueue ***queues, Imgidx *dhist, _int8 npartition_x, _int8 npartition_y, _int32 numbins)
-{
-        *queues = new HierarQueue*[(int)npartition_x * (int)npartition_y];
-        HierarQueue **Q = *queues;
-
-        //queues = new Trie_Cache<trieidx>*[npartition * npartition];//(nredges, listsize);
-        Imgidx p = 0;
-        Imgidx *dh = dhist;
-        for (Imgidx y = 0;y < npartition_y; y++)
-        {
-            for (Imgidx x = 0;x < npartition_x; x++)
-            {
-                Q[p++] = new HierarQueue(dh, numbins);
-                //Q[p++]->push(nredges);
-                dh += numbins;
-            }
-        }
-}
-
 //obsolete code (subtree nodes are now indexed based on their level)
 template<class Pixel>
 void AlphaTree<Pixel>::fix_subtreeidx(Imgidx *subtreestart, Imgidx *startpidx, Imgidx *cursizes, _int8 npartition_x, _int8 npartition_y, int numpartitions, _int64 blksz_x, _int64 blksz_y, _int64 blksz_xn, _int64 blksz_yn)
@@ -5931,26 +5911,6 @@ Imgidx AlphaTree<Pixel>::find_root1(Imgidx p, Imgidx qlevel)//, int &cnt)
 }
 
 template<class Pixel>
-void AlphaTree<Pixel>::create_queues(HierarQueue ***queues, Imgidx nredges, Imgidx binsize, _int32 numbins)
-{
-    Imgidx *qh = (Imgidx*)Calloc((2 * (numbins - 2) + 3) * sizeof(Imgidx));
-    *queues = new HierarQueue*[numbins];
-    HierarQueue **Q = *queues;
-    qh[numbins - 2] = binsize;
-    qh[numbins - 1] = nredges - binsize;
-    Q[0] = new HierarQueue(nredges, qh + numbins - 2, numbins);
-    //Q[0] = new HierarQueue(numbins, nredges);
-    for (_int32 q = 1;q < numbins;q++)
-    {
-        qh[numbins - 2] = binsize * q;
-        qh[numbins - 1] = (q == numbins - 1) ? nredges - qh[0] : binsize;
-        qh[numbins] = nredges - qh[numbins - 1] - qh[numbins - 2];
-        Q[q] = new HierarQueue(nredges, qh + numbins - 1 - q, numbins);
-    }
-    Free(qh);
-}
-
-template<class Pixel>
 void AlphaTree<Pixel>::Flood_Trie_Cache(Pixel* img)
 {
     Imgidx imgsize, dimgsize, nredges;
@@ -5982,12 +5942,11 @@ void AlphaTree<Pixel>::Flood_Trie_Cache(Pixel* img)
 
     set_isAvailable(isAvailable);
 
-    Trie_Cache<trieidx>* queue = new Trie_Cache<trieidx>(nredges);
+    Trie_Cache* queue = new Trie_Cache(nredges);
 
     omp_set_num_threads(1);
     _int32* rank2rankitem = (_int32*)Calloc(nredges * sizeof(_int32));
     compute_difference_and_sort(rank, rankitem, img, nredges, rank2rankitem);
-
 
     initialize_node1(img, rankitem, maxpixval, rank2rankitem);
 
@@ -6691,32 +6650,6 @@ void AlphaTree<Pixel>::merge_subtrees(Imgidx *rank, RankItem<Pixel>* rankitem, _
                 blksz_x = _min(blksz_x, width);
         }
     }
-}
-
-template<class Pixel>
-void AlphaTree<Pixel>::create_queues(Trie_Cache<trieidx> ***queues, Imgidx nredges, _int8 npartition_x, _int8 npartition_y, _int8 listsize)
-{
-        *queues = new Trie_Cache<trieidx>*[(int)npartition_x * (int)npartition_y];
-        Trie_Cache<trieidx> **Q = *queues;
-
-        Imgidx p = 0;
-        for (Imgidx y = 0;y < npartition_y - 1; y++)
-        {
-            for (Imgidx x = 0;x < npartition_x - 1; x++)
-            {
-                Q[p] = new Trie_Cache<trieidx>(nredges + 1, listsize);
-                Q[p++]->push(nredges);
-            }
-            Q[p] = new Trie_Cache<trieidx>(nredges + 1, listsize);
-            Q[p++]->push(nredges);
-        }
-        for (Imgidx x = 0;x < npartition_x - 1; x++)
-        {
-            Q[p] = new Trie_Cache<trieidx>(nredges + 1, listsize);
-            Q[p++]->push(nredges);
-        }
-        Q[p] = new Trie_Cache<trieidx>(nredges + 1, listsize);
-        Q[p++]->push(nredges);
 }
 
 template<class Pixel>

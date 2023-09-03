@@ -12,9 +12,6 @@
 #include "HeapQueue.h"
 #include "radixsort_teeninga/sort/radix_sort_parallel.h"
 #include "radixsort_teeninga/sort/sort_item.h"
-
-//for debugging
-//#include <bitset>
 #include "walltime.h"
 
 using namespace pmt;
@@ -180,8 +177,8 @@ private:
 	_uint8 push_neighbor(HierarQueue *queue, _uint8 *isVisited, _uint64 *dimg, Imgidx p);
 	void Flood_HierarQueue_Hypergraph(Pixel* img);
 	void canonicalize(Imgidx nidx);
-	Imgidx merge_subtrees(Pixel *dimg, _int64 blksz_x, _int64 blksz_y, Imgidx npartition_x, Imgidx npartition_y, Imgidx* subtree_cur, Imgidx* subtree_start = NULL, Imgidx *blkhs = NULL, Imgidx *blkws = NULL, Imgidx *nrbnode = NULL, Imgidx *subtree_nborderedges = NULL);
-	Imgidx merge_subtrees(Pixel *dimg, _int64 blksz_x, _int64 blksz_y, Imgidx npartition_x, Imgidx npartition_y, Imgidx* subtree_cur, int tse, Imgidx* subtree_start = NULL, Imgidx *blkhs = NULL, Imgidx *blkws = NULL, Imgidx *nrbnode = NULL, Imgidx *subtree_nborderedges = NULL);
+	Imgidx merge_subtrees(Pixel *dimg, _int64 blksz_x, _int64 blksz_y, Imgidx npartition_x, Imgidx npartition_y, Imgidx* subtree_cur, int tse, Imgidx *nrbnode = NULL);
+	Imgidx merge_subtrees(Pixel *dimg, _int64 blksz_x, _int64 blksz_y, Imgidx npartition_x, Imgidx npartition_y, Imgidx* subtree_cur, Imgidx* subtree_start = NULL, Imgidx *blkhs = NULL, Imgidx *blkws = NULL);
 	Imgidx merge_subtrees(_uint8 *dimg, _int64 blksz_x, _int64 blksz_y, _int16 npartition_x, _int16 npartition_y, Imgidx* subtree_cur, int tse);
 	Imgidx merge_subtrees1(_uint8 *dimg, _int64 blksz_x, _int64 blksz_y, _int16 npartition_x, _int16 npartition_y, Imgidx* subtree_cur, int tse, Imgidx* hypernode_level);
 	int migrate_subtree(int blk, int numpartitions, Imgidx & nidx, Imgidx & nidx_lim, int & nidxblk, Imgidx & blkts, char *blkflooddone, Imgidx *subtree_cur, Imgidx *subtree_start, Imgidx *subtree_nborderedges, omp_lock_t *locks, int &numbusythr, int &numblkproc, int &outofmemory);
@@ -200,7 +197,6 @@ private:
 	void unionfind_refine_qlevel(_int64 qlevel, _int64 binsize, Imgidx nredges, AlphaNode<Pixel>* pilottree, RankItem<double>* rankitem, _int8* redundant_edge, _int32* rank2rankitem);
 	void compute_dhist_par(_uint8 *qrank, Imgidx *dhist, Imgidx *startpidx, _int32 numbins, _int8 npartition_x, _int8 npartition_y, _int64 blksz_x, _int64 blksz_y, _int64 blksz_xn, _int64 blksz_yn);
 	void compute_dhist_par_hypergraph(_uint8 *qrank, Imgidx *dhist, Imgidx *startpidx, _int32 numbins, _int8 npartition_x, _int8 npartition_y, _int64 blksz_x, _int64 blksz_y, _int64 blksz_xn, _int64 blksz_yn, Imgidx *blkmaxpidx);
-	void create_queues(HierarQueue ***queues, Imgidx *dhist, _int8 npartition_x, _int8 npartition_y, _int32 numbins);
 	void fix_subtreeidx(Imgidx *subtreestart, Imgidx *startpidx, Imgidx *cursizes, _int8 npartition_x, _int8 npartition_y, int numpartitions, _int64 blksz_x, _int64 blksz_y, _int64 blksz_xn, _int64 blksz_yn);
 	void merge_subtrees(_uint8 *qrank, Imgidx *qindex, _int64 blksz_x, _int64 blksz_y, Imgidx neighbor_offset, Imgidx shamt, Imgidx npartition_x, Imgidx npartition_y, _int32 numbins);
 	void merge_subtrees(_uint8 *qrank, _int64 blksz_x, _int64 blksz_y, Imgidx neighbor_offset, Imgidx shamt, Imgidx npartition_x, Imgidx npartition_y, _int32 numbins);
@@ -221,7 +217,6 @@ private:
 	void remove_redundant_node(AlphaNode<Pixel> *tree, Imgidx &size, Imgidx& prev_top, Imgidx& stack_top);
 	void connectPix2Node(AlphaNode<Pixel> *tree, Imgidx pidx, Pixel pix_val, Imgidx iNode, Imgidx *pAry);
 	Imgidx find_root1(Imgidx p, Imgidx qlevel);
-	void create_queues(HierarQueue ***queues, Imgidx nredges, Imgidx binsize, _int32 numbins);
 
 	void Flood_Trie(Pixel* img);
 	void Flood_Trie_Cache(Pixel* img);
@@ -237,7 +232,6 @@ private:
 	Pixel connect(Imgidx x, Imgidx y, Pixel alpha, Imgidx newidx);
 	void canonicalize();
 	void merge_subtrees(Imgidx *rank, RankItem<Pixel>* rankitem, _int64 blksz_x, _int64 blksz_y, Imgidx neighbor_offset, Imgidx shamt, Imgidx npartition_x, Imgidx npartition_y);
-	void create_queues(Trie_Cache<trieidx> ***queues, Imgidx nredges, _int8 npartition_x, _int8 npartition_y, _int8 listsize);
 	void set_subimgsizes(Imgidx** subimgsizes, _int8 npartition_x, _int8 npartition_y, _int64 blksz, _int64 blksz_lastcol, _int64 blksz_lastrow, _int64 blksz_last);
 
 };
