@@ -10,6 +10,11 @@
 #include "walltime.h"
 #include "pgmio.h"
 
+
+// tmp
+#include "LadderQueue.hpp"
+#include "HeapQueue.h"
+
 #define RANDOMINPUT		 0
 #define NUM_ALGORITHMS 12
 
@@ -662,6 +667,50 @@ void parse_input(AtreeInputParams& input, int argc, char **argv)
 //args: Filename, nchannels, numthreads, testimgsize, algorithmcode, bitdepth, tseflag
 int main(int argc, char **argv)
 {
+	int size = 10;
+	LadderQueue queue(3);
+	// HeapQueue<double> hq(size);
+
+	bool verbose = false;
+
+	Imgidx idx = 0;
+	for (int i = 0;i < size;i++) {
+		if (i == 9) {
+			int aa = 1;
+			aa *= 10;
+		}
+		double alpha = (double)(rand() % 1000) / 1000.0;
+		printf("Enqueue (%d, %f)\n", idx, alpha);
+		queue.enqueue((Imgidx)idx++, alpha);
+		if(verbose) queue.print();
+		if(verbose) std::getchar();
+		alpha = (double)(rand() % 1000) / 1000.0;
+		printf("Enqueue (%d, %f)\n", i, alpha);
+		queue.enqueue((Imgidx)idx++, alpha);
+		if(verbose) queue.print();
+		if(verbose) std::getchar();
+		alpha = (double)(rand() % 1000) / 1000.0;
+		printf("Enqueue (%d, %f)\n", i, alpha);
+		queue.enqueue((Imgidx)idx++, alpha);
+		if(verbose) queue.print();
+		if(verbose) std::getchar();
+		// printf("Dequeue\n");
+		queue.dequeue();
+		if(verbose) queue.print();
+		if(verbose) std::getchar();
+	}
+
+	while (!queue.isEmpty()) {
+		// printf("Dequeue\n");
+		queue.dequeue();
+		if(verbose) queue.print();
+		if(verbose) std::getchar();
+		// queue.dequeue();
+		// Imgidx hqidx = hq.pop();
+	}
+	
+	return 0;
+
 	if(argc == 1)
 	{
 		printf("args: Filename, nchannels, numthreads, testimgsize, algorithmcode, bitdepth, tseflag, outfnameheader connectivity float_param1 float_param2 int_param1\n");

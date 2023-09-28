@@ -50,6 +50,7 @@ using namespace pmt;
 #define PILOT_RANK							12//p1
 #define FLOOD_HIERARQUEUE_CACHE_PAR			13//p2
 #define FLOOD_HIERARHEAPQUEUE				14//p2
+#define FLOOD_LADDERQUEUE					15//p2
 
 #define ROOTIDX -1
 
