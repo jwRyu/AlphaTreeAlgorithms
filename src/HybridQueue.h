@@ -9,6 +9,7 @@
 #include <iostream>
 #include <cfloat>
 #include <cmath>
+#include <vector>
 
 #define LISTSIZE_DEFAULT 12
 #define HEAPSIZE_DEFAULT 128
@@ -103,24 +104,35 @@ class HierarHeapQueue_cache
 	_int8 shamt, nbit;
 	int emptytop;
 
-	Imgidx totalsize;
+	Imgidx maxSize;
 
 public:
 #if PROFILE
-	double t0;
-	double tconv;
-	double tcache;
-	double tqueue;
+	double t0 = get_cpu_time();
+	double tconv = 0;
+	double tcache = 0;
+	double tqueue = 0;
 
-	Imgidx num_cache;
-	Imgidx num_cache_ovfl;
-	Imgidx num_hq;
-	Imgidx num_store;
-	Imgidx num_conv;
+	Imgidx num_cache = 0;
+	Imgidx num_cache_ovfl = 0;
+	Imgidx num_hq = 0;
+	Imgidx num_store = 0;
+	Imgidx num_conv = 0;
+
+	std::vector<_uint64> num_memmove_push;
+	std::vector<_uint64> num_memmove_pop;
+	std::vector<_uint64> num_items_push;
+	std::vector<_uint64> num_items_pop;
+	_uint64 curSize = 0;
+
+	_uint64 num_memmove_push_i;
+	_uint64 num_memmove_pop_i;
+
+	void decrement_curSize() { curSize--; }
+
 #endif
 
 	void initHQ(Imgidx *dhist, Imgidx numlevels_in, Imgidx size, double a_in, int listsize, int connectivity, double r);
-	HierarHeapQueue_cache(Imgidx *dhist, Imgidx numlevels_in, double a_in, Imgidx size, Imgidx connectivity = 4, double r = 0.2);
 	HierarHeapQueue_cache(Imgidx *dhist, Imgidx numlevels_in, Imgidx size, double a_in, int listsize, Imgidx connectivity = 4, double r = 0.2);
 	~HierarHeapQueue_cache();
 	inline void start_pushes() {emptytop = 1;}

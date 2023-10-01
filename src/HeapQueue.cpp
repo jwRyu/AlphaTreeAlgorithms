@@ -1,6 +1,9 @@
 #include "HeapQueue.h"
 #include "allocator.h"
 
+#if PROFILE
+#include <fstream>
+#endif
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // HeapQueue
 
@@ -15,6 +18,18 @@ HeapQueue<Pixel>::HeapQueue(Imgidx maxsize_in) : maxsize(maxsize_in), cursize(0)
 template<class Pixel>
 HeapQueue<Pixel>::~HeapQueue()
 {
+#if PROFILE
+    std::ofstream outFile("MemmoveHEAP.txt", std::ios::app);
+    for (int i = 0;i < (int)num_memmove_push.size();i++) {
+            outFile << "0 " << num_memmove_push[i] << " " << num_items_push[i] << std::endl;
+        // printf("%d %d\n", (int)num_memmove_push[i], (int)num_items_push[i]);
+    }
+    for (int i = 0;i < (int)num_memmove_pop.size();i++) {
+            outFile << "1 " << num_memmove_pop[i] << " " << num_items_pop[i] << std::endl;
+        // printf("%d %d\n", (int)num_memmove_pop[i], (int)num_items_pop[i]);
+    }
+    outFile.close();
+#endif
     delete[] arr;
 }
 
@@ -63,6 +78,10 @@ void HeapQueue<Pixel>::find_minlev()
 template<class Pixel>
 Imgidx HeapQueue<Pixel>::pop()
 {
+#if PROFILE
+    printf("pop %d, size %d\n", arr[1].pidx, cursize);
+    num_memmove_pop_i = 0;
+#endif   
     Imgidx outval = arr[1].pidx;
     Imgidx current = 1, next, next0, next1, curidx;
     Pixel curalpha;
@@ -86,10 +105,20 @@ Imgidx HeapQueue<Pixel>::pop()
 
         arr[current] = arr[next];
         current = next;
+#if PROFILE
+        num_memmove_pop_i++;
+#endif  
     }
     arr[current].alpha = curalpha;
     arr[current].pidx = curidx;
+#if PROFILE
+    num_memmove_pop_i++;
+#endif  
 
+#if PROFILE
+    num_memmove_pop.push_back(num_memmove_pop_i);
+    num_items_pop.push_back(cursize);
+#endif   
     return outval;
 }
 
@@ -103,6 +132,10 @@ void HeapQueue<Pixel>::push(Imgidx pidx, Pixel alpha)
 template<class Pixel>
 void HeapQueue<Pixel>::push_run(Imgidx pidx, Pixel alpha)
 {
+#if PROFILE
+    // printf("push %d, size %d\n", pidx, cursize);
+    num_memmove_push_i = 0;
+#endif
     Imgidx current, next;
 
     cursize++;
@@ -110,13 +143,23 @@ void HeapQueue<Pixel>::push_run(Imgidx pidx, Pixel alpha)
     next = current >> 1;
     while (next && (arr[next].alpha > alpha))
     {
+#if PROFILE
+        num_memmove_push_i++;
+#endif
         arr[current] = arr[next];
         current = next;
         next = next >> 1;
     }
 
+#if PROFILE
+        num_memmove_push_i++;
+#endif
     arr[current].pidx = pidx;
     arr[current].alpha = alpha;
+#if PROFILE
+    num_memmove_push.push_back(num_memmove_push_i);
+    num_items_push.push_back(cursize);
+#endif   
 }
 
 template class HeapQueue<_uint8>;
@@ -146,12 +189,28 @@ HeapQueue_naive<Pixel>::HeapQueue_naive(Imgidx maxsize_in) : cursize(0), maxsize
 template<class Pixel>
 HeapQueue_naive<Pixel>::~HeapQueue_naive()
 {
+#if PROFILE
+    std::ofstream outFile("MemmoveHEAP.txt", std::ios::app);
+    for (int i = 0;i < (int)num_memmove_push.size();i++) {
+            outFile << "0 " << num_memmove_push[i] << " " << num_items_push[i] << std::endl;
+        // printf("%d %d\n", (int)num_memmove_push[i], (int)num_items_push[i]);
+    }
+    for (int i = 0;i < (int)num_memmove_pop.size();i++) {
+            outFile << "1 " << num_memmove_pop[i] << " " << num_items_pop[i] << std::endl;
+        // printf("%d %d\n", (int)num_memmove_pop[i], (int)num_items_pop[i]);
+    }
+    outFile.close();
+#endif
     delete[] arr;
 }
 
 template<class Pixel>
 Imgidx HeapQueue_naive<Pixel>::pop()
 {
+#if PROFILE
+    // printf("pop %d, size %d\n", arr[1].pidx, cursize);
+    num_memmove_pop_i = 0;
+#endif  
     Imgidx outval = arr[1].pidx;
     Imgidx current = 1, next, next0, next1, curidx;
     Pixel curalpha;
@@ -175,16 +234,29 @@ Imgidx HeapQueue_naive<Pixel>::pop()
 
         arr[current] = arr[next];
         current = next;
+#if PROFILE
+        num_memmove_pop_i++;
+#endif
     }
     arr[current].alpha = curalpha;
     arr[current].pidx = curidx;
-
+#if PROFILE
+    num_memmove_pop_i++;
+#endif
+#if PROFILE
+    num_memmove_pop.push_back(num_memmove_pop_i);
+    num_items_pop.push_back(cursize);
+#endif 
     return outval;
 }
 
 template<class Pixel>
 void HeapQueue_naive<Pixel>::push(Imgidx pidx, Pixel alpha)
 {
+#if PROFILE
+    // printf("push %d, size %d\n", pidx, cursize);
+    num_memmove_push_i = 0;
+#endif
     Imgidx current, next;
     cursize++;
     current = cursize;
@@ -194,10 +266,20 @@ void HeapQueue_naive<Pixel>::push(Imgidx pidx, Pixel alpha)
         arr[current] = arr[next];
         current = next;
         next = next >> 1;
+#if PROFILE
+        num_memmove_push_i++;
+#endif  
     }
 
+#if PROFILE
+    num_memmove_push_i++;
+#endif  
     arr[current].pidx = pidx;
     arr[current].alpha = alpha;
+#if PROFILE
+    num_memmove_push.push_back(num_memmove_push_i);
+    num_items_push.push_back(cursize);
+#endif  
 }
 
 template class HeapQueue_naive<_uint8>;
@@ -231,9 +313,17 @@ HeapQueue_naive_quad<Pixel>::~HeapQueue_naive_quad()
 }
 
 template<class Pixel>
+#if PROFILE
+_uint64 HeapQueue_naive_quad<Pixel>::pop()
+#else
 Imgidx HeapQueue_naive_quad<Pixel>::pop()
+#endif
 {
+#if PROFILE
+    _uint64 nummove = 0;
+#else
     Imgidx outval = arr[1].pidx;
+#endif
     Imgidx current = 1, next, next0, curidx;
     Pixel curalpha;
     curidx = arr[cursize].pidx;
@@ -267,16 +357,31 @@ MIN_NEXT_FOUND:
             break;
 
         arr[current] = arr[next];
+#if PROFILE
+        nummove++;
+#endif
         current = next;
     }
     arr[current].alpha = curalpha;
     arr[current].pidx = curidx;
+#if PROFILE
+    nummove++;
+    return nummove;
+#else
     return outval;
+#endif
 }
 
 template<class Pixel>
+#if PROFILE
+_uint64 HeapQueue_naive_quad<Pixel>::push(Imgidx pidx, Pixel alpha)
+#else
 void HeapQueue_naive_quad<Pixel>::push(Imgidx pidx, Pixel alpha)
+#endif
 {
+#if PROFILE
+    _uint64 nummove = 0;
+#endif
     Imgidx current, next;
     cursize++;
     current = cursize;
@@ -287,10 +392,17 @@ void HeapQueue_naive_quad<Pixel>::push(Imgidx pidx, Pixel alpha)
         arr[current] = arr[next];
         current = next;
         next = (next + 2) >> 2;
+#if PROFILE
+        nummove++;
+#endif
     }
 
     arr[current].pidx = pidx;
     arr[current].alpha = alpha;
+#if PROFILE
+    nummove++;
+    return nummove;
+#endif
 }
 
 template class HeapQueue_naive_quad<_uint8>;

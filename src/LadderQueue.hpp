@@ -19,7 +19,6 @@ class Event {
     friend class LadderQueue;
 };
 
-
 struct LQNode {
     LQNode* next;
     LQNode* prev;
@@ -46,6 +45,7 @@ public:
     Event* removeDeleteNode();
     LQNode* removeNode();
     void sort();
+    bool isAllSameAlpha();
 
     inline LQNode* getHead() {return head;}
     inline Event* getFirst() {return head->info;}
@@ -99,6 +99,9 @@ public:
 
     // POP
     Imgidx dequeue();
+
+    Imgidx getTopIdx();
+    double getTopAlpha();
 
     void print();
     

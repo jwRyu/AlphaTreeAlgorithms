@@ -1,6 +1,10 @@
 #pragma once
 #include <cfloat>
 #include "defines.h"
+#define PROFILE 0
+#if PROFILE
+#include <vector>
+#endif
 
 template<class Pixel>
 class HQentry
@@ -30,6 +34,17 @@ class HeapQueue
 	_uint8 flags[7];
 	_int8 pushlistidx;
 
+#if PROFILE
+	std::vector<_uint64> num_memmove_push;
+	std::vector<_uint64> num_memmove_pop;
+	std::vector<_uint64> num_items_push;
+	std::vector<_uint64> num_items_pop;
+
+	_uint64 num_memmove_push_i;
+	_uint64 num_memmove_pop_i;
+#endif
+
+
 public:
 	Imgidx cursize;
 	double qtime, timing;
@@ -53,6 +68,16 @@ class HeapQueue_naive
 	Imgidx maxsize;
 	HQentry<Pixel> *arr;
 	Pixel pop_level;
+
+#if PROFILE
+	std::vector<_uint64> num_memmove_push;
+	std::vector<_uint64> num_memmove_pop;
+	std::vector<_uint64> num_items_push;
+	std::vector<_uint64> num_items_pop;
+
+	_uint64 num_memmove_push_i;
+	_uint64 num_memmove_pop_i;
+#endif
 
 public:
 	double qtime; //tmp
@@ -80,8 +105,13 @@ public:
 	HeapQueue_naive_quad(Imgidx maxsize_in);
 	~HeapQueue_naive_quad();
 
+#if PROFILE
+	_uint64 pop();
+	_uint64 push(Imgidx pidx, Pixel alpha);
+#else
 	Imgidx pop();
 	void push(Imgidx pidx, Pixel alpha);
+#endif
 
 	inline Pixel get_minlev() { return arr[1].alpha; }
 	inline Imgidx top() { return arr[1].pidx; }

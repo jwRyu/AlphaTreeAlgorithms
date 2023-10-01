@@ -251,17 +251,33 @@
 ./AlphaTree rand 1 1 10000 10 64 1 testp2 8
 
 
+./AlphaTree rand 1 1 10000 15 6  1 testp2 8 1 0.0 0.0 0.0 32
+./AlphaTree rand 1 1 10000 15 8  1 testp2 8 1 0.0 0.0 0.0 32
+./AlphaTree rand 1 1 10000 15 10 1 testp2 8 1 0.0 0.0 0.0 32
+./AlphaTree rand 1 1 10000 15 12 1 testp2 8 1 0.0 0.0 0.0 32
+./AlphaTree rand 1 1 10000 15 14 1 testp2 8 1 0.0 0.0 0.0 32
+./AlphaTree rand 1 1 10000 15 16 1 testp2 8 1 0.0 0.0 0.0 32
+./AlphaTree rand 1 1 10000 15 18 1 testp2 8 1 0.0 0.0 0.0 32
+./AlphaTree rand 1 1 10000 15 21 1 testp2 8 1 0.0 0.0 0.0 32
+./AlphaTree rand 1 1 10000 15 24 1 testp2 8 1 0.0 0.0 0.0 32
+./AlphaTree rand 1 1 10000 15 28 1 testp2 8 1 0.0 0.0 0.0 32
+./AlphaTree rand 1 1 10000 15 32 1 testp2 8 1 0.0 0.0 0.0 32
+./AlphaTree rand 1 1 10000 15 48 1 testp2 8 1 0.0 0.0 0.0 32
+./AlphaTree rand 1 1 10000 15 64 1 testp2 8 1 0.0 0.0 0.0 32 
 
-#define UNIONFIND			 							        0
+
+
+#define UNIONFIND			 					0
 #define FLOOD_HIERARQUEUE  	       			    1//p1
 #define FLOOD_HIERARQUEUE_CACHE		  		    2
-#define FLOOD_TRIE             		 			    3//p1
-#define FLOOD_TRIE_CACHE      		 			    4
-#define FLOOD_HEAPQUEUE											5//p1
-#define FLOOD_HEAPQUEUE_CACHE			 			    6
+#define FLOOD_TRIE             		 			3//p1
+#define FLOOD_TRIE_CACHE      		 			4
+#define FLOOD_HEAPQUEUE							5//p1
+#define FLOOD_HEAPQUEUE_CACHE			 		6
 #define FLOOD_HIERARQUEUE_HYPERGRAPH 		    7//p1
-#define FLOOD_TRIE_HYPERGRAPH			 			    8//p1
+#define FLOOD_TRIE_HYPERGRAPH			 		8//p1
 #define FLOOD_HIERARHEAPQUEUE_CACHE			    9
-#define FLOOD_HIERARHEAPQUEUE_CACHE_HISTEQ  10
+#define FLOOD_HIERARHEAPQUEUE_CACHE_HISTEQ      10
 #define FLOOD_HIERARQUEUE_PAR  	   			    11//p1
-#define PILOT_RANK	 	 				     			    12//p1
+#define PILOT_RANK	 	 				        12//p1
+#define FLOOD_LADDERQUEUE					    15//p2

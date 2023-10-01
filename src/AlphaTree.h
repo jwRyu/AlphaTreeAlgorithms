@@ -13,6 +13,7 @@
 #include "radixsort_teeninga/sort/radix_sort_parallel.h"
 #include "radixsort_teeninga/sort/sort_item.h"
 #include "walltime.h"
+#include "LadderQueue.hpp"
 
 using namespace pmt;
 
@@ -51,6 +52,7 @@ using namespace pmt;
 #define FLOOD_HIERARQUEUE_CACHE_PAR			13//p2
 #define FLOOD_HIERARHEAPQUEUE				14//p2
 #define FLOOD_LADDERQUEUE					15//p2
+#define FLOOD_HEAPQUEUE_NAIVE				16//p2
 
 #define ROOTIDX -1
 
@@ -120,18 +122,15 @@ public:
 private:
 
     Pixel abs_diff(Pixel p, Pixel q);
-
     _uint8 compute_incidedge_queue(Pixel d0, Pixel d1);
-
     void compute_dimg_par4(RankItem<double> *&rankitem, Pixel *img, SortValue<double> *&vals);
     void compute_dimg_par4(RankItem<double> *&rankitem, Pixel *img, SortValue<Pixel> *&vals);
-
-    void compute_dimg(double *dimg, Pixel *img);
+    Pixel compute_dimg(double *dimg, Pixel *img);
     Pixel compute_dimg1(Pixel *dimg, Imgidx *dhist, Pixel *img);
     void compute_dimg(Imgidx &minidx, double &mindiff, Pixel *dimg, Imgidx *dhist, Pixel *img, double a);
     void compute_dimg(Pixel *dimg, Imgidx *dhist, Pixel *img, double a);
-    void compute_dimg(Pixel *dimg, Imgidx *dhist, Pixel *img);
-    void compute_dimg(double *dimg, Imgidx *dhist, Pixel *img);
+    Pixel compute_dimg(Pixel *dimg, Imgidx *dhist, Pixel *img);
+    double compute_dimg(double *dimg, Imgidx *dhist, Pixel *img);
     void set_isAvailable(_uint8 *isAvailable);
     void set_isAvailable(_uint8 *isAvailable, int npartitions_hor, int npartitions_ver);
     _uint8 is_available(_uint8 isAvailable, _uint8 iNeighbour);
@@ -152,8 +151,10 @@ private:
     void remove_redundant_node(Imgidx &prev_top, Imgidx &stack_top);
     void Flood_HierarQueue(Pixel *img, int tse);
     void Flood_HeapQueue(Pixel *img);
+    void Flood_HeapQueue_Naive(Pixel *img);
     void Flood_HeapQueue_Cache(Pixel *img);
     void Flood_HierarQueue_Cache(Pixel *img);
+	void Flood_LadderQueue(Pixel *img, int thres = 64);
 	int get_bitdepth(_uint64 num);
 	void Flood_HierarHeapQueue(Pixel* img, double a = 12.0, double r = 0.5, int listsize = 12);
 	void Flood_HierarHeapQueue_Cache(Pixel* img, double a = 12.0, double r = 0.5, int listsize = 12);
@@ -218,7 +219,6 @@ private:
 	void remove_redundant_node(AlphaNode<Pixel> *tree, Imgidx &size, Imgidx& prev_top, Imgidx& stack_top);
 	void connectPix2Node(AlphaNode<Pixel> *tree, Imgidx pidx, Pixel pix_val, Imgidx iNode, Imgidx *pAry);
 	Imgidx find_root1(Imgidx p, Imgidx qlevel);
-
 	void Flood_Trie(Pixel* img);
 	void Flood_Trie_Cache(Pixel* img);
 	Imgidx get_level_root(Imgidx p, Imgidx nodeidx);
