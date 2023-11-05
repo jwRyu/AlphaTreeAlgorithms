@@ -59,10 +59,3 @@ void Free(void* ptr)
 	memuse -= size;
 	free((void*)((size_t*)ptr - 1));
 }
-
-// void Free(void* ptr, int fake)
-// {
-// 	size_t size = *((size_t*)ptr - 1);
-// 	memuse -= size;
-// 	free((void*)((size_t*)ptr - 1));
-// }

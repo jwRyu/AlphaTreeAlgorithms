@@ -1,0 +1,2 @@
+g++ -lstdc++fs -std=c++11 -fopenmp -Wall -g  -I /usr/local/include -c -o obj/main.o src/main.cpp
+g++ -lstdc++fs -std=c++11 -fopenmp -Wall -g  -I /usr/local/include -c -o obj/AlphaTree.o src/AlphaTree.cpp

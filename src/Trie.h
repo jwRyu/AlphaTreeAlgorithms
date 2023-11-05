@@ -6,11 +6,10 @@
 
 #if TRIE_DEBUG
 #include <iostream>
-using namespace std;
 #endif
 
 
-template<class Imgidx, class Trieidx>
+template<class Trieidx>
 class Trie
 {
 	Imgidx minidx;

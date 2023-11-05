@@ -36,5 +36,5 @@ typedef int16_t _int16;
 typedef int32_t _int32;
 typedef int64_t _int64;
 
-
+typedef int32_t Imgidx;
 typedef _int64 trieidx;
