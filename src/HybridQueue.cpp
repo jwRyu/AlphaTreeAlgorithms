@@ -492,8 +492,10 @@ void HierarHeapQueue_cache<Pixel>::end_pushes(_uint8 *isVisited)
 {
     if(emptytop)
         pop(isVisited);
+#if PROFILE
     else
         decrement_curSize();
+#endif
 }
 
 template<class Pixel>
