@@ -67,8 +67,7 @@ void RandomizedHDRimage(_uint64* hdrimg, _int64 imgsize)
 
 	for (_int64 i = 0; i < imgsize; i++)
 	{
-		//pix = ((_uint64)ldrimg[i]) << 56;
-		pix = ((_uint64)(rand() & 0xff) << 56); //tmp!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		pix = ((_uint64)(rand() & 0xff) << 56);
 		pix |= ((_uint64)(rand() & 0xff) << 48);
 		pix |= ((_uint64)(rand() & 0xff) << 40);
 		pix |= ((_uint64)(rand() & 0xff) << 32);
@@ -629,105 +628,44 @@ void imread(Pixel*& img, char *filename, int imgidx, int& height, int& width, in
 
 struct AtreeInputParams
 {
-	char *name;
-	int nchannels;
-	int numthreads;
-	int testimgsize;
-	int algorithmcode;
-	int bitdepth;
-	int tse;
-	int connectivity;
-	int numitr;
-	double fparam1;
-	double fparam2;
-	int iparam1;
-	char *fnameheader;
+	char *name = nullptr;
+	int nchannels = 1;
+	int numthreads = 1;
+	int testimgsize = 100;
+	int algorithmcode = 0;
+	int bitdepth = 8;
+	int tse = 1;
+	int connectivity = 4;
+	int numitr = 1;
+	double fparam1 = 0.0;
+	double fparam2 = 0.0;
+	int iparam1 = 0;
+	char *fnameheader = nullptr;
 };
 
 void parse_input(AtreeInputParams& input, int argc, char **argv)
 {
-	input.name = argv[1];
-	input.nchannels = atoi(argv[2]);
-	input.numthreads = atoi(argv[3]);
-	input.testimgsize = atoi(argv[4]);
-	input.algorithmcode = atoi(argv[5]);
-	input.bitdepth = atoi(argv[6]);
-	input.tse = atoi(argv[7]);
-	input.fnameheader = argv[8];
-	if(argc >= 10)
-		input.connectivity = atoi(argv[9]);
-	else
-		input.connectivity = 4;
-	input.numitr = atoi(argv[10]);
-	input.fparam1 = atof(argv[11]);
-	input.fparam2 = atof(argv[12]);
-	input.iparam1 = atoi(argv[13]);
+	if(argc >= 2) input.name = argv[1];
+	if(argc >= 6) input.algorithmcode = atoi(argv[5]);
+	if(argc >= 3) input.nchannels = atoi(argv[2]);
+	if(argc >= 4) input.numthreads = atoi(argv[3]);
+	if(argc >= 5) input.testimgsize = atoi(argv[4]);
+	if(argc >= 7) input.bitdepth = atoi(argv[6]);
+	if(argc >= 8) input.tse = atoi(argv[7]);
+	if(argc >= 9) input.fnameheader = argv[8];
+	if(argc >= 10) input.connectivity = atoi(argv[9]);
+	if(argc >= 11) input.numitr = atoi(argv[10]);
+	if(argc >= 12) input.fparam1 = atof(argv[11]);
+	if(argc >= 13) input.fparam2 = atof(argv[12]);
+	if(argc >= 14) input.iparam1 = atoi(argv[13]);
 }
 
 //args: Filename, nchannels, numthreads, testimgsize, algorithmcode, bitdepth, tseflag
 int main(int argc, char **argv)
 {
-	// int size = 10;
-	// LadderQueue queue(3);
-	// // HeapQueue<double> hq(size);
-
-	// bool verbose = false;
-
-	// Imgidx idx = 0;
-	// for (int i = 0;i < size;i++) {
-	// 	if (i == 9) {
-	// 		int aa = 1;
-	// 		aa *= 10;
-	// 	}
-	// 	double alpha = (double)(rand() % 1000) / 1000.0;
-	// 	printf("Enqueue (%d, %f)\n", idx, alpha);
-	// 	queue.enqueue((Imgidx)idx++, alpha);
-	// 	if(verbose) queue.print();
-	// 	if(verbose) std::getchar();
-	// 	alpha = (double)(rand() % 1000) / 1000.0;
-	// 	printf("Enqueue (%d, %f)\n", i, alpha);
-	// 	queue.enqueue((Imgidx)idx++, alpha);
-	// 	if(verbose) queue.print();
-	// 	if(verbose) std::getchar();
-	// 	alpha = (double)(rand() % 1000) / 1000.0;
-	// 	printf("Enqueue (%d, %f)\n", i, alpha);
-	// 	queue.enqueue((Imgidx)idx++, alpha);
-	// 	if(verbose) queue.print();
-	// 	if(verbose) std::getchar();
-	// 	// printf("Dequeue\n");
-	// 	queue.dequeue();
-	// 	if(verbose) queue.print();
-	// 	if(verbose) std::getchar();
-	// }
-
-	// while (!queue.isEmpty()) {
-	// 	// printf("Dequeue\n");
-	// 	queue.dequeue();
-	// 	if(verbose) queue.print();
-	// 	if(verbose) std::getchar();
-	// 	// queue.dequeue();
-	// 	// Imgidx hqidx = hq.pop();
-	// }
-	
-	// return 0;
-
 	if(argc == 1)
 	{
 		printf("args: Filename, nchannels, numthreads, testimgsize, algorithmcode, bitdepth, tseflag, outfnameheader connectivity float_param1 float_param2 int_param1\n");
-		return 0;
-		printf("No Arg - running default tests\n");
-
-		int width = 4;
-		int height = 4;
-
-		_uint32 *img = getRandomizedImage<_uint32>(width * height, 32, 1);
-	
-		AlphaTree<_uint32> tree;
-
-		// tree.BuildAlphaTree(img, height, width, 1, 4, FLOOD_HIERARHEAPQUEUE_CACHE, 1, 0, 0.0, 0.0, 0);
-		tree.BuildAlphaTree(img, height, width, 1, 4, FLOOD_LADDERQUEUE, 1, 0, 0.0, 0.0, 32);
-		// tree.print_tree();
-
 		return 0;
 	}
 

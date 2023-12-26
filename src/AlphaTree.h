@@ -35,25 +35,6 @@ using namespace pmt;
 #define	PIXEL_FLOAT			16
 #define	PIXEL_DOUBLE		32
 
-//algcode
-#define UNIONFIND							0//p1
-#define FLOOD_HIERARQUEUE					1//p1,2
-#define FLOOD_HIERARQUEUE_CACHE				2//p2
-#define FLOOD_TRIE							3//p1,2
-#define FLOOD_TRIE_CACHE					4//p2
-#define FLOOD_HEAPQUEUE						5//p1,2
-#define FLOOD_HEAPQUEUE_CACHE				6//p1,2
-#define FLOOD_HIERARQUEUE_HYPERGRAPH		7//p1
-#define FLOOD_TRIE_HYPERGRAPH				8//p1
-#define FLOOD_HIERARHEAPQUEUE_CACHE			9//p2
-#define FLOOD_HIERARHEAPQUEUE_CACHE_HISTEQ	10//p2
-#define FLOOD_HIERARQUEUE_PAR				11//p1
-#define PILOT_RANK							12//p1
-#define FLOOD_HIERARQUEUE_CACHE_PAR			13//p2
-#define FLOOD_HIERARHEAPQUEUE				14//p2
-#define FLOOD_LADDERQUEUE					15//p2
-#define FLOOD_HEAPQUEUE_NAIVE				16//p2
-
 #define ROOTIDX -1
 
 #define CHKRNG(var,a,b) ( (var >= a) && (var < b) )
@@ -120,6 +101,25 @@ public:
 
 
 private:
+
+//algcode
+#define UNIONFIND							0//p1
+#define FLOOD_HIERARQUEUE					1//p1,2
+#define FLOOD_HIERARQUEUE_CACHE				2//p2
+#define FLOOD_TRIE							3//p1,2
+#define FLOOD_TRIE_CACHE					4//p2
+#define FLOOD_HEAPQUEUE						5//p1,2
+#define FLOOD_HEAPQUEUE_CACHE				6//p1,2
+#define FLOOD_HIERARQUEUE_HYPERGRAPH		7//p1
+#define FLOOD_TRIE_HYPERGRAPH				8//p1
+#define FLOOD_HIERARHEAPQUEUE_CACHE			9//p2
+#define FLOOD_HIERARHEAPQUEUE_CACHE_HISTEQ	10//p2
+#define FLOOD_HIERARQUEUE_PAR				11//p1
+#define PILOT_RANK							12//p1
+#define FLOOD_HIERARQUEUE_CACHE_PAR			13//p2
+#define FLOOD_HIERARHEAPQUEUE				14//p2
+#define FLOOD_LADDERQUEUE					15//p2
+#define FLOOD_HEAPQUEUE_NAIVE				16//p2
 
     Pixel abs_diff(Pixel p, Pixel q);
     _uint8 compute_incidedge_queue(Pixel d0, Pixel d1);
