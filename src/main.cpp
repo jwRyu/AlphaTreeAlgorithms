@@ -682,9 +682,7 @@ int main(int argc, char **argv)
 	int numimg = randomimg ? 1 : 10;
 	int imgidxstart = 0;
 	int thrstart = 0;
-
-	// srand(time(NULL));
-
+	
 	//if(!randomimg)
 	{
 		sprintf(outfname, "%s_ch%d_nthr%d_alg%d_bit%d_tse%d_conn%d.txt", input.fnameheader, input.nchannels, input.numthreads, input.algorithmcode, input.bitdepth, input.tse, input.connectivity);
@@ -776,19 +774,7 @@ int main(int argc, char **argv)
 					else if(bitdepth <= 32) Randomizedimage(img32, height * width, bitdepth, 1);
 					else					Randomizedimage(img64, height * width, bitdepth, 1);
 
-					// int queueprofile = 0;
-					// if(queueprofile)
-					// {
-					// 	qrecord = 0;
-					// 	if(bitdepth <= 8)		tree->BuildAlphaTree(img8, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse, input.fparam1, input.fparam2, input.iparam1);
-					// 	else if(bitdepth <= 16) tree->BuildAlphaTree(img, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse, input.fparam1, input.fparam2, input.iparam1);
-					// 	else if(bitdepth <= 32) tree->BuildAlphaTree(img32, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse, input.fparam1, input.fparam2, input.iparam1);
-					// 	else					tree->BuildAlphaTree(img64, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse, input.fparam1, input.fparam2, input.iparam1);
-					// 	delete tree;
-					// 	tree = new AlphaTree;
-					// }
-
-					t = get_cpu_time();
+					t = get_wall_time();
 					if(bitdepth <= 8) {
 						AlphaTree<_uint8> *tree = new AlphaTree<_uint8>;
 						tree->BuildAlphaTree(img8, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse, input.fparam1, input.fparam2, input.iparam1);
@@ -806,7 +792,7 @@ int main(int argc, char **argv)
 						tree->BuildAlphaTree(img64, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse, input.fparam1, input.fparam2, input.iparam1);
 						delete tree;
 					}
-					runtime = get_cpu_time() - t;
+					runtime = get_wall_time() - t;
 
 					if(img32) delete[] img32;
 					if(img64) delete[] img64;

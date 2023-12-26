@@ -425,7 +425,7 @@ HeapQueue_rank::HeapQueue_rank(Imgidx maxsize_in) : cursize(0), maxsize(maxsize_
 
 HeapQueue_rank::~HeapQueue_rank()
 {
-    delete[] (arr + 1);
+    delete[] (Imgidx*)(arr + 1);
 }
 
 Imgidx HeapQueue_rank::pop()

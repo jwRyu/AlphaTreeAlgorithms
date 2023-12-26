@@ -15,27 +15,7 @@
 #include "walltime.h"
 #include "LadderQueue.hpp"
 
-using namespace pmt;
-
-//Minimum number of pixels for TSE to be used. TSE does not work well with very small images (also saving memory is not so important on small images).
-#define TSE_MINSIZE 10000
-
-#define A		1.3901
-#define SIGMA	-2.1989
-#define B		-0.1906
-#define M		0.05
-
-#define	IMGIDX_32BITS		0
-#define	IMGIDX_64BITS		1
-
-#define	PIXEL_8BIT			1
-#define	PIXEL_16BIT			2
-#define	PIXEL_32BIT			4
-#define	PIXEL_64BIT			8
-#define	PIXEL_FLOAT			16
-#define	PIXEL_DOUBLE		32
-
-#define ROOTIDX -1
+using namespace pmt; // TODO: remove
 
 #define CHKRNG(var,a,b) ( (var >= a) && (var < b) )
 #define QUANTIZE_RANK(rank, binsize) (rank) / (binsize)
@@ -102,25 +82,36 @@ public:
 
 private:
 
-//algcode
-#define UNIONFIND							0//p1
-#define FLOOD_HIERARQUEUE					1//p1,2
-#define FLOOD_HIERARQUEUE_CACHE				2//p2
-#define FLOOD_TRIE							3//p1,2
-#define FLOOD_TRIE_CACHE					4//p2
-#define FLOOD_HEAPQUEUE						5//p1,2
-#define FLOOD_HEAPQUEUE_CACHE				6//p1,2
-#define FLOOD_HIERARQUEUE_HYPERGRAPH		7//p1
-#define FLOOD_TRIE_HYPERGRAPH				8//p1
-#define FLOOD_HIERARHEAPQUEUE_CACHE			9//p2
-#define FLOOD_HIERARHEAPQUEUE_CACHE_HISTEQ	10//p2
-#define FLOOD_HIERARQUEUE_PAR				11//p1
-#define PILOT_RANK							12//p1
-#define FLOOD_HIERARQUEUE_CACHE_PAR			13//p2
-#define FLOOD_HIERARHEAPQUEUE				14//p2
-#define FLOOD_LADDERQUEUE					15//p2
-#define FLOOD_HEAPQUEUE_NAIVE				16//p2
+	///< Root or subtree roots are denoted by having NULLINDEX as parent
+	static Imgidx constexpr NULLINDEX = -1;
 
+	static int constexpr UNIONFIND = 0;
+	static int constexpr FLOOD_HIERARQUEUE = 1;
+	static int constexpr FLOOD_HIERARQUEUE_CACHE = 2;
+	static int constexpr FLOOD_TRIE = 3;
+	static int constexpr FLOOD_TRIE_CACHE = 4;
+	static int constexpr FLOOD_HEAPQUEUE = 5;
+	static int constexpr FLOOD_HEAPQUEUE_CACHE = 6;
+	static int constexpr FLOOD_HIERARQUEUE_HYPERGRAPH = 7;
+	static int constexpr FLOOD_TRIE_HYPERGRAPH = 8;
+	static int constexpr FLOOD_HIERARHEAPQUEUE_CACHE = 9;
+	static int constexpr FLOOD_HIERARHEAPQUEUE_CACHE_HISTEQ = 10;
+	static int constexpr FLOOD_HIERARQUEUE_PAR = 11;
+	static int constexpr PILOT_RANK = 12;
+	static int constexpr FLOOD_HIERARQUEUE_CACHE_PAR = 13;
+	static int constexpr FLOOD_HIERARHEAPQUEUE = 14;
+	static int constexpr FLOOD_LADDERQUEUE = 15;
+	static int constexpr FLOOD_HEAPQUEUE_NAIVE = 16;
+
+	///< Tree size estimation parameters
+	// Minimum number of pixels for TSE to be used. TSE does not work well with very small images.
+	static Imgidx constexpr TSE_MINSIZE = 10000;
+	static double constexpr A = 1.3901;
+	static double constexpr SIGMA = -2.1989;
+	static double constexpr B = -0.1906;
+	static double constexpr M = 0.05;
+
+	int parseAlgorithmCode(const char* algorithmName);
     Pixel abs_diff(Pixel p, Pixel q);
     _uint8 compute_incidedge_queue(Pixel d0, Pixel d1);
     void compute_dimg_par4(RankItem<double> *&rankitem, Pixel *img, SortValue<double> *&vals);
