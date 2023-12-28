@@ -15,9 +15,6 @@
 #include "LadderQueue.hpp"
 #include "HeapQueue.h"
 
-#define RANDOMINPUT		 0
-#define NUM_ALGORITHMS 12
-
 #define DEBUG 0
 
 #define OUTPUT_FNAME "./AlphaTree.dat"
@@ -437,98 +434,6 @@ void sort_h1(double* h1_arr, int obs)
 	delete[] tmp;
 }
 
-void alg_name(char*dst, int alg)
-{
-	switch(alg)
-	{
-		case(UNIONFIND):
-			strcpy(dst,"Unionfind (Berger) (UNIONFIND)");
-			break;
-		case(FLOOD_HIERARQUEUE):
-			strcpy(dst,"Flood using Hierarchical queue (Salembier) (FLOOD_HIERARQUEUE)");
-			break;
-		case(FLOOD_HIERARQUEUE_CACHE):
-			strcpy(dst,"Flood using Hierarchical queue with cache (Salembier) (FLOOD_HIERARQUEUE_CACHE)");
-			break;
-		case(FLOOD_HIERARHEAPQUEUE_CACHE):
-			strcpy(dst,"Flood using hierarchical heap queue with cache (FLOOD_HIERARHEAPQUEUE_CACHE)");
-			break;
-		case(FLOOD_HIERARHEAPQUEUE_CACHE_HISTEQ):
-			strcpy(dst,"Flood using hist-equalized hierarchical heap queue with cache (FLOOD_HIERARHEAPQUEUE_CACHE_HISTEQ)");
-			break;
-		case(FLOOD_HEAPQUEUE):
-			strcpy(dst,"Flood using heap queue (Wilkinson) (FLOOD_HEAPQUEUE)");
-			break;
-		case(FLOOD_HEAPQUEUE_CACHE):
-			strcpy(dst,"Flood using quad heap queue with cache (Wilkinson) (FLOOD_HEAPQUEUE_CACHE)");
-			break;
-		case(FLOOD_TRIE):
-			strcpy(dst,"Flood using Trie (Teeninga) (FLOOD_TRIE)");
-			break;
-		case(FLOOD_TRIE_CACHE):
-			strcpy(dst,"Flood using cached trie (FLOOD_TRIE_CACHE)");
-			break;
-		case(FLOOD_TRIE_HYPERGRAPH):
-			strcpy(dst,"Flood using Trie and hypergraph (FLOOD_TRIE_HYPERGRAPH)");
-			break;
-		case(PILOT_RANK):
-			strcpy(dst,"Pilot-tree parallel (Ugo) (PILOT_RANK)");
-			break;
-		case(FLOOD_HIERARQUEUE_HYPERGRAPH):
-			strcpy(dst,"Flooding using HierarQueue, Hypergraph (FLOOD_HIERARQUEUE_HYPERGRAPH)");
-			break;
-		case(FLOOD_HIERARQUEUE_PAR):
-			strcpy(dst,"Block-based parallel using Hierarqueue (FLOOD_HQUEUE_PAR)");
-			break;
-		case(FLOOD_HIERARHEAPQUEUE):
-			strcpy(dst,"Flood using hierarchical heap queue (FLOOD_HIERARHEAPQUEUE)");
-			break;
-		default:
-			strcpy(dst,"NO_NAME");
-			break;
-	}
-}
-
-bool is_par(int alg)
-{
-	switch(alg)
-	{
-		case(UNIONFIND):
-			return 0;
-			break;
-		case(FLOOD_HIERARQUEUE):
-			return 0;
-			break;
-		case(FLOOD_HIERARQUEUE_CACHE):
-			return 0;
-			break;
-		case(FLOOD_HEAPQUEUE_CACHE):
-			return 0;
-			break;
-		case(FLOOD_TRIE):
-			return 0;
-			break;
-		case(FLOOD_TRIE_CACHE):
-			return 0;
-			break;
-		case(FLOOD_TRIE_HYPERGRAPH):
-			return 0;
-			break;
-		case(PILOT_RANK):
-			return 1;
-			break;
-		case(FLOOD_HIERARQUEUE_HYPERGRAPH):
-			return 0;
-			break;
-		case(FLOOD_HIERARQUEUE_PAR):
-			return 1;
-			break;
-		default:
-			return 0;
-			break;
-	}
-}
-
 _uint64 rand64()
 {
 	_uint64 ret, num;
@@ -632,7 +537,7 @@ struct AtreeInputParams
 	int nchannels = 1;
 	int numthreads = 1;
 	int testimgsize = 100;
-	int algorithmcode = 0;
+	char *algorithmname;
 	int bitdepth = 8;
 	int tse = 1;
 	int connectivity = 4;
@@ -646,10 +551,10 @@ struct AtreeInputParams
 void parse_input(AtreeInputParams& input, int argc, char **argv)
 {
 	if(argc >= 2) input.name = argv[1];
-	if(argc >= 6) input.algorithmcode = atoi(argv[5]);
 	if(argc >= 3) input.nchannels = atoi(argv[2]);
 	if(argc >= 4) input.numthreads = atoi(argv[3]);
 	if(argc >= 5) input.testimgsize = atoi(argv[4]);
+	if(argc >= 6) input.algorithmname = argv[5];
 	if(argc >= 7) input.bitdepth = atoi(argv[6]);
 	if(argc >= 8) input.tse = atoi(argv[7]);
 	if(argc >= 9) input.fnameheader = argv[8];
@@ -660,12 +565,22 @@ void parse_input(AtreeInputParams& input, int argc, char **argv)
 	if(argc >= 14) input.iparam1 = atoi(argv[13]);
 }
 
-//args: Filename, nchannels, numthreads, testimgsize, algorithmcode, bitdepth, tseflag
 int main(int argc, char **argv)
 {
 	if(argc == 1)
 	{
-		printf("args: Filename, nchannels, numthreads, testimgsize, algorithmcode, bitdepth, tseflag, outfnameheader connectivity float_param1 float_param2 int_param1\n");
+		printf("Arguments: imageFileName algorithmName testImgsize numChannels numThreads bitDepth runTSE outFileHeader connectivity floatParam1 floatParam2 intParam1\n");
+		printf("Only .pgm files can be used for imageFileName. Type \"rand\" for imageFileName to run on randomly-generated images.\n");
+		printf("algorithmName list\n");
+		for (int algorithmCode = 0;algorithmCode < AlphaTree<uint8_t>::NUM_ALGORITHMS;algorithmCode++)
+		{
+			char algorithmName[256];
+			AlphaTree<uint8_t>::getAlgorithmName(algorithmName, algorithmCode);
+			char algorithmDesc[256];
+			AlphaTree<uint8_t>::getAlgorithmDescriptionFromCode(algorithmDesc, algorithmCode);
+			printf("%d) %s: %s\n", algorithmCode, algorithmName, algorithmDesc);
+		}
+
 		return 0;
 	}
 
@@ -676,7 +591,7 @@ int main(int argc, char **argv)
 	int randomimg = (strcmp(input.name,"rand") == 0);
 	double meanrunspeed[16] = {0,}, maxmemuse[16] = {0,};
 	int nthr[] = {1, 2, 4, 8, 16, 32, 48, 64, 96, 128, 192, 256, 480, 960, 1920};
-	char algname[256];
+	
 	char outfname[128];
 
 	int numimg = randomimg ? 1 : 10;
@@ -685,7 +600,7 @@ int main(int argc, char **argv)
 	
 	//if(!randomimg)
 	{
-		sprintf(outfname, "%s_ch%d_nthr%d_alg%d_bit%d_tse%d_conn%d.txt", input.fnameheader, input.nchannels, input.numthreads, input.algorithmcode, input.bitdepth, input.tse, input.connectivity);
+		sprintf(outfname, "%s_ch%d_nthr%d_%s_bit%d_tse%d_conn%d.txt", input.fnameheader, input.nchannels, input.numthreads, input.algorithmname, input.bitdepth, input.tse, input.connectivity);
 		printf("output file name = %s\n",outfname);
 		fstream f(outfname);
 		if(0 && f.good())
@@ -724,9 +639,6 @@ int main(int argc, char **argv)
 
 		height = width = input.testimgsize;
 		int image_number = imgidx;
-		//if(imgidx >= 4) image_number += 2;
-		//if(imgidx >= 8) image_number += 1;
-		//if(imgidx >= 9) image_number += 1;
 
 
 		printf("========================================================================================\n");
@@ -737,9 +649,10 @@ int main(int argc, char **argv)
 		for(int thridx = thrstart;thridx < thritr;thridx++)
 		{
 			int numthreads = randomimg ? input.numthreads : nthr[thridx];
-			alg_name(algname, (int)input.algorithmcode);
+			char algname[256];
+			AlphaTree<uint8_t>::getAlgorithmDescription(algname, input.algorithmname);
 			printf("-----------------------------------------------------------------------------------\n");
-			printf("%d Running %s (%d threads)\n", (int)input.algorithmcode, algname, (int)numthreads);
+			printf("Running %s (%d threads)\n", algname, (int)numthreads);
 			printf("-----------------------------------------------------------------------------------\n");
 			double minruntime = 0;
 
@@ -761,7 +674,6 @@ int main(int argc, char **argv)
 					img = 0;
 				}
 
-
 				if(randomimg)
 				{
 					img8 = 0;
@@ -777,19 +689,19 @@ int main(int argc, char **argv)
 					t = get_wall_time();
 					if(bitdepth <= 8) {
 						AlphaTree<_uint8> *tree = new AlphaTree<_uint8>;
-						tree->BuildAlphaTree(img8, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse, input.fparam1, input.fparam2, input.iparam1);
+						tree->BuildAlphaTree(img8, height, width, input.nchannels, input.connectivity, input.algorithmname, (int)numthreads, input.tse, input.fparam1, input.fparam2, input.iparam1);
 						delete tree;
 					} else if(bitdepth <= 16) {
 						AlphaTree<_uint16> *tree = new AlphaTree<_uint16>;
-						tree->BuildAlphaTree(img, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse, input.fparam1, input.fparam2, input.iparam1);
+						tree->BuildAlphaTree(img, height, width, input.nchannels, input.connectivity, input.algorithmname, (int)numthreads, input.tse, input.fparam1, input.fparam2, input.iparam1);
 						delete tree;
 					} else if(bitdepth <= 32) {
 						AlphaTree<_uint32> *tree = new AlphaTree<_uint32>;
-						tree->BuildAlphaTree(img32, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse, input.fparam1, input.fparam2, input.iparam1);
+						tree->BuildAlphaTree(img32, height, width, input.nchannels, input.connectivity, input.algorithmname, (int)numthreads, input.tse, input.fparam1, input.fparam2, input.iparam1);
 						delete tree;
 					} else {
 						AlphaTree<_uint64> *tree = new AlphaTree<_uint64>;
-						tree->BuildAlphaTree(img64, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse, input.fparam1, input.fparam2, input.iparam1);
+						tree->BuildAlphaTree(img64, height, width, input.nchannels, input.connectivity, input.algorithmname, (int)numthreads, input.tse, input.fparam1, input.fparam2, input.iparam1);
 						delete tree;
 					}
 					runtime = get_wall_time() - t;
@@ -797,21 +709,11 @@ int main(int argc, char **argv)
 					if(img32) delete[] img32;
 					if(img64) delete[] img64;
 				}
-				// else
-				// {
-				// 	t = get_cpu_time();
-				// 	if(img8) tree->BuildAlphaTree(img8, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse, input.fparam1, input.fparam2, input.iparam1);
-				// 	else 	 tree->BuildAlphaTree(img, height, width, input.nchannels, input.connectivity, input.algorithmcode, (int)numthreads, input.tse, input.fparam1, input.fparam2, input.iparam1);
-				// 	runtime = get_cpu_time() - t;
-				// }
-
 				printf("-------------------Run %d: %.3f------------------\n",(int)testrep, runtime);
 
-				//cout << "Run " << testrep << ": " << runtime << endl;
 				if(!testrep) minruntime = runtime;
 				minruntime = (minruntime > runtime) ? runtime : minruntime;
 
-				// delete tree;
 				if(img) delete[] img;
 				if(img8) delete[] img8;
 			}

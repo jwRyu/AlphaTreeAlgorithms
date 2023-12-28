@@ -71,7 +71,7 @@ public:
 
 	inline void clear() { Free(node); Free(parentAry); node = NULL; parentAry = NULL; curSize = 0; }
 
-	void BuildAlphaTree(Pixel *img, int height_in, int width_in, int channel_in, int connectivity_in, int algorithm, int numthreads, int tse, double fparam1 = 0.0, double fparam2 = 0.0, int iparam1 = 0);
+	void BuildAlphaTree(Pixel *img, int height_in, int width_in, int channel_in, int connectivity_in, const char* algorithm, int numthreads, int tse, double fparam1 = 0.0, double fparam2 = 0.0, int iparam1 = 0);
 
     void AlphaFilter(double *outimg, double alpha);
 
@@ -79,29 +79,59 @@ public:
 
     void print_tree();
 
+  	static void getAlgorithmName(char* out, int algorithmCode);
+
+	static void getAlgorithmDescriptionFromCode(char* out, int algorithmCode);
+
+  	static void getAlgorithmDescription(char* out, const char* algorithmName);
+
+	static int constexpr NUM_ALGORITHMS = 16;
 
 private:
 
 	///< Root or subtree roots are denoted by having NULLINDEX as parent
 	static Imgidx constexpr NULLINDEX = -1;
 
-	static int constexpr UNIONFIND = 0;
-	static int constexpr FLOOD_HIERARQUEUE = 1;
-	static int constexpr FLOOD_HIERARQUEUE_CACHE = 2;
-	static int constexpr FLOOD_TRIE = 3;
-	static int constexpr FLOOD_TRIE_CACHE = 4;
-	static int constexpr FLOOD_HEAPQUEUE = 5;
-	static int constexpr FLOOD_HEAPQUEUE_CACHE = 6;
-	static int constexpr FLOOD_HIERARQUEUE_HYPERGRAPH = 7;
-	static int constexpr FLOOD_TRIE_HYPERGRAPH = 8;
-	static int constexpr FLOOD_HIERARHEAPQUEUE_CACHE = 9;
-	static int constexpr FLOOD_HIERARHEAPQUEUE_CACHE_HISTEQ = 10;
-	static int constexpr FLOOD_HIERARQUEUE_PAR = 11;
-	static int constexpr PILOT_RANK = 12;
-	static int constexpr FLOOD_HIERARQUEUE_CACHE_PAR = 13;
-	static int constexpr FLOOD_HIERARHEAPQUEUE = 14;
-	static int constexpr FLOOD_LADDERQUEUE = 15;
-	static int constexpr FLOOD_HEAPQUEUE_NAIVE = 16;
+	static int constexpr FLOOD_HIERARHEAPQUEUE_CACHE = 0;
+	static int constexpr FLOOD_HIERARHEAPQUEUE_CACHE_HISTEQ = 1;
+	static int constexpr FLOOD_HIERARHEAPQUEUE = 2;
+	static int constexpr PILOT_RANK = 3;
+	static int constexpr UNIONFIND = 4;
+	static int constexpr FLOOD_HIERARQUEUE_CACHE = 5;
+	static int constexpr FLOOD_HIERARQUEUE = 8;
+	static int constexpr FLOOD_HIERARQUEUE_PAR = 7;
+	static int constexpr FLOOD_TRIE_CACHE = 9;
+	static int constexpr FLOOD_TRIE = 10;
+	static int constexpr FLOOD_HEAPQUEUE_CACHE = 11;
+	static int constexpr FLOOD_HEAPQUEUE = 12;
+	static int constexpr FLOOD_HEAPQUEUE_NAIVE = 13;
+	static int constexpr FLOOD_HIERARQUEUE_HYPERGRAPH = 14;
+	static int constexpr FLOOD_TRIE_HYPERGRAPH = 15;
+	static int constexpr FLOOD_LADDERQUEUE = 16;
+
+	static char constexpr UNIONFIND_COMMAND[] = "UnionFind";
+	static char constexpr UNIONFIND_COMMAND_ALT[] = "UF";
+	static char constexpr FLOOD_HIERARQUEUE_CACHE_COMMAND[] = "FloodHierQueue";
+	static char constexpr FLOOD_HIERARQUEUE_CACHE_COMMAND_ALT[] = "FHIQ";
+	static char constexpr FLOOD_HIERARQUEUE_COMMAND[] = "FloodHierQueueNoCache";
+	static char constexpr FLOOD_TRIE_CACHE_COMMAND[] = "FloodTrie";
+	static char constexpr FLOOD_TRIE_CACHE_COMMAND_ALT[] = "FT";
+	static char constexpr FLOOD_TRIE_COMMAND[] = "FloodTrieNoCache";
+	static char constexpr FLOOD_HEAPQUEUE_CACHE_COMMAND[] = "FloodHeapQueue";
+	static char constexpr FLOOD_HEAPQUEUE_CACHE_COMMAND_ALT[] = "FHEQ";
+	static char constexpr FLOOD_HEAPQUEUE_COMMAND[] = "FloodHeapQueueNoCache";
+	static char constexpr FLOOD_HEAPQUEUE_NAIVE_COMMAND[] = "FloodHeapQueueNaive";
+	static char constexpr FLOOD_HIERARQUEUE_HYPERGRAPH_COMMAND[] = "FloodHierQueueHyperGraph";
+	static char constexpr FLOOD_TRIE_HYPERGRAPH_COMMAND[] = "FloodTrieHyperGraph";
+	static char constexpr FLOOD_HIERARHEAPQUEUE_CACHE_COMMAND[] = "FloodHiearHeapQueue";
+	static char constexpr FLOOD_HIERARHEAPQUEUE_CACHE_COMMAND_ALT[] = "FHHQ";
+	static char constexpr FLOOD_HIERARHEAPQUEUE_COMMAND[] = "FloodHiearHeapQueueNoCache";
+	static char constexpr FLOOD_HIERARHEAPQUEUE_CACHE_HISTEQ_COMMAND[] = "FloodHiearHeapQueueHistogramEqualization";
+	static char constexpr FLOOD_HIERARQUEUE_PAR_COMMAND[] = "FloodHierQueueParallel";
+	static char constexpr FLOOD_HIERARQUEUE_PAR_COMMAND_ALT[] = "FHIQP";
+	static char constexpr PILOT_RANK_COMMAND[] = "HybridAlgorithm";
+	static char constexpr PILOT_RANK_COMMAND_ALT[] = "HA";
+	static char constexpr FLOOD_LADDERQUEUE_COMMAND[] = "FloodLadderQueue";
 
 	///< Tree size estimation parameters
 	// Minimum number of pixels for TSE to be used. TSE does not work well with very small images.
@@ -111,7 +141,7 @@ private:
 	static double constexpr B = -0.1906;
 	static double constexpr M = 0.05;
 
-	int parseAlgorithmCode(const char* algorithmName);
+	static int parseAlgorithmCode(const char* algorithmName);
     Pixel abs_diff(Pixel p, Pixel q);
     _uint8 compute_incidedge_queue(Pixel d0, Pixel d1);
     void compute_dimg_par4(RankItem<double> *&rankitem, Pixel *img, SortValue<double> *&vals);

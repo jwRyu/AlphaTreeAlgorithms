@@ -53,6 +53,7 @@
         "streambuf": "cpp",
         "thread": "cpp",
         "tuple": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "format": "cpp"
     }
 }

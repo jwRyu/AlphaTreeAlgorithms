@@ -142,64 +142,152 @@ Imgidx RankItem<Pixel>::get_pidx1(Imgidx width, Imgidx connectivity)
 }
 
 template<class Pixel>
+void AlphaTree<Pixel>::getAlgorithmDescriptionFromCode(char* out, int algorithmCode)
+{
+    if (out == nullptr) {
+        return;
+    }
+    switch (algorithmCode)
+	{
+		case(UNIONFIND):
+			strcpy(out,"Unionfind (Berger)");
+			break;
+		case(FLOOD_HIERARQUEUE):
+			strcpy(out,"Flood using Hierarchical queue (Salembier)");
+			break;
+		case(FLOOD_HIERARQUEUE_CACHE):
+			strcpy(out,"Flood using Hierarchical queue with cache (Salembier)");
+			break;
+		case(FLOOD_HIERARHEAPQUEUE_CACHE):
+			strcpy(out,"Flood using hierarchical heap queue with cache (Ryu)");
+			break;
+		case(FLOOD_HIERARHEAPQUEUE_CACHE_HISTEQ):
+			strcpy(out,"Flood using hist-equalized hierarchical heap queue with cache (Ryu)");
+			break;
+		case(FLOOD_HEAPQUEUE):
+			strcpy(out,"Flood using heap queue (Wilkinson)");
+			break;
+		case(FLOOD_HEAPQUEUE_CACHE):
+			strcpy(out,"Flood using quad heap queue with cache (Wilkinson)");
+			break;
+		case(FLOOD_TRIE):
+			strcpy(out,"Flood using Trie (Teeninga)");
+			break;
+		case(FLOOD_TRIE_CACHE):
+			strcpy(out,"Flood using cached trie (Teeninga, Ryu)");
+			break;
+		case(FLOOD_TRIE_HYPERGRAPH):
+			strcpy(out,"Flood using Trie and hypergraph (Teeninga, Ryu)");
+			break;
+		case(PILOT_RANK):
+			strcpy(out,"Pilot-tree parallel (Ugo)");
+			break;
+		case(FLOOD_HIERARQUEUE_HYPERGRAPH):
+			strcpy(out,"Flooding using HierarQueue, Hypergraph (Ryu)");
+			break;
+		case(FLOOD_HIERARQUEUE_PAR):
+			strcpy(out,"Block-based parallel using Hierarqueue (Ryu)");
+			break;
+		case(FLOOD_HIERARHEAPQUEUE):
+			strcpy(out,"Flood using hierarchical heap queue (Ryu)");
+			break;
+		default:
+			strcpy(out,"Unidentifiable name");
+			break;
+	}
+}
+
+template<class Pixel>
+void AlphaTree<Pixel>::getAlgorithmName(char* out, int algorithmCode)
+{
+    if (out == nullptr)
+        return;
+    switch (algorithmCode)
+    {
+        case(FLOOD_HIERARHEAPQUEUE_CACHE):			sprintf(out, FLOOD_HIERARHEAPQUEUE_CACHE_COMMAND);          break;
+        case(FLOOD_HIERARHEAPQUEUE_CACHE_HISTEQ):	sprintf(out, FLOOD_HIERARHEAPQUEUE_CACHE_HISTEQ_COMMAND);   break;
+        case(FLOOD_HIERARHEAPQUEUE):				sprintf(out, FLOOD_HIERARHEAPQUEUE_COMMAND);                break;
+        case(PILOT_RANK):							sprintf(out, PILOT_RANK_COMMAND);                           break;
+        case(UNIONFIND):							sprintf(out, UNIONFIND_COMMAND);                            break;
+        case(FLOOD_HIERARQUEUE_CACHE):				sprintf(out, FLOOD_HIERARQUEUE_CACHE_COMMAND);              break;
+        case(FLOOD_HIERARQUEUE):					sprintf(out, FLOOD_HIERARQUEUE_COMMAND);                    break;
+        case(FLOOD_HIERARQUEUE_PAR):				sprintf(out, FLOOD_HIERARQUEUE_PAR_COMMAND);                break;
+        case(FLOOD_TRIE_CACHE):						sprintf(out, FLOOD_TRIE_CACHE_COMMAND);                     break;
+        case(FLOOD_TRIE):							sprintf(out, FLOOD_TRIE_COMMAND);                           break;
+        case(FLOOD_HEAPQUEUE_CACHE):				sprintf(out, FLOOD_HEAPQUEUE_CACHE_COMMAND);                break;
+        case(FLOOD_HEAPQUEUE): 						sprintf(out, FLOOD_HEAPQUEUE_COMMAND);                      break;
+        case(FLOOD_HEAPQUEUE_NAIVE): 			    sprintf(out, FLOOD_HEAPQUEUE_NAIVE_COMMAND);                break;
+        case(FLOOD_HIERARQUEUE_HYPERGRAPH):			sprintf(out, FLOOD_HIERARQUEUE_HYPERGRAPH_COMMAND);         break;
+        case(FLOOD_TRIE_HYPERGRAPH):				sprintf(out, FLOOD_TRIE_HYPERGRAPH_COMMAND);                break;
+        case(FLOOD_LADDERQUEUE):                    sprintf(out, FLOOD_LADDERQUEUE_COMMAND);                    break;
+        default: break;
+    }
+}
+
+template<class Pixel>
+void AlphaTree<Pixel>::getAlgorithmDescription(char* out, const char* algorithmName)
+{
+    auto algorithmCode = parseAlgorithmCode(algorithmName);
+	getAlgorithmDescriptionFromCode(out, algorithmCode);
+}
+
+template<class Pixel>
 int AlphaTree<Pixel>::parseAlgorithmCode(const char* algorithmName)
 {
-    if (strcmp(algorithmName, "UnionFind") == 0)
+    if (strcmp(algorithmName, UNIONFIND_COMMAND) == 0)
         return UNIONFIND;
-    else if (strcmp(algorithmName, "UF") == 0)          
+    else if (strcmp(algorithmName, UNIONFIND_COMMAND_ALT) == 0)          
         return UNIONFIND;
-    else if (strcmp(algorithmName, "FloodHierQueue") == 0)
+    else if (strcmp(algorithmName, FLOOD_HIERARQUEUE_CACHE_COMMAND) == 0)
         return FLOOD_HIERARQUEUE_CACHE;
-    else if (strcmp(algorithmName, "FHIQ") == 0)
+    else if (strcmp(algorithmName, FLOOD_HIERARQUEUE_CACHE_COMMAND_ALT) == 0)
         return FLOOD_HIERARQUEUE_CACHE;
-    else if (strcmp(algorithmName, "FloodHierQueueNoCache") == 0)
+    else if (strcmp(algorithmName, FLOOD_HIERARQUEUE_COMMAND) == 0)
         return FLOOD_HIERARQUEUE;
-    else if (strcmp(algorithmName, "FloodTrie") == 0)
+    else if (strcmp(algorithmName, FLOOD_TRIE_CACHE_COMMAND) == 0)
         return FLOOD_TRIE_CACHE;
-    else if (strcmp(algorithmName, "FT") == 0)
+    else if (strcmp(algorithmName, FLOOD_TRIE_CACHE_COMMAND_ALT) == 0)
         return FLOOD_TRIE_CACHE;
-    else if (strcmp(algorithmName, "FloodTrieNoCache") == 0)
+    else if (strcmp(algorithmName, FLOOD_TRIE_COMMAND) == 0)
         return FLOOD_TRIE;
-    else if (strcmp(algorithmName, "FloodHeapQueue") == 0)
+    else if (strcmp(algorithmName, FLOOD_HEAPQUEUE_CACHE_COMMAND) == 0)
         return FLOOD_HEAPQUEUE_CACHE;
-    else if (strcmp(algorithmName, "FHEQ") == 0)
+    else if (strcmp(algorithmName, FLOOD_HEAPQUEUE_CACHE_COMMAND_ALT) == 0)
         return FLOOD_HEAPQUEUE_CACHE;
-    else if (strcmp(algorithmName, "FloodHeapQueueNoCache") == 0)
+    else if (strcmp(algorithmName, FLOOD_HEAPQUEUE_COMMAND) == 0)
         return FLOOD_HEAPQUEUE;
-    else if (strcmp(algorithmName, "FloodHeapQueueNaive") == 0)
+    else if (strcmp(algorithmName, FLOOD_HEAPQUEUE_NAIVE_COMMAND) == 0)
         return FLOOD_HEAPQUEUE_NAIVE;
-    else if (strcmp(algorithmName, "FloodHierQueueHyperGraph") == 0)
+    else if (strcmp(algorithmName, FLOOD_HIERARQUEUE_HYPERGRAPH_COMMAND) == 0)
         return FLOOD_HIERARQUEUE_HYPERGRAPH;
-    else if (strcmp(algorithmName, "FloodTrieHyperGraph") == 0)
+    else if (strcmp(algorithmName, FLOOD_TRIE_HYPERGRAPH_COMMAND) == 0)
         return FLOOD_TRIE_HYPERGRAPH;
-    else if (strcmp(algorithmName, "FloodHiearHeapQueue") == 0)
+    else if (strcmp(algorithmName, FLOOD_HIERARHEAPQUEUE_CACHE_COMMAND) == 0)
         return FLOOD_HIERARHEAPQUEUE_CACHE;
-    else if (strcmp(algorithmName, "FHHQ") == 0)
+    else if (strcmp(algorithmName, FLOOD_HIERARHEAPQUEUE_CACHE_COMMAND_ALT) == 0)
         return FLOOD_HIERARHEAPQUEUE_CACHE;
-    else if (strcmp(algorithmName, "FloodHiearHeapQueueNoCache") == 0)
+    else if (strcmp(algorithmName, FLOOD_HIERARHEAPQUEUE_COMMAND) == 0)
         return FLOOD_HIERARHEAPQUEUE;
-    else if (strcmp(algorithmName, "FloodHiearHeapQueueWithHistogramEqualization") == 0)
+    else if (strcmp(algorithmName, FLOOD_HIERARHEAPQUEUE_CACHE_HISTEQ_COMMAND) == 0)
         return FLOOD_HIERARHEAPQUEUE_CACHE_HISTEQ;
-    else if (strcmp(algorithmName, "FloodHierQueueParallel") == 0)
-        return FLOOD_HIERARQUEUE_CACHE_PAR;
-    else if (strcmp(algorithmName, "FHIQP") == 0)
-        return FLOOD_HIERARQUEUE_CACHE_PAR;
-    else if (strcmp(algorithmName, "FloodHierQueueParallelNoCache") == 0)
+    else if (strcmp(algorithmName, FLOOD_HIERARQUEUE_PAR_COMMAND) == 0)
         return FLOOD_HIERARQUEUE_PAR;
-    else if (strcmp(algorithmName, "HybridAlgorithm") == 0)
+    else if (strcmp(algorithmName, FLOOD_HIERARQUEUE_PAR_COMMAND_ALT) == 0)
+        return FLOOD_HIERARQUEUE_PAR;
+    else if (strcmp(algorithmName, PILOT_RANK_COMMAND) == 0)
         return PILOT_RANK;
-    else if (strcmp(algorithmName, "HA") == 0)
+    else if (strcmp(algorithmName, PILOT_RANK_COMMAND_ALT) == 0)
         return PILOT_RANK;
-    else if (strcmp(algorithmName, "FloodLadderQueue") == 0)
+    else if (strcmp(algorithmName, FLOOD_LADDERQUEUE_COMMAND) == 0)
         return FLOOD_LADDERQUEUE;
-    else if (strcmp(algorithmName, "FloodTrieHyperGraph") == 0)
+    else if (strcmp(algorithmName, FLOOD_TRIE_HYPERGRAPH_COMMAND) == 0)
         return FLOOD_TRIE_HYPERGRAPH;
     else 
         return -1;
 }
 
 template<class Pixel>
-void AlphaTree<Pixel>::BuildAlphaTree(Pixel *img, int height_in, int width_in, int channel_in, int connectivity_in, int algorithm, int numthreads, int tse, double fparam1, double fparam2, int iparam1)
+void AlphaTree<Pixel>::BuildAlphaTree(Pixel *img, int height_in, int width_in, int channel_in, int connectivity_in, const char* algorithmName, int numthreads, int tse, double fparam1, double fparam2, int iparam1)
 {
     this->height = (Imgidx)height_in;
     this->width = (Imgidx)width_in;
@@ -213,7 +301,8 @@ void AlphaTree<Pixel>::BuildAlphaTree(Pixel *img, int height_in, int width_in, i
         return;
     }
 
-    switch (algorithm)
+    auto algorithmCode = parseAlgorithmCode(algorithmName);
+    switch (algorithmCode)
     {
         case(UNIONFIND):							Unionfind(img);													break;
         case(FLOOD_HIERARQUEUE):					Flood_HierarQueue(img, tse);                			        break;
