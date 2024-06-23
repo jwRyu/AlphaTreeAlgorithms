@@ -32,7 +32,7 @@ class AlphaTreeConfig {
         double fparam3;
     };
     AlphaTreeConfig(const std::string &filename, const std::string &commentToken = "#");
-    std::optional<AlphaTreeParameters> load();
+    std::optional<AlphaTreeParameters> load(int argc, char **argv);
 
     int getAlphaTreeAlgorithmCode(std::string AlphaTreeAlgorithmName);
     std::string getAlphaTreeAlgorithmName(int AlphaTreeAlgorithmCode);

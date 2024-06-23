@@ -1,6 +1,7 @@
 #include "AlphaTreeConfig.h"
 #include <algorithm>
 #include <fstream>
+#include <iostream>
 #include <sstream>
 
 AlphaTreeConfig::AlphaTreeConfig(const std::string &filename, const std::string &commentToken)
@@ -37,31 +38,55 @@ std::string AlphaTreeConfig::getAlphaTreeAlgorithmName(int AlphaTreeAlgorithmCod
     return AlgorithmCodeToName[AlphaTreeAlgorithmCode];
 }
 
-std::optional<AlphaTreeConfig::AlphaTreeParameters> AlphaTreeConfig::load() {
-    std::ifstream configFile(filename);
-    if (!configFile.is_open()) {
-        return std::nullopt;
-    }
-
-    std::string line;
-    while (std::getline(configFile, line)) {
-        line = trim(line);
-        if (line.empty() || line.find(commentToken) == 0) {
-            continue; // Skip empty lines and comment lines
+std::optional<AlphaTreeConfig::AlphaTreeParameters> AlphaTreeConfig::load(int argc, char **argv) {
+    if (argc == 1) {
+        std::ifstream configFile(filename);
+        if (!configFile.is_open()) {
+            return std::nullopt;
         }
 
-        std::istringstream lineStream(line);
-        std::string key;
-        if (std::getline(lineStream, key, '=')) {
-            std::string value;
-            if (std::getline(lineStream, value)) {
-                key = trim(key);
-                value = trim(value);
-                config[key] = value;
+        std::string line;
+        while (std::getline(configFile, line)) {
+            line = trim(line);
+            if (line.empty() || line.find(commentToken) == 0) {
+                continue; // Skip empty lines and comment lines
+            }
+
+            std::istringstream lineStream(line);
+            std::string key;
+            if (std::getline(lineStream, key, '=')) {
+                std::string value;
+                if (std::getline(lineStream, value)) {
+                    key = trim(key);
+                    value = trim(value);
+                    config[key] = value;
+                }
             }
         }
+        configFile.close();
+    } else if (argc == 19) {
+        config["ImageFileName"] = std::string(argv[1]);
+        config["LogFileName"] = std::string(argv[2]);
+        config["UseRandomlyGeneratedImages"] = std::string(argv[3]);
+        config["RandomlyGeneratedImageWidth"] = std::string(argv[4]);
+        config["RandomlyGeneratedImageHeight"] = std::string(argv[5]);
+        config["NumberOfChannels"] = std::string(argv[6]);
+        config["NumberOfThreads"] = std::string(argv[7]);
+        config["AlphaTreeAlgorithm"] = std::string(argv[8]);
+        config["BitDepth"] = std::string(argv[9]);
+        config["UseTreeSizeEstimation"] = std::string(argv[10]);
+        config["Connectivity"] = std::string(argv[11]);
+        config["NumberOfTestIterations"] = std::string(argv[12]);
+        config["ParameterInteger1"] = std::string(argv[13]);
+        config["ParameterInteger2"] = std::string(argv[14]);
+        config["ParameterInteger3"] = std::string(argv[15]);
+        config["ParameterFloat1"] = std::string(argv[16]);
+        config["ParameterFloat2"] = std::string(argv[17]);
+        config["ParameterFloat3"] = std::string(argv[18]);
+    } else {
+        std::cerr << "[AlphaTreeConfig::load] Invalid argument (requires either 0 or 18)" << std::endl;
+        return std::nullopt;
     }
-    configFile.close();
 
     AlphaTreeConfig::AlphaTreeParameters params;
     params.imageFileName = getString("ImageFileName");

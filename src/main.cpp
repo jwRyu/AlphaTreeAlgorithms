@@ -14,10 +14,7 @@
 
 // args: Filename, nchannels, numthreads, testimgsize, algorithmcode, bitdepth, tseflag
 int main(int argc, char **argv) {
-
-    std::cout << argc << std::endl;
-
-    auto config = alphatreeConfig.load();
+    auto config = alphatreeConfig.load(argc, argv);
 
     if (config.has_value() == false) {
         std::cerr << "Unable to open configuration file." << std::endl;
