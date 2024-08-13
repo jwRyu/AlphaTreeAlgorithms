@@ -117,21 +117,3 @@ public:
 	inline Imgidx top() { return arr[1].pidx; }
 	inline Pixel top_alpha() {return arr[1].alpha;}
 };
-
-//Heap-based priority queue
-class HeapQueue_rank
-{
-	Imgidx *arr;
-public:
-	Imgidx cursize;
-	Imgidx maxsize;
-	Imgidx min_level;
-	HeapQueue_rank(Imgidx maxsize_in);
-	~HeapQueue_rank();
-	Imgidx pop();
-	void push(Imgidx pidx);
-
-	inline Imgidx get_minlev() { return arr[1]; }
-	inline void find_minlev() {};
-	inline Imgidx top() { return arr[1]; }
-};
