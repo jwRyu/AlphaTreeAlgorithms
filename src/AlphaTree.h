@@ -88,7 +88,6 @@ template <class Pixel> class RankItem {
     RankItem() = default;
     RankItem(Pixel alpha_, ImgIdx dimgidx_) : alpha(alpha_), dimgidx(dimgidx_) {}
 
-    void operator=(const RankItem &item);
     ImgIdx get_pidx0(ImgIdx connectivity = 4);
     ImgIdx get_pidx1(ImgIdx width, ImgIdx connectivity = 4);
 };

@@ -1,17 +1,17 @@
 #pragma once
 
+#include "AlphaTree.h"
 #include <map>
 #include <vector>
 
-using Data = std::pair<float, int>;
 struct Bucket {
-    std::vector<Data> data;
+    std::vector<RankItem<float>> data;
     bool isSorted = true;
     size_t size() const { return data.size(); }
     bool empty() const { return data.empty(); }
-    Data &back() { return data.back(); }
+    RankItem<float> &back() { return data.back(); }
 };
-using BucketArray = std::map<int, Bucket>;
+using BucketArray = std::vector<Bucket>;
 
 class BucketSort {
   private:
@@ -21,5 +21,5 @@ class BucketSort {
     static int alphaToIndex(float alpha);
 
   public:
-    static void sort(std::vector<Data> &dataAndIndex);
+    // static void sort(std::vector<Data> &dataAndIndex);
 };

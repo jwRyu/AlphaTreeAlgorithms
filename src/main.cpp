@@ -32,12 +32,12 @@ int main(int argc, char **argv) {
     std::vector<RankItem<float>> rankitems;
 
     {
-        int width = w;
-        int height = h;
-        int imgsize = width * height;
+        ImgIdx width = w;
+        ImgIdx height = h;
+        ImgIdx imgsize = width * height;
         for (int i = 0; i < h; i++) {
             for (int j = 0; j < w; j++) {
-                int pixelIndex = i * width + j;
+                ImgIdx pixelIndex = i * width + j;
 
                 float r = (float)image[i * width + j];
                 float g = (float)image[imgsize + i * width + j];
@@ -70,6 +70,24 @@ int main(int argc, char **argv) {
                 }
             }
         }
+    }
+
+    {
+        auto t0 = get_wall_time();
+
+        auto copyData = rankitems;
+
+        for (int i = 0; i < 10; i++)
+            printf("alpha = %f / index = %d \n", (double)copyData[i].alpha, (int)copyData[i].dimgidx);
+
+        std::sort(copyData.begin(), copyData.end(),
+                  [](const RankItem<float> &a, const RankItem<float> &b) { return a.alpha < b.alpha; });
+
+        auto tSort = get_wall_time() - t0;
+        printf("std::sort(): %fs\n", tSort);
+
+        for (int i = 0; i < 10; i++)
+            printf("alpha = %f / index = %d \n", (double)copyData[i].alpha, (int)copyData[i].dimgidx);
     }
 
     PNGCodec::imwrite(image, w, h, ch, "out.png");

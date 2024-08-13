@@ -68,11 +68,6 @@ template <class Pixel> void AlphaNode<Pixel>::print(AlphaNode *node, int heading
            (double)this->sumPix, (int)this->minPix, (int)this->maxPix, (int)this->rootidx);
 }
 
-template <class Pixel> void RankItem<Pixel>::operator=(const RankItem &item) {
-    this->alpha = item.alpha;
-    this->dimgidx = item.dimgidx;
-}
-
 template <class Pixel> ImgIdx RankItem<Pixel>::get_pidx0(ImgIdx connectivity) {
     if (connectivity == 4)
         return (this->dimgidx >> 1);

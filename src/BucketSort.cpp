@@ -10,18 +10,18 @@ int BucketSort::alphaToIndex(float alpha) {
     return index;
 }
 
-void BucketSort::sort(std::vector<Data> &dataAndIndex) {
-    const size_t N = dataAndIndex.size();
-    BucketArray bArray;
+// void BucketSort::sort(std::vector<Data> &dataAndIndex) {
+    // const size_t N = dataAndIndex.size();
+    // BucketArray bArray;
 
-    for (auto &item : dataAndIndex) {
-        {
-            int index = alphaToIndex(item.first);
-            if (bArray[index].empty() == false && bArray[index].back().first != item.first)
-                bArray[index].isSorted = false;
-            bArray[index].data.push_back(std::move(item));
-        }
-    }
+    // for (auto &item : dataAndIndex) {
+    //     {
+    //         int index = alphaToIndex(item.first);
+    //         if (bArray[index].empty() == false && bArray[index].back().first != item.first)
+    //             bArray[index].isSorted = false;
+    //         bArray[index].data.push_back(std::move(item));
+    //     }
+    // }
     // dataAndIndex.clear();
 
     // size_t preSortedPop = 0;
@@ -36,4 +36,4 @@ void BucketSort::sort(std::vector<Data> &dataAndIndex) {
     //         preSortedPop += bucket.size();
     // }
     // printf("Presorted population ratio = %f\n", (double)preSortedPop / (double)N);
-}
+// }
