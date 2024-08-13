@@ -3,3 +3,10 @@ obj/pngReader.o
 gmon.out
 AlphaTree
 *.png
+AlphaTree
+obj/AlphaTree.o
+obj/HeapQueue.o
+obj/HierarQueue.o
+obj/HybridQueue.o
+obj/LadderQueue.o
+obj/main.o
