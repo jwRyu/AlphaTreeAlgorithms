@@ -1,4 +1,4 @@
-ImageFileName=Image.pgm
+ImageFileName=image03.png
 LogFileName=test
 UseRandomlyGeneratedImages=1
 RandomlyGeneratedImageWidth=1500

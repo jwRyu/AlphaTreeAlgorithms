@@ -1,3 +1,5 @@
+#include "PNGcodec.hpp"
+
 #include "AlphaTree.h"
 #include "AlphaTreeConfig.h"
 #include "RandGenImage.hpp"
@@ -22,6 +24,12 @@ int main(int argc, char **argv) {
     }
 
     AlphaTreeConfig::AlphaTreeParameters params = config.value();
+
+    // auto input_filename = "img03.png";
+    // auto output_filename = "out.png";
+    auto [image, w, h, ch] = PNGCodec::imread("img03.png");
+    PNGCodec::imwrite(image, w, h, ch, "out.png");
+
     const auto &width = params.randomGenImageWidth;
     const auto &height = params.randomGenImageHeight;
     const auto &bitdepth = params.bitdepth;
