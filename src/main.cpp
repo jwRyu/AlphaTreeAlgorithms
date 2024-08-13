@@ -29,7 +29,44 @@ int main(int argc, char **argv) {
     // auto output_filename = "out.png";
     auto [image, w, h, ch] = PNGCodec::imread("img03.png");
 
-    
+    std::vector<RankItem> rankitems;
+
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            int pixelIndex = i * width + j;
+
+            float r = (float)image[i * width + j];
+            float g = (float)image[imgsize + i * width + j];
+            float b = (float)image[2 * imgsize + i * width + j];
+
+            if (i < h - 1) {
+                float rBottom = (float)image[(i + 1) * width + j];
+                float gBottom = (float)image[imgsize + (i + 1) * width + j];
+                float bBottom = (float)image[2 * imgsize + (i + 1) * width + j];
+
+                float dr = r - rBottom;
+                float dg = g - gBottom;
+                float db = b - bBottom;
+                float alpha = std::sqrt((dr * dr + dg * dg + db * db) / 3.0f);
+
+                alphaAndIndex.emplace_back(alpha, pixelIndex * 2);
+            }
+
+            if (j < w - 1) {
+                float rRight = (float)image[i * width + j + 1];
+                float gRight = (float)image[imgsize + i * width + j + 1];
+                float bRight = (float)image[2 * imgsize + i * width + j + 1];
+
+                float dr = r - rRight;
+                float dg = g - gRight;
+                float db = b - bRight;
+                float alpha = std::sqrt((dr * dr + dg * dg + db * db) / 3.0f);
+
+                alphaAndIndex.emplace_back(alpha, pixelIndex * 2 + 1);
+            }
+        }
+    }
+
 
     PNGCodec::imwrite(image, w, h, ch, "out.png");
 
