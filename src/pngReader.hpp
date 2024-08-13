@@ -5,7 +5,6 @@
 #include <ctime>
 #include <fstream>
 #include <iostream>
-#include <png.h>
 #include <vector>
 
 std::tuple<std::vector<unsigned char>, int, int, int> loadPng(const std::string &filename);

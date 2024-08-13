@@ -1,5 +1,6 @@
 
 #include "pngReader.hpp"
+#include <png.h>
 
 std::tuple<std::vector<unsigned char>, int, int, int> loadPng(const std::string &filename) {
     std::vector<unsigned char> image;
