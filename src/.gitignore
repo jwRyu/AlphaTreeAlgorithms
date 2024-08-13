@@ -1,0 +1,8 @@
+*.o
+*.obj
+*.txt
+*.swp
+*.cff
+*.out
+makefile
+AlphaTree

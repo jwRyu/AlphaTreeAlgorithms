@@ -40,7 +40,7 @@ main.cpp:(.text._ZN5ATreeIihE13Flood_HQueue2EPh[_ZN5ATreeIihE13Flood_HQueue2EPh]
 main.cpp:(.text._ZN5ATreeIihE13Flood_HQueue2EPh[_ZN5ATreeIihE13Flood_HQueue2EPh]+0xee1): undefined reference to `Free(void*)'
 main.cpp:(.text._ZN5ATreeIihE13Flood_HQueue2EPh[_ZN5ATreeIihE13Flood_HQueue2EPh]+0xeed): undefined reference to `Free(void*)'
 main.cpp:(.text._ZN5ATreeIihE13Flood_HQueue2EPh[_ZN5ATreeIihE13Flood_HQueue2EPh]+0xef9): undefined reference to `Free(void*)'
-/tmp/cc2xjk9z.o: In function `ATree<int, unsigned char>::Flood_HeapQueue(unsigned char*)':
+/tmp/cc2xjk9z.o: In function `ATree<int, unsigned char>::FloodHeapQueueNoCache(unsigned char*)':
 main.cpp:(.text._ZN5ATreeIihE15Flood_HeapQueueEPh[_ZN5ATreeIihE15Flood_HeapQueueEPh]+0x14a): undefined reference to `Malloc(unsigned long)'
 main.cpp:(.text._ZN5ATreeIihE15Flood_HeapQueueEPh[_ZN5ATreeIihE15Flood_HeapQueueEPh]+0x178): undefined reference to `Malloc(unsigned long)'
 main.cpp:(.text._ZN5ATreeIihE15Flood_HeapQueueEPh[_ZN5ATreeIihE15Flood_HeapQueueEPh]+0x200): undefined reference to `Free(void*)'
@@ -62,7 +62,7 @@ main.cpp:(.text._ZN5ATreeIihE20Flood_HeapQueue_RankEPh[_ZN5ATreeIihE20Flood_Heap
 main.cpp:(.text._ZN5ATreeIihE20Flood_HeapQueue_RankEPh[_ZN5ATreeIihE20Flood_HeapQueue_RankEPh]+0xa88): undefined reference to `Free(void*)'
 main.cpp:(.text._ZN5ATreeIihE20Flood_HeapQueue_RankEPh[_ZN5ATreeIihE20Flood_HeapQueue_RankEPh]+0xa94): undefined reference to `Free(void*)'
 main.cpp:(.text._ZN5ATreeIihE20Flood_HeapQueue_RankEPh[_ZN5ATreeIihE20Flood_HeapQueue_RankEPh]+0xaa0): undefined reference to `Free(void*)'
-/tmp/cc2xjk9z.o: In function `ATree<int, unsigned char>::Flood_Trie(unsigned char*)':
+/tmp/cc2xjk9z.o: In function `ATree<int, unsigned char>::FloodTrieNoCache(unsigned char*)':
 main.cpp:(.text._ZN5ATreeIihE10Flood_TrieEPh[_ZN5ATreeIihE10Flood_TrieEPh]+0x116): undefined reference to `Calloc(unsigned long)'
 main.cpp:(.text._ZN5ATreeIihE10Flood_TrieEPh[_ZN5ATreeIihE10Flood_TrieEPh]+0x127): undefined reference to `Malloc(unsigned long)'
 main.cpp:(.text._ZN5ATreeIihE10Flood_TrieEPh[_ZN5ATreeIihE10Flood_TrieEPh]+0x152): undefined reference to `Malloc(unsigned long)'
@@ -128,7 +128,7 @@ main.cpp:(.text._ZN5ATreeIxhE13Flood_HQueue2EPh[_ZN5ATreeIxhE13Flood_HQueue2EPh]
 main.cpp:(.text._ZN5ATreeIxhE13Flood_HQueue2EPh[_ZN5ATreeIxhE13Flood_HQueue2EPh]+0x10b0): undefined reference to `Free(void*)'
 main.cpp:(.text._ZN5ATreeIxhE13Flood_HQueue2EPh[_ZN5ATreeIxhE13Flood_HQueue2EPh]+0x10bc): undefined reference to `Free(void*)'
 main.cpp:(.text._ZN5ATreeIxhE13Flood_HQueue2EPh[_ZN5ATreeIxhE13Flood_HQueue2EPh]+0x10c8): undefined reference to `Free(void*)'
-/tmp/cc2xjk9z.o: In function `ATree<long long, unsigned char>::Flood_HeapQueue(unsigned char*)':
+/tmp/cc2xjk9z.o: In function `ATree<long long, unsigned char>::FloodHeapQueueNoCache(unsigned char*)':
 main.cpp:(.text._ZN5ATreeIxhE15Flood_HeapQueueEPh[_ZN5ATreeIxhE15Flood_HeapQueueEPh]+0x17b): undefined reference to `Malloc(unsigned long)'
 main.cpp:(.text._ZN5ATreeIxhE15Flood_HeapQueueEPh[_ZN5ATreeIxhE15Flood_HeapQueueEPh]+0x1a8): undefined reference to `Malloc(unsigned long)'
 main.cpp:(.text._ZN5ATreeIxhE15Flood_HeapQueueEPh[_ZN5ATreeIxhE15Flood_HeapQueueEPh]+0x237): undefined reference to `Free(void*)'
@@ -150,7 +150,7 @@ main.cpp:(.text._ZN5ATreeIxhE20Flood_HeapQueue_RankEPh[_ZN5ATreeIxhE20Flood_Heap
 main.cpp:(.text._ZN5ATreeIxhE20Flood_HeapQueue_RankEPh[_ZN5ATreeIxhE20Flood_HeapQueue_RankEPh]+0xc5b): undefined reference to `Free(void*)'
 main.cpp:(.text._ZN5ATreeIxhE20Flood_HeapQueue_RankEPh[_ZN5ATreeIxhE20Flood_HeapQueue_RankEPh]+0xc67): undefined reference to `Free(void*)'
 main.cpp:(.text._ZN5ATreeIxhE20Flood_HeapQueue_RankEPh[_ZN5ATreeIxhE20Flood_HeapQueue_RankEPh]+0xc73): undefined reference to `Free(void*)'
-/tmp/cc2xjk9z.o: In function `ATree<long long, unsigned char>::Flood_Trie(unsigned char*)':
+/tmp/cc2xjk9z.o: In function `ATree<long long, unsigned char>::FloodTrieNoCache(unsigned char*)':
 main.cpp:(.text._ZN5ATreeIxhE10Flood_TrieEPh[_ZN5ATreeIxhE10Flood_TrieEPh]+0x146): undefined reference to `Calloc(unsigned long)'
 main.cpp:(.text._ZN5ATreeIxhE10Flood_TrieEPh[_ZN5ATreeIxhE10Flood_TrieEPh]+0x159): undefined reference to `Malloc(unsigned long)'
 main.cpp:(.text._ZN5ATreeIxhE10Flood_TrieEPh[_ZN5ATreeIxhE10Flood_TrieEPh]+0x183): undefined reference to `Malloc(unsigned long)'

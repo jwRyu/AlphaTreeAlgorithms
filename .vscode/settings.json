@@ -53,6 +53,14 @@
         "streambuf": "cpp",
         "thread": "cpp",
         "tuple": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "charconv": "cpp",
+        "map": "cpp",
+        "iterator": "cpp",
+        "format": "cpp",
+        "numbers": "cpp",
+        "semaphore": "cpp",
+        "span": "cpp",
+        "variant": "cpp"
     }
 }

@@ -1,0 +1,47 @@
+ImageFileName=Image.pgm
+LogFileName=test
+UseRandomlyGeneratedImages=1
+RandomlyGeneratedImageWidth=1500
+RandomlyGeneratedImageHeight=1500
+NumberOfChannels=1
+NumberOfThreads=1
+
+# List of algorithms
+#
+# Single-thread Alpha-tree Algorithms
+#
+# 1. Unionfind
+# 2. FloodHierQueue
+# 3. FloodTrieQueue
+# 4. FloodHeapQueue
+# 5. FloodHierHeapQueue
+# 6. FloodLadderQueue
+#
+# Multi-thread Alpha-tree Algorithms
+#
+# 7. FloodHierQueueParallel
+# 8. HybridParallel
+# 9. FloodHierQueueParalle
+#
+# Experimental Algorithms
+#
+# 10. FloodHierQueueNoCache
+# 11. FloodTrieQueueNoCache
+# 12. FloodHeapQueueNoCache
+# 13. FloodHierQueueHypergraph
+# 14. FloodTrieQueueHypergraph
+# 15. FloodHierHeapQueueHisteq
+# 16. FloodHierHeapQueueNoCache
+# 17. FloodHeapQueueNaiveNoCache
+AlphaTreeAlgorithm=Unionfind
+
+BitDepth=64
+UseTreeSizeEstimation=1
+Connectivity=4
+NumberOfTestIterations=5
+ParameterInteger1=4
+ParameterInteger2=2
+ParameterInteger3=3
+ParameterFloat1=45.0
+ParameterFloat2=0.15
+ParameterFloat3=0.3
