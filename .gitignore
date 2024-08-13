@@ -1,10 +1,5 @@
-img01.png
-img02.png
-img03.png
-img04.png
-img05.png
-output.png
 obj/BucketSort.o
 obj/pngReader.o
 gmon.out
 AlphaTree
+*.png
