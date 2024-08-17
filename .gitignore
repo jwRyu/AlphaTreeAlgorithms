@@ -1,12 +1,10 @@
-obj/BucketSort.o
-obj/pngReader.o
-gmon.out
 AlphaTree
+obj/*
 *.png
+*.out
 AlphaTree
+config.txt
+gmon.out
 obj/AlphaTree.o
-obj/HeapQueue.o
-obj/HierarQueue.o
 obj/HybridQueue.o
-obj/LadderQueue.o
 obj/main.o

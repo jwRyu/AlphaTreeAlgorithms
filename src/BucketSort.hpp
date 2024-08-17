@@ -4,22 +4,23 @@
 #include <map>
 #include <vector>
 
-struct Bucket {
-    std::vector<RankItem<float>> data;
-    bool isSorted = true;
-    size_t size() const { return data.size(); }
-    bool empty() const { return data.empty(); }
-    RankItem<float> &back() { return data.back(); }
-};
-using BucketArray = std::vector<Bucket>;
-
 class BucketSort {
-  private:
-    static constexpr float AlPHA_MODEL_SIG = 2.0f;
-    static constexpr size_t NUM_BUCKETS = 2048;
-
-    static int alphaToIndex(float alpha);
+    using Bucket = std::vector<RankItem<float>>;
 
   public:
-    // static void sort(std::vector<Data> &dataAndIndex);
+    static constexpr float AlPHA_MODEL_SIG = 1200.f;
+    static constexpr size_t NUM_BUCKETS = 2048;
+
+    std::vector<RankItem<float>> sort();
+    std::vector<RankItem<float>> parallelSort(int numThreads = omp_get_max_threads());
+
+    void insert(float alpha, ImgIdx idx);
+
+    BucketSort();
+
+  private:
+    std::vector<Bucket> buckets;
+    Bucket bucket0;
+
+    int alphaToIndex(float alpha);
 };

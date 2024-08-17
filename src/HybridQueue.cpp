@@ -436,17 +436,7 @@ template <class Pixel> void HierarHeapQueue_cache<Pixel>::end_pushes(_uint8 *isV
 }
 
 template <class Pixel> void HierarHeapQueue_cache<Pixel>::push(ImgIdx idx, Pixel alpha) {
-#if PROFILE
-    // printf("push %d, size %d\n", idx, curSize);
-    curSize++;
-    num_memmove_push_i = 0;
-#endif
     if (emptytop && alpha < list[0].alpha) {
-#if PROFILE
-        num_cache++;
-        num_memmove_push.push_back(1);
-        num_items_push.push_back(curSize);
-#endif
         emptytop = 0;
         list[0].pidx = idx;
         list[0].alpha = alpha;
@@ -457,76 +447,31 @@ template <class Pixel> void HierarHeapQueue_cache<Pixel>::push(ImgIdx idx, Pixel
                                              : (int)(a * log2(1 + (double)alpha)) < queue_minlev;
 
     if (push2list) {
-#if PROFILE
-        num_cache++;
-        double t1 = get_cpu_time(), t2, tq = 0;
-#endif
-        if (curSize_list < maxSize_list) // spare room in the list
-        {
+        // spare room in the list
+        if (curSize_list < maxSize_list) {
             int i;
             for (i = curSize_list; alpha < list[i].alpha; i--) {
                 list[i + 1] = list[i];
-#if PROFILE
-                num_memmove_push_i++;
-#endif
             }
             list[i + 1].pidx = idx;
             list[i + 1].alpha = alpha;
-#if PROFILE
-            num_memmove_push_i++;
-#endif
             curSize_list++;
-        } else if (alpha < list[curSize_list].alpha) // push to the full list
-        {
-#if PROFILE
-            num_cache_ovfl++;
-            t2 = get_cpu_time();
-#endif
+        } else if (alpha < list[curSize_list].alpha) { // push to the full list
             push_queue(list[curSize_list].pidx, list[curSize_list].alpha);
 
-#if PROFILE
-            tq = get_cpu_time() - t2;
-#endif
             int i;
             for (i = curSize_list - 1; alpha < list[i].alpha; i--) {
                 list[i + 1] = list[i];
-#if PROFILE
-                num_memmove_push_i++;
-#endif
             }
             list[i + 1].pidx = idx;
             list[i + 1].alpha = alpha;
-#if PROFILE
-            num_memmove_push_i++;
-#endif
         } else {
-#if PROFILE
-            num_cache_ovfl++;
-            t2 = get_cpu_time();
-#endif
             push_queue(idx, alpha); // push to the queue
-#if PROFILE
-            tq = get_cpu_time() - t2;
-#endif
         }
 
-#if PROFILE
-        tcache += get_cpu_time() - t1 - tq;
-        tqueue += tq;
-#endif
     } else {
-#if PROFILE
-        double t1 = get_cpu_time();
-#endif
         push_queue(idx, alpha); // push to the queue
-#if PROFILE
-        tqueue += get_cpu_time() - t1;
-#endif
     }
-#if PROFILE
-    num_memmove_push.push_back(num_memmove_push_i);
-    num_items_push.push_back(curSize);
-#endif
 }
 
 template <class Pixel> void HierarHeapQueue_cache<Pixel>::push_queue(ImgIdx idx, Pixel alpha) {

@@ -2,38 +2,67 @@
 #include <cmath>
 #include <cstdio>
 
+BucketSort::BucketSort() { buckets.resize(NUM_BUCKETS); }
+
 int BucketSort::alphaToIndex(float alpha) {
-    // int index = (int)((float)NUM_BUCKETS * (1.0f - exp(-(alpha / AlPHA_MODEL_SIG))));
-    int index = (int)((double)NUM_BUCKETS * (1.0 - exp(-((double)alpha / 4.0))));
+    int index = (int)((float)NUM_BUCKETS * (1.0f - exp(-(alpha / (AlPHA_MODEL_SIG * AlPHA_MODEL_SIG)))));
 
     index = std::min<int>(NUM_BUCKETS - 1, index);
     return index;
 }
 
-// void BucketSort::sort(std::vector<Data> &dataAndIndex) {
-    // const size_t N = dataAndIndex.size();
-    // BucketArray bArray;
+void BucketSort::insert(float alpha, ImgIdx idx) {
+    if (alpha <= 0) {
+        // printf("PIEP0\n");
+        bucket0.emplace_back(alpha, idx);
+        return;
+    }
 
-    // for (auto &item : dataAndIndex) {
-    //     {
-    //         int index = alphaToIndex(item.first);
-    //         if (bArray[index].empty() == false && bArray[index].back().first != item.first)
-    //             bArray[index].isSorted = false;
-    //         bArray[index].data.push_back(std::move(item));
-    //     }
-    // }
-    // dataAndIndex.clear();
+    int index = alphaToIndex(alpha);
+    // printf("PIEP %d\n", index);
+    buckets[index].emplace_back(alpha, idx);
+    // printf("PIEPPIEP\n");
+}
 
-    // size_t preSortedPop = 0;
-    // for (const auto &[bIdx, bucket] : bArray) {
-    //     if (bucket.size() == 0) {
-    //         printf("bucket[%d].size() = %lu\n", bIdx, bucket.size());
-    //         continue;
-    //     }
+std::vector<RankItem<float>> BucketSort::sort() {
+    std::vector<RankItem<float>> &sorted = bucket0;
 
-    //     printf("bucket[%d].size() = %lu, isSorted = %d\n", bIdx, bucket.size(), (int)bucket.isSorted);
-    //     if (bucket.isSorted)
-    //         preSortedPop += bucket.size();
-    // }
-    // printf("Presorted population ratio = %f\n", (double)preSortedPop / (double)N);
-// }
+    for (auto &bucket : buckets) {
+        if (bucket.empty())
+            continue;
+        std::sort(bucket.begin(), bucket.end(),
+                  [](const RankItem<float> &a, const RankItem<float> &b) { return a.alpha < b.alpha; });
+        sorted.insert(sorted.end(), bucket.begin(), bucket.end());
+    }
+
+    return sorted;
+}
+
+std::vector<RankItem<float>> BucketSort::parallelSort(int numThreads) {
+    numThreads = 1;
+    omp_set_num_threads(numThreads);
+
+    std::vector<RankItem<float>> &sorted = bucket0;
+    // Create a vector of vectors to store sorted buckets for each thread
+    std::vector<std::vector<RankItem<float>>> local_sorted_buckets(numThreads);
+
+#pragma omp parallel for
+    for (size_t i = 0; i < buckets.size(); ++i) {
+
+        int thread_id = omp_get_thread_num();
+
+        auto &bucket = buckets[i];
+        if (bucket.empty())
+            continue;
+
+        std::sort(bucket.begin(), bucket.end(),
+                  [](const RankItem<float> &a, const RankItem<float> &b) { return a.alpha < b.alpha; });
+
+        // printf("thread_id = %d on bucket i = %d\n", thread_id, (int)i);
+    }
+
+    for (auto &bucket : buckets)
+        sorted.insert(sorted.end(), bucket.begin(), bucket.end());
+
+    return sorted;
+}
