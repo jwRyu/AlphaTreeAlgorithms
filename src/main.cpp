@@ -186,6 +186,7 @@ int main(int argc, char **argv) {
     printf("-----------------------------------------------------------------------------------\n");
     std::vector<double> runtimes;
 
+    srand(time(NULL));
     for (int itr = 0; itr < nitr; itr++) {
         double tStart = 0, tEnd = INFINITY;
         if (params.UseRandomlyGeneratedImages == true) {

@@ -130,8 +130,8 @@ template <class Pixel> class AlphaTree {
     void compute_dimg_par4(RankItem<double> *&rankitem, Pixel *img, SortValue<Pixel> *&vals);
     Pixel compute_dimg(double *dimg, Pixel *img);
     Pixel compute_dimg1(Pixel *dimg, ImgIdx *dhist, Pixel *img);
-    void compute_dimg(ImgIdx &minidx, double &mindiff, Pixel *dimg, ImgIdx *dhist, Pixel *img, double a);
-    void compute_dimg(Pixel *dimg, ImgIdx *dhist, Pixel *img, double a);
+    // void compute_dimg_HHQ(ImgIdx &minidx, double &mindiff, Pixel *dimg, ImgIdx *dhist, Pixel *img, double a);
+    void compute_dimg_HHQ(Pixel *dimg, ImgIdx *dhist, Pixel *img, double a);
     Pixel compute_dimg(Pixel *dimg, ImgIdx *dhist, Pixel *img);
     double compute_dimg(double *dimg, ImgIdx *dhist, Pixel *img);
     void set_isAvailable(_uint8 *isAvailable);
