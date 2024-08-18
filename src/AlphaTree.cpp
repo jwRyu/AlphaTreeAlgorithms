@@ -2738,8 +2738,8 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
     dhist = nullptr;
 
     _uint8 *isVisited = (_uint8 *)Calloc((size_t)((imgsize)));
-    _uint8 *isAvailable = (_uint8 *)Malloc((size_t)(imgsize));
-    set_isAvailable(isAvailable);
+    // _uint8 *isAvailable = (_uint8 *)Malloc((size_t)(imgsize));
+    // set_isAvailable(isAvailable);
 
     parentAry = (ImgIdx *)Malloc((size_t)imgsize * sizeof(_int32));
     node = (AlphaNode<Pixel> *)Malloc((size_t)maxSize * sizeof(AlphaNode<Pixel>));
@@ -2761,31 +2761,37 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
                 queue->pop(isVisited);
                 continue;
             }
+
             queue->start_pushes();
             isVisited[p] = 1;
 
-            const auto isAv = isAvailable[p];
+            // const auto isAv = isAvailable[p];
+            const ImgIdx x = p % width;
+            const ImgIdx y = p / width;
+            const bool top = y > 0;
+            const bool bottom = y < height - 1;
+            const bool left = x > 0;
+            const bool right = x < width - 1;
             if (connectivity == 4) {
                 const ImgIdx q = p << 1;
                 // clang-format off
-                if (is_available(isAv, 0) && !isVisited[p + width]) queue->push(p + width, dimg[q]);
-                if (is_available(isAv, 1) && !isVisited[p + 1])     queue->push(p + 1, dimg[q + 1]);
-                if (is_available(isAv, 2) && !isVisited[p - 1])     queue->push(p - 1, dimg[q - 1]);
-                if (is_available(isAv, 3) && !isVisited[p - width]) queue->push(p - width, dimg[q - (width << 1)]);
+                if (bottom  && !isVisited[p + width]) queue->push(p + width, dimg[q]);
+                if (right   && !isVisited[p + 1])     queue->push(p + 1, dimg[q + 1]);
+                if (left    && !isVisited[p - 1])     queue->push(p - 1, dimg[q - 1]);
+                if (top     && !isVisited[p - width]) queue->push(p - width, dimg[q - (width << 1)]);
                 // clang-format on
             } else if (connectivity == 8) {
                 const ImgIdx width4 = width << 2;
                 const ImgIdx q = p << 2;
                 // clang-format off
-                if (is_available(isAv, 0) && !isVisited[p + width])     queue->push(p + width, dimg[q]);
-                if (is_available(isAv, 1) && !isVisited[p + width + 1]) queue->push(p + width + 1, dimg[q + 1]);
-                if (is_available(isAv, 2) && !isVisited[p + 1])         queue->push(p + 1, dimg[q + 2]);
-                if (is_available(isAv, 3) && !isVisited[p - width + 1]) queue->push(p - width + 1, dimg[q + 3]);
-                if (is_available(isAv, 4) && !isVisited[p - width])     queue->push(p - width, dimg[q - width4]);
-                if (is_available(isAv, 5) && !isVisited[p - width - 1]) queue->push(p - width - 1, dimg[q - width4 -
-                3]); if (is_available(isAv, 6) && !isVisited[p - 1])         queue->push(p - 1, dimg[q - 2]); if
-                (is_available(isAv, 7) && !isVisited[p + width - 1]) queue->push(p + width - 1, dimg[q + width4 -
-                1]);
+                if (bottom  &&          !isVisited[p + width])     queue->push(p + width, dimg[q]);
+                if (bottom  && right && !isVisited[p + width + 1]) queue->push(p + width + 1, dimg[q + 1]);
+                if (right   &&          !isVisited[p + 1])         queue->push(p + 1, dimg[q + 2]);
+                if (top     && right && !isVisited[p - width + 1]) queue->push(p - width + 1, dimg[q + 3]);
+                if (top     &&          !isVisited[p - width])     queue->push(p - width, dimg[q - width4]);
+                if (top     && left &&  !isVisited[p - width - 1]) queue->push(p - width - 1, dimg[q - width4 - 3]); 
+                if (left    &&          !isVisited[p - 1])         queue->push(p - 1, dimg[q - 2]);
+                if (bottom  && right && !isVisited[p + width - 1]) queue->push(p + width - 1, dimg[q + width4 - 1]);
                 // clang-format on
             } else {
                 //?
@@ -2854,7 +2860,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
     delete queue;
     Free(dimg);
     Free(isVisited);
-    Free(isAvailable);
+    // Free(isAvailable);
 }
 
 template <class Pixel> void AlphaTree<Pixel>::FloodHierHeapQueueHisteq(Pixel *img, int listsize, int a) {
