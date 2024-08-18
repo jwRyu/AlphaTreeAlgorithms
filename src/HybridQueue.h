@@ -82,67 +82,6 @@ template <class Pixel> class HierarHeapQueue {
     void pop_queue(_uint8 *isVisited);
 };
 
-template <class Pixel> class HierarHeapQueue_cache {
-    HQentry<Pixel> *list;
-    HeapQueue_naive_quad<Pixel> **hqueue;
-    HQentry<Pixel> **storage;
-    ImgIdx *storage_cursize;
-    ImgIdx *qsizes;
-
-    ImgIdx thr_hqueue, curthr, numlevels;
-    double a;
-    ImgIdx queue_minlev;
-
-    _int16 curSize_list, maxSize_list;
-    ImgIdx maxSize_queue, mask_field;
-    _int8 shamt, nbit;
-    int emptytop;
-
-    ImgIdx maxSize;
-
-  public:
-#if PROFILE
-    double t0 = get_cpu_time();
-    double tconv = 0;
-    double tcache = 0;
-    double tqueue = 0;
-
-    ImgIdx num_cache = 0;
-    ImgIdx num_cache_ovfl = 0;
-    ImgIdx num_hq = 0;
-    ImgIdx num_store = 0;
-    ImgIdx num_conv = 0;
-
-    std::vector<_uint64> num_memmove_push;
-    std::vector<_uint64> num_memmove_pop;
-    std::vector<_uint64> num_items_push;
-    std::vector<_uint64> num_items_pop;
-    _uint64 curSize = 0;
-
-    _uint64 num_memmove_push_i;
-    _uint64 num_memmove_pop_i;
-
-    void decrement_curSize() { curSize--; }
-
-#endif
-
-    void initHQ(ImgIdx *dhist, ImgIdx numlevels_in, ImgIdx size, double a_in, int listsize, int connectivity, double r);
-    HierarHeapQueue_cache(ImgIdx *dhist, ImgIdx numlevels_in, ImgIdx size, double a_in, int listsize,
-                          ImgIdx connectivity = 4, double r = 0.2);
-    ~HierarHeapQueue_cache();
-    inline void start_pushes() { emptytop = 1; }
-    inline Pixel get_minlev() { return list[0].alpha; }
-    inline ImgIdx top() { return list[0].pidx; }
-    inline Pixel top_alpha() { return list[0].alpha; }
-    void push_1stitem(ImgIdx idx, Pixel alpha);
-    void end_pushes(_uint8 *isVisited);
-    void push(ImgIdx idx, Pixel alpha);
-    void push_queue(ImgIdx idx, Pixel alpha);
-    ImgIdx pop(_uint8 *isVisited);
-    int check_queue_level(_uint8 *isVisited);
-    void pop_queue(_uint8 *isVisited);
-};
-
 template <class Pixel> class Cache_Heapqueue {
     HQentry<Pixel> *list;
     HeapQueue_naive<Pixel> *hqueue;

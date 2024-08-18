@@ -22,10 +22,10 @@ using namespace pmt;
 // so important on small images).
 #define TSE_MINSIZE 10000
 
-#define A 1.3901
-#define SIGMA -2.1989
-#define B -0.1906
-#define M 0.05
+#define TSE_A 1.3901
+#define TSE_SIGMA -2.1989
+#define TSE_B -0.1906
+#define TSE_M 0.05
 
 #define IMGIDX_32BITS 0
 #define IMGIDX_64BITS 1

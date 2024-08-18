@@ -21,3 +21,7 @@ obj/PNGcodec.o
 obj/RandGenImage.o
 obj/Trie.o
 obj/walltime.o
+AlphaTree
+analysis.txt
+config.txt
+gmon.out
