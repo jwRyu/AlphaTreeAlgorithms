@@ -2,6 +2,7 @@
 
 #include <allocator.h>
 #include <cmath>
+#include <cstring>
 #include <defines.h>
 
 template <class Pixel>
@@ -18,7 +19,8 @@ void HierarHeapQueue_cache<Pixel>::initHQ(ImgIdx *dhist, ImgIdx numlevels_in, Im
     this->queue_minlev = numlevels;
 
     ImgIdx cumsum = 0;
-    qsizes = dhist; // do not free dhist outside
+    qsizes = (ImgIdx *)Malloc((size_t)numlevels_in * sizeof(ImgIdx));
+    std::memcpy(qsizes, dhist, (size_t)numlevels_in * sizeof(ImgIdx));
     if (r >= 1) {
         thr_hqueue = curthr = numlevels;
         hqueue = (HeapQueue_naive_quad<Pixel> **)Calloc(numlevels * sizeof(HeapQueue_naive_quad<Pixel> *));
