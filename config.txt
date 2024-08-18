@@ -38,7 +38,7 @@ AlphaTreeAlgorithm=FloodHierHeapQueuePar
 
 BitDepth=64
 UseTreeSizeEstimation=1
-Connectivity=4
+Connectivity=8
 NumberOfTestIterations=5
 ParameterInteger1=4
 ParameterInteger2=2

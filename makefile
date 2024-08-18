@@ -17,7 +17,7 @@ OBJEXT      := o
 #-Wall -O3
 # g++ -o png_read_write png_read_write.cpp `pkg-config --cflags --libs opencv4`
 #Flags, Libraries and Includes
-CFLAGS      := $(shell pkg-config --cflags opencv4) -lstdc++fs -std=c++17 -fopenmp -Wall -O3
+CFLAGS      := $(shell pkg-config --cflags opencv4) -lstdc++fs -std=c++17 -fopenmp -Wall -g # -O3
 LIB         := $(shell pkg-config --libs opencv4) -fopenmp
 INC         := -I /usr/local/include -I $(INCDIR)
 INCDEP      :=

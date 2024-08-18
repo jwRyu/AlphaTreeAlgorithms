@@ -2588,6 +2588,8 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueue(Pixel *img, d
               dimgsize; // Do not use TSE here, becasue dhist is a logged histogram (also this algorithm is for hdr)
 
     // TODO: REFACTOR DHIST
+
+    Free(dhist);
     dhist = nullptr;
 
     _uint8 *isVisited = (_uint8 *)Calloc((size_t)((imgsize)));
@@ -2722,6 +2724,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
 
     ImgIdx *dhist = (ImgIdx *)Calloc((size_t)numlevels * sizeof(ImgIdx));
     Pixel *dimg = (Pixel *)Malloc((size_t)dimgsize * sizeof(Pixel));
+    bool *isRedundant = (bool *)Calloc((size_t)dimgsize * sizeof(bool));
 
     compute_dimg_HHQ(dimg, dhist, img, a); // calculate pixel differences and make histogram
 
@@ -2753,6 +2756,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
     double current_level = max_level;
     ImgIdx prev_top = stackTop;
     queue->push_1stitem(p0, (Pixel)current_level);
+
     while (node[stackTop].area < imgsize) {
         while ((double)queue->top_alpha() <= (double)current_level) { // flood all levels below current_level
             const ImgIdx p = queue->top();
@@ -2772,13 +2776,19 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
             const bool bottom = y < height - 1;
             const bool left = x > 0;
             const bool right = x < width - 1;
+
             if (connectivity == 4) {
                 const ImgIdx q = p << 1;
                 // clang-format off
                 if (bottom  && !isVisited[p + width]) queue->push(p + width, dimg[q]);
                 if (right   && !isVisited[p + 1])     queue->push(p + 1, dimg[q + 1]);
                 if (left    && !isVisited[p - 1])     queue->push(p - 1, dimg[q - 1]);
-                if (top     && !isVisited[p - width]) queue->push(p - width, dimg[q - (width << 1)]);
+                if (top     && !isVisited[p - width]) queue->push(p - width, dimg[(p - width) << 1]);
+
+                if (bottom  && isVisited[p + width]) isRedundant[q] = true;
+                if (right   && isVisited[p + 1])     isRedundant[q + 1] = true;
+                if (left    && isVisited[p - 1])     isRedundant[q - 1] = true;
+                if (top     && isVisited[p - width]) isRedundant[(p - width) << 1] = true;
                 // clang-format on
             } else if (connectivity == 8) {
                 const ImgIdx width4 = width << 2;
@@ -2791,7 +2801,17 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
                 if (top     &&          !isVisited[p - width])     queue->push(p - width, dimg[q - width4]);
                 if (top     && left &&  !isVisited[p - width - 1]) queue->push(p - width - 1, dimg[q - width4 - 3]); 
                 if (left    &&          !isVisited[p - 1])         queue->push(p - 1, dimg[q - 2]);
-                if (bottom  && right && !isVisited[p + width - 1]) queue->push(p + width - 1, dimg[q + width4 - 1]);
+                if (bottom  && left &&  !isVisited[p + width - 1]) queue->push(p + width - 1, dimg[q + width4 - 1]);
+
+
+                // if (bottom  &&          isVisited[p + width])     isRedundant[q] = true;
+                // if (bottom  && right && isVisited[p + width + 1]) isRedundant[q + 1] = true;
+                // if (right   &&          isVisited[p + 1])         isRedundant[q + 2] = true;
+                // if (top     && right && isVisited[p - width + 1]) isRedundant[q + 3] = true;
+                // if (top     &&          isVisited[p - width])     isRedundant[q - width4] = true;
+                // if (top     && left &&  isVisited[p - width - 1]) isRedundant[q - width4 - 3] = true;
+                // if (left    &&          isVisited[p - 1])         isRedundant[q - 2] = true;
+                // if (bottom  && right && isVisited[p + width - 1]) isRedundant[q + width4 - 1] = true;
                 // clang-format on
             } else {
                 //?
@@ -2860,6 +2880,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
     delete queue;
     Free(dimg);
     Free(isVisited);
+    Free(isRedundant);
     // Free(isAvailable);
 }
 
