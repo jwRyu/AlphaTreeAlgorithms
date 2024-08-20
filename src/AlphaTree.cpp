@@ -1,13 +1,21 @@
 #include <AlphaTree.h>
 #include <HierarHeapQueue_cache.h>
 
-template <class Pixel> AlphaTree<Pixel>::~AlphaTree() {
-    if (node) {
+template <class Pixel> AlphaTree<Pixel>::~AlphaTree() { clear(); }
+
+template <class Pixel> void AlphaTree<Pixel>::clear() {
+    if (node)
         Free(node);
-        if (parentAry) {
-            Free(parentAry);
-        }
-    }
+    node = nullptr;
+    if (parentAry)
+        Free(parentAry);
+    parentAry = nullptr;
+    curSize = 0;
+    maxSize = 0;
+    height = 0;
+    width = 0;
+    channel = 0;
+    connectivity = 0;
 }
 
 template <class Pixel>
@@ -95,6 +103,8 @@ template <class Pixel>
 void AlphaTree<Pixel>::BuildAlphaTree(Pixel *img, int height_in, int width_in, int channel_in, int connectivity_in,
                                       int algorithm, int numthreads, int tse, double fparam1, double fparam2,
                                       int iparam1) {
+    clear();
+
     this->height = (ImgIdx)height_in;
     this->width = (ImgIdx)width_in;
     this->channel = (ImgIdx)channel_in;
@@ -2736,14 +2746,10 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
     maxSize = 1 + imgsize +
               dimgsize; // Do not use TSE here, becasue dhist is a logged histogram (also this algorithm is for hdr)
 
-    // TODO: REFACTOR DHIST
     Free(dhist);
     dhist = nullptr;
 
     _uint8 *isVisited = (_uint8 *)Calloc((size_t)((imgsize)));
-    // _uint8 *isAvailable = (_uint8 *)Malloc((size_t)(imgsize));
-    // set_isAvailable(isAvailable);
-
     parentAry = (ImgIdx *)Malloc((size_t)imgsize * sizeof(_int32));
     node = (AlphaNode<Pixel> *)Malloc((size_t)maxSize * sizeof(AlphaNode<Pixel>));
 
@@ -2802,16 +2808,6 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
                 if (top     && left &&  !isVisited[p - width - 1]) queue->push(p - width - 1, dimg[q - width4 - 3]); 
                 if (left    &&          !isVisited[p - 1])         queue->push(p - 1, dimg[q - 2]);
                 if (bottom  && left &&  !isVisited[p + width - 1]) queue->push(p + width - 1, dimg[q + width4 - 1]);
-
-
-                // if (bottom  &&          isVisited[p + width])     isRedundant[q] = true;
-                // if (bottom  && right && isVisited[p + width + 1]) isRedundant[q + 1] = true;
-                // if (right   &&          isVisited[p + 1])         isRedundant[q + 2] = true;
-                // if (top     && right && isVisited[p - width + 1]) isRedundant[q + 3] = true;
-                // if (top     &&          isVisited[p - width])     isRedundant[q - width4] = true;
-                // if (top     && left &&  isVisited[p - width - 1]) isRedundant[q - width4 - 3] = true;
-                // if (left    &&          isVisited[p - 1])         isRedundant[q - 2] = true;
-                // if (bottom  && right && isVisited[p + width - 1]) isRedundant[q + width4 - 1] = true;
                 // clang-format on
             } else {
                 //?

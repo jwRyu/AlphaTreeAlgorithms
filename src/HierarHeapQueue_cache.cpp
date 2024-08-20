@@ -21,7 +21,7 @@ void HierarHeapQueue_cache<Pixel>::initHQ(ImgIdx *dhist, ImgIdx numlevels_in, Im
     ImgIdx cumsum = 0;
     qsizes = (ImgIdx *)Malloc((size_t)numlevels_in * sizeof(ImgIdx));
     std::memcpy(qsizes, dhist, (size_t)numlevels_in * sizeof(ImgIdx));
-    qsizes = dhist;
+    // qsizes = dhist;
     if (r >= 1) {
         thr_hqueue = curthr = numlevels;
         hqueue = (HeapQueue_naive_quad<Pixel> **)Calloc(numlevels * sizeof(HeapQueue_naive_quad<Pixel> *));

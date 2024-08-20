@@ -4,5 +4,7 @@
 *.swp
 *.cff
 *.out
+obj/*
+build/*
 makefile
 AlphaTree

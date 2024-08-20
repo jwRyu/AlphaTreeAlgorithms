@@ -49,7 +49,7 @@ std::vector<RankItem<float>> BucketSort::parallelSort(int numThreads) {
 #pragma omp parallel for
     for (size_t i = 0; i < buckets.size(); ++i) {
 
-        int thread_id = omp_get_thread_num();
+        // int thread_id = omp_get_thread_num();
 
         auto &bucket = buckets[i];
         if (bucket.empty())

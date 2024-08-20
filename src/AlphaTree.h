@@ -94,25 +94,23 @@ template <class Pixel> class RankItem {
 
 template <class Pixel> class AlphaTree {
   public:
-    ImgIdx maxSize;
-    ImgIdx curSize;
-    ImgIdx height, width, channel, connectivity;
-    AlphaNode<Pixel> *node, *node_in;
-    ImgIdx num_node, num_node_in;
-    ImgIdx rootidx;
-    ImgIdx *parentAry;
-    double nrmsd;
+    ImgIdx maxSize = 0;
+    ImgIdx curSize = 0;
+    ImgIdx height = 0;
+    ImgIdx width = 0;
+    ImgIdx channel = 0;
+    ImgIdx connectivity = 0;
+    AlphaNode<Pixel> *node = nullptr;
+    AlphaNode<Pixel> *node_in = nullptr;
+    ImgIdx *parentAry = nullptr;
+    ImgIdx num_node = 0;
+    ImgIdx num_node_in = 0;
+    ImgIdx rootidx = ROOTIDX;
+    double nrmsd = 0.0;
 
-    AlphaTree() : maxSize(0), curSize(0), node(0), parentAry(0) {}
     ~AlphaTree();
 
-    inline void clear() {
-        Free(node);
-        Free(parentAry);
-        node = NULL;
-        parentAry = NULL;
-        curSize = 0;
-    }
+    void clear();
 
     void BuildAlphaTree(Pixel *img, int height_in, int width_in, int channel_in, int connectivity_in, int algorithm,
                         int numthreads, int tse, double fparam1 = 0.0, double fparam2 = 0.0, int iparam1 = 0);
