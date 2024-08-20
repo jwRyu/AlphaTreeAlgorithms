@@ -22,7 +22,7 @@ template <class Pixel> class HHPQ {
     ImgIdx _lowestUnsortedLevel = -1;
     ImgIdx _lowestNonemptyLevel = -1;
 
-    const double a;
+    const double _a;
 
     ImgIdx _size = 0;
     const ImgIdx _sizeMax = 0;
@@ -30,16 +30,21 @@ template <class Pixel> class HHPQ {
 
     const _uint8 *_isVisited;
 
-    bool _isEmptyTop = false;
+    bool _isEmptyFront = false;
 
-    QItem top(ImgIdx level) const { return _queue[_levelStart[level]]; }
-    inline Pixel topAlpha(ImgIdx level) const;
-    inline Pixel bottomAlphaInCache() const;
+    static inline ImgIdx quadHeapFirstChild(ImgIdx parent);
+    static inline ImgIdx quadHeapParent(ImgIdx child);
+
+    QItem front(ImgIdx level) const { return _queue[_levelStart[level]]; }
+    QItem cacheBack() const { return _queue[_cacheCurSize - 1];}
+    inline Pixel frontAlpha(ImgIdx level) const;
+    inline ImgIdx findNextNonemptyLevel(ImgIdx level) const;
     inline void popCache();
     inline void pushToLevel(QItem item);
     inline void pushToQuadHeapQueue(QItem item, ImgIdx level);
     inline void popFromQuadHeapQueue(ImgIdx level);
     inline void sort(ImgIdx level);
+    inline ImgIdx size(ImgIdx level);
 
     inline void clear(ImgIdx level);
     inline bool isLevelFull(ImgIdx level);
@@ -51,14 +56,14 @@ template <class Pixel> class HHPQ {
          int cacheSize = 12, int connectivity = 4);
     ~HHPQ();
 
-    void start_pushes() { _isEmptyTop = true; }
-    inline Pixel topAlpha();
-    inline ImgIdx top();
+    void start_pushes() { _isEmptyFront = true; }
+    void end_pushes();
+    inline Pixel frontAlpha();
+    inline ImgIdx front();
     void push(ImgIdx idx, Pixel alpha);
     ImgIdx pop();
-    bool isEmptyAfterSort(ImgIdx level);
 
-    inline ImgIdx alphaToLevel(double alpha);
+    static inline ImgIdx alphaToLevel(const double &a, const double &alpha);
 
     // void initHQ(ImgIdx *dhist, ImgIdx numlevels_in, ImgIdx size, double a_in, int listsize, int connectivity, double
     // r); HierarHeapQueue_cache(ImgIdx *dhist, ImgIdx numlevels_in, ImgIdx size, double a_in, int listsize,

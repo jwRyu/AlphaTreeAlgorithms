@@ -11,7 +11,7 @@
 template <class Pixel>
 HHPQ<Pixel>::HHPQ(const ImgIdx *levelSizes, ImgIdx numLevels, ImgIdx sizeTotal, const _uint8 *isVisited_, double a_,
                   ImgIdx cacheSize, int connectivity)
-    : _cacheMaxSize(cacheSize), a(a_), _sizeMax(sizeTotal + cacheSize), _numLevels(numLevels), _isVisited(isVisited_) {
+    : _cacheMaxSize(cacheSize), _a(a_), _sizeMax(sizeTotal + cacheSize), _numLevels(numLevels), _isVisited(isVisited_) {
 
     // Validate input parameters
     assert(numLevels > 0 && a_ > 0.0 && cacheSize > 0 &&
@@ -32,6 +32,8 @@ HHPQ<Pixel>::HHPQ(const ImgIdx *levelSizes, ImgIdx numLevels, ImgIdx sizeTotal, 
         n += levelSizes[level];
     }
     _levelStart[_numLevels] = n;
+    _lowestNonemptyLevel = _numLevels;
+    _lowestUnsortedLevel = (ImgIdx)(_numLevels / (connectivity / 2));
 }
 
 template <class Pixel> HHPQ<Pixel>::~HHPQ() {
@@ -40,23 +42,23 @@ template <class Pixel> HHPQ<Pixel>::~HHPQ() {
     delete[] _levelCurrent;
 }
 
-template <class Pixel> Pixel HHPQ<Pixel>::topAlpha() {
+template <class Pixel> Pixel HHPQ<Pixel>::frontAlpha() {
 #ifdef BOUNDARYCHECK
     assert(_size > 0 && _cacheMaxSize > 0);
 #endif
     return _queue[0].alpha;
 }
 
-template <class Pixel> ImgIdx HHPQ<Pixel>::top() {
+template <class Pixel> ImgIdx HHPQ<Pixel>::front() {
 #ifdef BOUNDARYCHECK
     assert(_size > 0 && _cacheMaxSize > 0);
 #endif
     return _queue[0].index;
 }
 
-template <class Pixel> ImgIdx HHPQ<Pixel>::alphaToLevel(double alpha) { return (ImgIdx)(a * log2(1.0 + alpha)); }
+template <class Pixel> ImgIdx HHPQ<Pixel>::alphaToLevel(const double &a const double &alpha) { return (ImgIdx)(a * log2(1.0 + alpha)); }
 
-template <class Pixel> Pixel HHPQ<Pixel>::topAlpha(ImgIdx level) const {
+template <class Pixel> Pixel HHPQ<Pixel>::frontAlpha(ImgIdx level) const {
 #ifdef BOUNDARYCHECK
     assert(_size > 0);
     assert(level >= 0 && level <= _numLevels);
@@ -65,52 +67,50 @@ template <class Pixel> Pixel HHPQ<Pixel>::topAlpha(ImgIdx level) const {
     return _queue[_levelStart[level]].alpha;
 }
 
-template <class Pixel> Pixel HHPQ<Pixel>::bottomAlphaInCache() const {
-#ifdef BOUNDARYCHECK
-    assert(_size > 0 && _cacheCurSize > 0 && _cacheCurSize <= _cacheMaxSize);
-#endif
-    return _queue[_cacheCurSize - 1].alpha;
+template <class Pixel> void HHPQ<Pixel>::end_pushes() {
+    if (_isEmptyFront)
+        pop();
+    _isEmptyFront = false;
 }
 
 template <class Pixel> void HHPQ<Pixel>::push(ImgIdx index, Pixel alpha) {
 #ifdef BOUNDARYCHECK
-    assert(_size > 0 && _cacheMaxSize > 0);
+    assert(_sizeMax > 0 && _cacheMaxSize > 0);
     assert(_cacheCurSize <= _cacheMaxSize);
 #endif
     if (_cacheCurSize == 0) {
 #ifdef BOUNDARYCHECK
-        assert(_isEmptyTop == false && _size == 0);
+        assert(_isEmptyFront == false && _size == 0);
 #endif
-        _size = _cacheMaxSize = 1;
+        _size = _cacheCurSize = 1;
         _queue[0] = QItem(index, alpha);
         return;
     }
 
-    if (_isEmptyTop && alpha < topAlpha()) {
-        _isEmptyTop = false;
+    if (_isEmptyFront && alpha <= frontAlpha()) {
+        _isEmptyFront = false;
         _queue[0] = QItem(index, alpha);
         return;
     }
 
-    const ImgIdx newItemLevel = alphaToLevel(alpha);
-
-    const bool isTopLevelSorted = _lowestNonemptyLevel < _lowestUnsortedLevel;
-    const ImgIdx topLevelStart = _levelStart[_lowestNonemptyLevel];
-    const bool cacheFull = _cacheCurSize == _cacheMaxSize;
+    const ImgIdx newItemLevel = alphaToLevel(_a, alpha);
+    const bool isFrontLevelSorted = _lowestNonemptyLevel < _lowestUnsortedLevel;
+    const ImgIdx frontLevelStart = _levelStart[_lowestNonemptyLevel];
+    const bool cacheFull = (_cacheCurSize == _cacheMaxSize);
     const bool pushToCache =
-        ((newItemLevel < _lowestNonemptyLevel) || (isTopLevelSorted && (alpha < topAlpha(_lowestNonemptyLevel)))) &&
-        (!cacheFull || alpha < bottomAlphaInCache());
+        ((newItemLevel < _lowestNonemptyLevel) || (isFrontLevelSorted && (alpha < frontAlpha(_lowestNonemptyLevel)))) &&
+        (!cacheFull || alpha < cacheBack().alpha);
 
     if (pushToCache) {
+        ImgIdx i = _cacheCurSize;
         if (cacheFull) {
 #ifdef BOUNDARYCHECK
             assert(alpha < _queue[_cacheCurSize - 1].alpha);
 #endif
-            pushToLevel();
-            _cacheCurSize--;
-        }
+            pushToLevel(cacheBack());
+        } else 
+            _cacheCurSize++;
 
-        ImgIdx i = _cacheCurSize++;
         for (; i > 0 && alpha < _queue[i - 1].alpha; i--)
             _queue[i] = _queue[i - 1];
         _queue[i] = QItem(index, alpha);
@@ -120,7 +120,7 @@ template <class Pixel> void HHPQ<Pixel>::push(ImgIdx index, Pixel alpha) {
 }
 
 template <class Pixel> void HHPQ<Pixel>::pushToLevel(QItem item) {
-    const ImgIdx level = alphaToLevel(item.alpha);
+    const ImgIdx level = alphaToLevel(_a, item.alpha);
 
 #ifdef BOUNDARYCHECK
     assert(level >= 0 && level < _numLevels);
@@ -140,24 +140,30 @@ template <class Pixel> void HHPQ<Pixel>::pushToLevel(QItem item) {
 #endif
 }
 
+template <class Pixel> static inline ImgIdx HHPQ<Pixel>::quadHeapFirstChild(ImgIdx parent) {
+    return (parent << 2) - 2; 
+}
+template <class Pixel> static inline ImgIdx HHPQ<Pixel>::quadHeapParent(ImgIdx child) {
+    return (child + 2) >> 2;
+}
+
 template <class Pixel> void HHPQ<Pixel>::pushToQuadHeapQueue(QItem item, ImgIdx level) {
 #ifdef BOUNDARYCHECK
     assert(level >= 0 && level < _numLevels);
     assert(!isLevelFull(level) && !isLevelOverflowed(level));
 #endif
 
-    ImgIdx begin = _levelStart[level];
-    ImgIdx curSize = ++_levelCurrent[level];
+    _levelCurrent[level]++;
 
+    const ImgIdx begin = _levelStart[level];
 #ifdef BOUNDARYCHECK
-    ImgIdx end = _levelStart[level + 1];
+    const ImgIdx end = _levelStart[level + 1];
     assert(begin >= 0 && end <= _sizeMax);
     assert(begin < end);
 #endif
-
     QItem *heapQueue = _queue + begin - 1;
-    ImgIdx current = curSize - begin;
-    for (ImgIdx parent = current >> 2; parent > 0 && heapQueue[parent].alpha > item.alpha; parent >>= 2) {
+    ImgIdx current = _levelCurrent[level] - begin;
+    for (ImgIdx parent = quadHeapParent(current); parent > 0 && heapQueue[parent].alpha > item.alpha; parent = quadHeapParent(current)) {
         heapQueue[current] = heapQueue[parent];
         current = parent;
     }
@@ -197,124 +203,132 @@ template <class Pixel> bool HHPQ<Pixel>::isLevelOverflowed(ImgIdx level) {
     return _levelCurrent[level] > _levelStart[level + 1];
 }
 
+template <class Pixel> inline ImgIdx HHPQ<Pixel>::size(ImgIdx level) {
+#ifdef BOUNDARYCHECK
+    assert(level >= 0 && level < _numLevels);
+    assert(!isLevelOverflowed(level));
+#endif
+    return _levelCurrent[level] - _levelStart[level];
+}
+
+
 template <class Pixel> void HHPQ<Pixel>::sort(ImgIdx level) {
 #ifdef BOUNDARYCHECK
     assert(level >= 0 && level < _numLevels);
+    assert(!isLevelOverflowed(level));
 #endif
     if (isLevelEmpty(level))
         return;
 
-    ImgIdx begin = _levelStart[level];
-    ImgIdx curSize = _levelCurrent[level];
-
-    const ImgIdx levelSize = curSize - begin;
-    QItem *copy = new QItem[levelSize];
-    memcpy(copy, _queue + begin, sizeof(QItem) * (size_t)levelSize);
+    const ImgIdx levelSizeBefore = size(level);
+    QItem *copy = new QItem[levelSizeBefore];
+    memcpy(copy, _queue + _levelStart[level], sizeof(QItem) * (size_t)levelSizeBefore);
 
     clear(level);
-
-    for (int i = 0; i < levelSize; i++) {
+    for (ImgIdx i = 0; i < levelSizeBefore; i++) {
         QItem &item = copy[i];
         if (_isVisited[item.index]) // Skip redundant entry
             continue;
         pushToQuadHeapQueue(item, level);
     }
 
+    const ImgIdx levelSizeAfter = size(level);
+    _size = _size - (levelSizeBefore - levelSizeAfter);
+
     delete[] copy;
 
 #ifdef BOUNDARYCHECK
     assert(!isLevelOverflowed(level));
+    assert(_size >= 0);
 #endif
-}
-
-template <class Pixel> bool HHPQ<Pixel>::isEmptyAfterSort(ImgIdx level) {
-    while (_lowestUnsortedLevel <= level) {
-        sort(_lowestUnsortedLevel);
-        _lowestUnsortedLevel++;
-    }
-    return isLevelEmpty(level);
 }
 
 template <class Pixel> void HHPQ<Pixel>::popFromQuadHeapQueue(ImgIdx level) {
 #ifdef BOUNDARYCHECK
     assert(level >= 0 && level < _numLevels);
     assert(!isLevelEmpty(level));
+    assert(!isLevelOverflowed(level));
 #endif
 
     _levelCurrent[level]--;
 
-    ImgIdx begin = _levelStart[level];
-    const ImgIdx curSize = _levelCurrent[level] - begin;
+    const ImgIdx curSize = _levelCurrent[level] - _levelStart[level];
 
     if (curSize == 0) // Empty after pop - no need for replacement
         return;
 
-    QItem *heapQueue = _queue + begin - 1;
+    QItem *heapQueue = _queue + _levelStart[level] - 1;
     QItem lastItem = heapQueue[curSize + 1];
     ImgIdx newSpotForLastItem = 1;
-    while (true) {
-        const ImgIdx child0 = newSpotForLastItem << 2;
-        const ImgIdx child1 = newSpotForLastItem << 2;
-        const ImgIdx child2 = newSpotForLastItem << 2;
-        const ImgIdx child3 = newSpotForLastItem << 2;
-        ImgIdx bestChild = firstChild;
-        if (firstChild + 3 <= curSize) {
-            // clang-format off
-            if (arr[firstChild + 1].alpha < arr[next].alpha)
-                next = next0 + 1;
-            if (arr[next0 + 2].alpha < arr[next].alpha)
-                next = next0 + 2;
-            if (arr[next0 + 3].alpha < arr[next].alpha)
-                next = next0 + 3;
-            // clang-format on
-        } else {
-            if (next0 > cursize)
-                break;
-            if (next0 == cursize)
-                goto MIN_NEXT_FOUND;
-            if (arr[next0 + 1].alpha < arr[next].alpha)
-                next = next0 + 1;
-            if (next0 + 1 == cursize)
-                goto MIN_NEXT_FOUND;
-            if (arr[next0 + 2].alpha < arr[next].alpha)
-                next = next0 + 2;
-            if (next0 + 2 == cursize)
-                goto MIN_NEXT_FOUND;
-            if (arr[next0 + 3].alpha < arr[next].alpha)
-                next = next0 + 3;
-        }
+    while (quadHeapFirstChild(newSpotForLastItem) <= curSize) {
+        const ImgIdx child0 = quadHeapFirstChild(newSpotForLastItem);
+        const ImgIdx child1 = child0 + 1;
+        const ImgIdx child2 = child0 + 2;
+        const ImgIdx child3 = child0 + 3;
 
-    MIN_NEXT_FOUND:
-        if (curalpha < arr[next].alpha)
+        ImgIdx bestChild = child0;
+        // clang-format off
+        if (child1 <= curSize && heapQueue[child1].alpha < heapQueue[bestChild].alpha)   bestChild = child1;
+        if (child2 <= curSize && heapQueue[child2].alpha < heapQueue[bestChild].alpha)   bestChild = child2;
+        if (child3 <= curSize && heapQueue[child3].alpha < heapQueue[bestChild].alpha)   bestChild = child3;
+        // clang-format on
+        
+        if (lastItem.alpha < heapQueue[bestChild].alpha)
             break;
 
-        arr[current] = arr[next];
-#if PROFILE
-        nummove++;
+        heapQueue[newSpotForLastItem] = heapQueue[bestChild];
+        newSpotForLastItem = bestChild;
+    }
+    heapQueue[newSpotForLastItem] = lastItem;
+}
+
+template <class Pixel> ImgIdx HHPQ<Pixel>::findNextNonemptyLevel(ImgIdx level) const {
+#ifdef BOUNDARYCHECK
+    assert(level >= 0 && level < _numLevels);
 #endif
-        current = next;
+    while (isLevelEmpty(level)) {
+        level++;
+#ifdef BOUNDARYCHECK
+    assert(level < _numLevels);
+#endif
+    }
+    return level;
+}
+
+
+template <class Pixel> ImgIdx HHPQ<Pixel>::pop() {
+#ifdef BOUNDARYCHECK
+    assert(_size > 0 && _cacheCurSize > 0);
+#endif
+    _size--;
+    ImgIdx ret = _queue[0].index;
+    if (_cacheCurSize)
+        popCache();
+    else if {
+        do {
+            if (_size <= 0)
+                return ret;
+            _lowestNonemptyLevel = findNextNonemptyLevel(_lowestNonemptyLevel);
+#ifdef BOUNDARYCHECK
+    assert(_lowestNonemptyLevel < _numLevels);
+#endif
+            sort(_lowestNonemptyLevel);
+        } while (isLevelEmpty(_lowestNonemptyLevel));
+        _lowestUnsortedLevel = _lowestNonemptyLevel + 1;
+        _queue[0] = front(_lowestNonemptyLevel);
+        popFromQuadHeapQueue(_lowestNonemptyLevel);
     }
 
-    template <class Pixel> ImgIdx HHPQ<Pixel>::pop() {
-        if (_cacheCurSize)
-            popCache();
-        else {
-            while (isEmptyAfterSort(_lowestNonemptyLevel))
-                _lowestNonemptyLevel++;
-            _queue[0] = top(_lowestNonemptyLevel);
-            popFromQuadHeapQueue(_lowestNonemptyLevel);
-        }
+    return ret;
+}
 
-        return ret;
-    }
+template <class Pixel> void HHPQ<Pixel>::popCache() {
+    _cacheCurSize--;
+    for (int i = 0; i < _cacheCurSize; i++)
+        _queue[i] = _queue[i + 1];
+}
 
-    template <class Pixel> void HHPQ<Pixel>::popCache() {
-        for (int i = 0; i < _cacheCurSize - 1; i++)
-            _queue[i] = _queue[i + 1];
-        _cacheCurSize--;
-    }
-
-    template class HHPQ<_uint8>;
-    template class HHPQ<_uint16>;
-    template class HHPQ<_uint32>;
-    template class HHPQ<_uint64>;
+template class HHPQ<_uint8>;
+template class HHPQ<_uint16>;
+template class HHPQ<_uint32>;
+template class HHPQ<_uint64>;
