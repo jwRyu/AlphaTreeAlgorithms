@@ -1,4 +1,4 @@
-// #include "PNGcodec.hpp"
+#include "PNGcodec.hpp"
 
 #include "AlphaTree.h"
 #include "AlphaTreeConfig.h"

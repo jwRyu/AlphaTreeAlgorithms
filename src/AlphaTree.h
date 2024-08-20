@@ -133,6 +133,9 @@ template <class Pixel> class AlphaTree {
     void FloodHierarHeapQueuePar(Pixel *img, double a = 12.0, double r = 0.5, int listsize = 12);
     void FloodHierHeapQueueHisteq(Pixel *img, int listsize = 12, int a = 0);
     void Flood_Hierarqueue_par(Pixel *img, int numthreads);
+    void FloodTrieHypergraph(Pixel *img);
+
+    void printRedundantGraph(Pixel *img, bool *isRedundant, int width, int height, int connectivity);
 
     Pixel abs_diff(Pixel p, Pixel q);
     _uint8 compute_incidedge_queue(Pixel d0, Pixel d1);
@@ -174,7 +177,6 @@ template <class Pixel> class AlphaTree {
     void init_hypergraph_nodes(ImgIdx *rank);
     void set_isAvailable_hypergraph(_uint8 *isAvailable);
     _uint8 push_neighbor(Trie<TrieIdx> *queue, _uint8 *isVisited, ImgIdx *rank, ImgIdx p);
-    void FloodTrieHypergraph(Pixel *img);
     void set_isAvailable_par_hypergraph(_uint8 *isAvailable, _int8 npartition_x, _int8 npartition_y);
     void cumsum(ImgIdx *hist, ImgIdx size, ImgIdx &maxidx);
     void cumsum(ImgIdx *hist, ImgIdx size, _uint32 *histeqmap, int eqhistsize);

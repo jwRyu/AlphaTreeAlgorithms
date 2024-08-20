@@ -95,7 +95,7 @@ template <class Pixel> void HierarHeapQueue_cache<Pixel>::push(ImgIdx idx, Pixel
     }
 
     bool push2list = (queue_minlev < curthr) ? alpha < hqueue[queue_minlev]->top_alpha()
-                                             : (int)(a * log2(1 + (double)alpha)) < queue_minlev;
+                                             : (int)(a * log2(1.0 + (double)alpha)) < queue_minlev;
 
     if (push2list) {
         // spare room in the list
@@ -187,7 +187,6 @@ template <class Pixel> int HierarHeapQueue_cache<Pixel>::check_queue_level(_uint
 }
 
 template <class Pixel> void HierarHeapQueue_cache<Pixel>::pop_queue(_uint8 *isVisited) {
-
     hqueue[queue_minlev]->pop();
 
     if (!hqueue[queue_minlev]->get_cursize()) {

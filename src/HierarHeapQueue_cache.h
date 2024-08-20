@@ -14,8 +14,6 @@ template <class Pixel> class HierarHeapQueue_cache {
     ImgIdx queue_minlev;
 
     _int16 curSize_list, maxSize_list;
-    ImgIdx maxSize_queue, mask_field;
-    _int8 shamt, nbit;
     int emptytop;
 
     ImgIdx maxSize;

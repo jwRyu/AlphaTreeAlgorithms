@@ -1,8 +1,8 @@
 ImageFileName=image03.png
 LogFileName=test
 UseRandomlyGeneratedImages=1
-RandomlyGeneratedImageWidth=2000
-RandomlyGeneratedImageHeight=2000
+RandomlyGeneratedImageWidth=4
+RandomlyGeneratedImageHeight=4
 NumberOfChannels=1
 NumberOfThreads=1
 
@@ -38,9 +38,9 @@ AlphaTreeAlgorithm=FloodHierHeapQueuePar
 
 BitDepth=64
 UseTreeSizeEstimation=1
-Connectivity=8
+Connectivity=4
 NumberOfTestIterations=5
-ParameterInteger1=4
+ParameterInteger1=50
 ParameterInteger2=2
 ParameterInteger3=3
 ParameterFloat1=45.0

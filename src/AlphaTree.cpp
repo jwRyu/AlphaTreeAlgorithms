@@ -2721,6 +2721,42 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueue(Pixel *img, d
     Free(isAvailable);
 }
 
+template <class Pixel>
+void AlphaTree<Pixel>::printRedundantGraph(Pixel *img, bool *isRedundant, int width, int height, int connectivity) {
+    if (connectivity == 4) {
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
+                ImgIdx p = i * width + j;
+                ImgIdx q = p << 1;
+
+                printf("%2d ", (int)img[p]);
+                if (j < width - 1) {
+                    if (isRedundant[q])
+                        printf(" - ");
+                    else
+                        printf(" r ");
+                }
+            }
+            printf("\n");
+
+            if (i < height - 1) {
+                for (int j = 0; j < width; j++) {
+                    ImgIdx p = i * width + j;
+                    ImgIdx q = p << 1;
+
+                    {
+                        if (isRedundant[q])
+                            printf(" |    ");
+                        else
+                            printf(" r    ");
+                    }
+                }
+                printf("\n");
+            }
+        }
+    }
+}
+
 template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img, double a, double r, int listsize) {
     // TODO clear tree
     // clear();
@@ -2758,6 +2794,9 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
     pNode->set(0, (double)max_level, (double)0.0, (Pixel)max_level, (Pixel)0);
     pNode->parentidx = stackTop;
 
+    // printf("isRedundant Before\n");
+    // printRedundantGraph(img, isRedundant, width, height, connectivity);
+
     const ImgIdx p0 = 0; /*arbitrary starting point*/
     double current_level = max_level;
     ImgIdx prev_top = stackTop;
@@ -2771,6 +2810,8 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
                 queue->pop(isVisited);
                 continue;
             }
+
+            printf("visiting %d at %f\n", (int)p, current_level);
 
             queue->start_pushes();
             isVisited[p] = 1;
@@ -2791,10 +2832,10 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
                 if (left    && !isVisited[p - 1])     queue->push(p - 1, dimg[q - 1]);
                 if (top     && !isVisited[p - width]) queue->push(p - width, dimg[(p - width) << 1]);
 
-                if (bottom  && isVisited[p + width]) isRedundant[q] = true;
-                if (right   && isVisited[p + 1])     isRedundant[q + 1] = true;
-                if (left    && isVisited[p - 1])     isRedundant[q - 1] = true;
-                if (top     && isVisited[p - width]) isRedundant[(p - width) << 1] = true;
+                // if (bottom  && isVisited[p + width]) isRedundant[q] = true;
+                // if (right   && isVisited[p + 1])     isRedundant[q + 1] = true;
+                // if (left    && isVisited[p - 1])     isRedundant[q - 1] = true;
+                // if (top     && isVisited[p - width]) isRedundant[(p - width) << 1] = true;
                 // clang-format on
             } else if (connectivity == 8) {
                 const ImgIdx width4 = width << 2;
@@ -2808,6 +2849,15 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
                 if (top     && left &&  !isVisited[p - width - 1]) queue->push(p - width - 1, dimg[q - width4 - 3]); 
                 if (left    &&          !isVisited[p - 1])         queue->push(p - 1, dimg[q - 2]);
                 if (bottom  && left &&  !isVisited[p + width - 1]) queue->push(p + width - 1, dimg[q + width4 - 1]);
+
+                // if (bottom  &&          isVisited[p + width])     isRedundant[q] = true;
+                // if (bottom  && right && isVisited[p + width + 1]) isRedundant[q + 1] = true;
+                // if (right   &&          isVisited[p + 1])         isRedundant[q + 2] = true;
+                // if (top     && right && isVisited[p - width + 1]) isRedundant[q + 3] = true;
+                // if (top     &&          isVisited[p - width])     isRedundant[q - width4] = true;
+                // if (top     && left &&  isVisited[p - width - 1]) isRedundant[q - width4 - 3] = true;
+                // if (left    &&          isVisited[p - 1])         isRedundant[q - 2] = true;
+                // if (bottom  && left &&  isVisited[p + width - 1]) isRedundant[q + width4 - 1] = true;
                 // clang-format on
             } else {
                 //?
@@ -2871,6 +2921,8 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
     rootidx = stackTop;
     node[rootidx].parentidx = ROOTIDX;
 
+    // printf("isRedundant After\n");
+    // printRedundantGraph(img, isRedundant, width, height, connectivity);
     // print_tree();
 
     delete queue;
