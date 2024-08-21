@@ -2,6 +2,7 @@
 
 #include <allocator.h>
 #include <cmath>
+#include <cstdio>
 #include <cstring>
 #include <defines.h>
 
@@ -9,8 +10,9 @@ template <class Pixel>
 void HierarHeapQueue_cache<Pixel>::initHQ(ImgIdx *dhist, ImgIdx numlevels_in, ImgIdx size, double a_in, int listsize,
                                           int connectivity, double r) {
     maxSize = size;
+    _size = 0;
 
-    list = (HQentry<Pixel> *)Malloc((listsize) * sizeof(HQentry<Pixel>));
+    list = (HQentry<double> *)Malloc((listsize) * sizeof(HQentry<double>));
     maxSize_list = listsize - 1;
     curSize_list = -1;
 
@@ -24,9 +26,9 @@ void HierarHeapQueue_cache<Pixel>::initHQ(ImgIdx *dhist, ImgIdx numlevels_in, Im
     // qsizes = dhist;
     if (r >= 1) {
         thr_hqueue = curthr = numlevels;
-        hqueue = (HeapQueue_naive_quad<Pixel> **)Calloc(numlevels * sizeof(HeapQueue_naive_quad<Pixel> *));
+        hqueue = (HeapQueue_naive_quad<double> **)Calloc(numlevels * sizeof(HeapQueue_naive_quad<double> *));
         for (int level = 0; level < thr_hqueue; level++)
-            hqueue[level] = new HeapQueue_naive_quad<Pixel>(qsizes[level]);
+            hqueue[level] = new HeapQueue_naive_quad<double>(qsizes[level]);
         storage = 0;
         storage_cursize = 0;
     } else {
@@ -40,14 +42,14 @@ void HierarHeapQueue_cache<Pixel>::initHQ(ImgIdx *dhist, ImgIdx numlevels_in, Im
             }
         }
 
-        hqueue = (HeapQueue_naive_quad<Pixel> **)Calloc(numlevels * sizeof(HeapQueue_naive_quad<Pixel> *));
+        hqueue = (HeapQueue_naive_quad<double> **)Calloc(numlevels * sizeof(HeapQueue_naive_quad<double> *));
         for (int level = 0; level < thr_hqueue; level++)
-            hqueue[level] = new HeapQueue_naive_quad<Pixel>(qsizes[level]);
+            hqueue[level] = new HeapQueue_naive_quad<double>(qsizes[level]);
 
-        storage = (HQentry<Pixel> **)Calloc((numlevels - thr_hqueue) * sizeof(HQentry<Pixel> *));
+        storage = (HQentry<double> **)Calloc((numlevels - thr_hqueue) * sizeof(HQentry<double> *));
         storage -= thr_hqueue;
         for (int level = thr_hqueue; level < numlevels; level++)
-            storage[level] = (HQentry<Pixel> *)Malloc(qsizes[level] * sizeof(HQentry<Pixel>));
+            storage[level] = (HQentry<double> *)Malloc(qsizes[level] * sizeof(HQentry<double>));
     }
 }
 
@@ -75,18 +77,21 @@ template <class Pixel> HierarHeapQueue_cache<Pixel>::~HierarHeapQueue_cache() {
     }
 }
 
-template <class Pixel> void HierarHeapQueue_cache<Pixel>::push_1stitem(ImgIdx idx, Pixel alpha) {
-    list[0].pidx = idx;
-    list[0].alpha = alpha;
-    curSize_list++;
-}
-
 template <class Pixel> void HierarHeapQueue_cache<Pixel>::end_pushes(_uint8 *isVisited) {
     if (emptytop)
         pop(isVisited);
 }
 
-template <class Pixel> void HierarHeapQueue_cache<Pixel>::push(ImgIdx idx, Pixel alpha) {
+template <class Pixel> void HierarHeapQueue_cache<Pixel>::push(ImgIdx idx, double alpha) {
+    printf("HierarHeapQueue_cache::Pushing %d at %f \n", idx, (double)alpha);
+    _size++;
+    if (_size == 1) {
+        list[0].pidx = idx;
+        list[0].alpha = alpha;
+        curSize_list++;
+        return;
+    }
+
     if (emptytop && alpha < list[0].alpha) {
         emptytop = 0;
         list[0].pidx = idx;
@@ -125,7 +130,7 @@ template <class Pixel> void HierarHeapQueue_cache<Pixel>::push(ImgIdx idx, Pixel
     }
 }
 
-template <class Pixel> void HierarHeapQueue_cache<Pixel>::push_queue(ImgIdx idx, Pixel alpha) {
+template <class Pixel> void HierarHeapQueue_cache<Pixel>::push_queue(ImgIdx idx, double alpha) {
     int level = (int)(a * log2(1 + (double)alpha));
 
     if (level < queue_minlev)
@@ -141,6 +146,9 @@ template <class Pixel> void HierarHeapQueue_cache<Pixel>::push_queue(ImgIdx idx,
 }
 
 template <class Pixel> ImgIdx HierarHeapQueue_cache<Pixel>::pop(_uint8 *isVisited) {
+    if (_size == 0)
+        return -1;
+    _size--;
     ImgIdx ret = top();
     if (curSize_list == 0) {
         while (!check_queue_level(isVisited))
@@ -163,7 +171,7 @@ template <class Pixel> int HierarHeapQueue_cache<Pixel>::check_queue_level(_uint
         return hqueue[queue_minlev]->get_cursize();
     else {
         while (curthr < queue_minlev) {
-            hqueue[curthr] = new HeapQueue_naive_quad<Pixel>(qsizes[curthr]);
+            hqueue[curthr] = new HeapQueue_naive_quad<double>(qsizes[curthr]);
 
             Free(storage[curthr]);
             storage[curthr] = 0;
@@ -171,14 +179,16 @@ template <class Pixel> int HierarHeapQueue_cache<Pixel>::check_queue_level(_uint
         }
         curthr++;
 
-        hqueue[queue_minlev] = new HeapQueue_naive_quad<Pixel>(qsizes[queue_minlev]);
+        hqueue[queue_minlev] = new HeapQueue_naive_quad<double>(qsizes[queue_minlev]);
 
-        HQentry<Pixel> *store = storage[queue_minlev];
+        HQentry<double> *store = storage[queue_minlev];
         ImgIdx cur = storage_cursize[queue_minlev];
-        HeapQueue_naive_quad<Pixel> *pQ = hqueue[queue_minlev];
+        HeapQueue_naive_quad<double> *pQ = hqueue[queue_minlev];
         for (ImgIdx p = 0; p < cur; p++) {
             if (!isVisited[store[p].pidx])
                 pQ->push(store[p].pidx, store[p].alpha);
+            else
+                _size--;
         }
         Free(storage[queue_minlev]);
         storage[queue_minlev] = 0;

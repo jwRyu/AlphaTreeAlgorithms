@@ -71,7 +71,10 @@ template <class Pixel> class AlphaNode {
     ImgIdx parentidx;
     ImgIdx rootidx;
 
-    void set(ImgIdx area_in, double level, double sumPix_in, Pixel minPix_in, Pixel maxPix_in);
+    AlphaNode() = default;
+    AlphaNode(Pixel pixelVal, double alpha_, ImgIdx parentidx_ = ROOTIDX);
+
+    void set(ImgIdx area_in, double alpha, double sumPix_in, Pixel minPix_in, Pixel maxPix_in);
     void add(AlphaNode *q);
     void add(Pixel pix_val);
     void copy(AlphaNode *q);
@@ -119,7 +122,10 @@ template <class Pixel> class AlphaTree {
 
     void AreaFilter(double *outimg, double area);
 
-    void print_tree();
+    void printTree() const;
+    void printGraph(_uint8 *isVisited, _uint8 *edge) const;
+    void printImage(Pixel *img);
+    void printParentAry();
 
   private:
     void FloodHierarQueueNoCache(Pixel *img, int tse);

@@ -1,8 +1,8 @@
 ImageFileName=image03.png
 LogFileName=test
 UseRandomlyGeneratedImages=1
-RandomlyGeneratedImageWidth=4
-RandomlyGeneratedImageHeight=4
+RandomlyGeneratedImageWidth=5
+RandomlyGeneratedImageHeight=5
 NumberOfChannels=1
 NumberOfThreads=1
 
@@ -40,7 +40,7 @@ BitDepth=64
 UseTreeSizeEstimation=1
 Connectivity=4
 NumberOfTestIterations=5
-ParameterInteger1=50
+ParameterInteger1=3
 ParameterInteger2=2
 ParameterInteger3=3
 ParameterFloat1=45.0

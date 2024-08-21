@@ -69,6 +69,8 @@
         "set": "cpp",
         "mutex": "cpp",
         "typeindex": "cpp",
-        "*.ipp": "cpp"
+        "*.ipp": "cpp",
+        "any": "cpp",
+        "regex": "cpp"
     }
 }

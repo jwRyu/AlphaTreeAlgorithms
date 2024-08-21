@@ -186,7 +186,8 @@ int main(int argc, char **argv) {
     printf("-----------------------------------------------------------------------------------\n");
     std::vector<double> runtimes;
 
-    srand(time(NULL));
+    // srand(time(NULL));
+    srand(0);
     for (int itr = 0; itr < nitr; itr++) {
         double tStart = 0, tEnd = INFINITY;
         if (params.UseRandomlyGeneratedImages == true) {
@@ -264,7 +265,7 @@ int main(int argc, char **argv) {
 
     //     // tree.BuildAlphaTree(img, height, width, 1, 4, FLOOD_HIERARHEAPQUEUE_CACHE, 1, 0, 0.0, 0.0, 0);
     //     tree.BuildAlphaTree(img, height, width, 1, 4, FLOOD_LADDERQUEUE, 1, 0, 0.0, 0.0, 32);
-    //     // tree.print_tree();
+    //     // tree.printTree();
 
     //     return 0;
     // }
