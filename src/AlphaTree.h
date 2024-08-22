@@ -69,7 +69,7 @@ template <class Pixel> class AlphaNode {
     Pixel minPix = std::numeric_limits<Pixel>::max();
     Pixel maxPix = std::numeric_limits<Pixel>::min();
     ImgIdx parentidx = ROOTIDX;
-    ImgIdx rootidx = ROOTIDX;
+    ImgIdx _rootIdx = ROOTIDX;
 
     AlphaNode() = default;
     AlphaNode(Pixel pixelVal, double alpha_, ImgIdx parentidx_ = ROOTIDX);
@@ -90,27 +90,27 @@ template <class Pixel> class RankItem {
     ImgIdx dimgidx;
 
     void operator=(const RankItem &item);
-    ImgIdx get_pidx0(ImgIdx connectivity = 4);
-    ImgIdx get_pidx1(ImgIdx width, ImgIdx connectivity = 4);
+    ImgIdx get_pidx0(ImgIdx _connectivity = 4);
+    ImgIdx get_pidx1(ImgIdx _width, ImgIdx _connectivity = 4);
 };
 
 template <class Pixel> class AlphaTree {
   public:
-    ImgIdx maxSize = 0;
-    ImgIdx curSize = 0;
-    ImgIdx height = 0;
-    ImgIdx width = 0;
-    ImgIdx channel = 0;
-    ImgIdx connectivity = 0;
+    ImgIdx _maxSize = 0;
+    ImgIdx _curSize = 0;
+    ImgIdx _height = 0;
+    ImgIdx _width = 0;
+    ImgIdx _channel = 0;
+    ImgIdx _connectivity = 0;
     AlphaNode<Pixel> *node = nullptr;
     AlphaNode<Pixel> *node_in = nullptr;
-    ImgIdx *parentAry = nullptr;
+    ImgIdx *_parentAry = nullptr;
     ImgIdx num_node = 0;
     ImgIdx num_node_in = 0;
-    ImgIdx rootidx = ROOTIDX;
+    ImgIdx _rootIdx = ROOTIDX;
     double nrmsd = 0.0;
 
-    AlphaTree() : maxSize(0), curSize(0), node(0), parentAry(0) {}
+    AlphaTree() : _maxSize(0), _curSize(0), node(0), _parentAry(0) {}
     ~AlphaTree();
     void clear();
 

@@ -5,27 +5,27 @@ template <class Pixel> AlphaTree<Pixel>::~AlphaTree() { clear(); }
 template <class Pixel>
 AlphaNode<Pixel>::AlphaNode(Pixel pixelVal, double alpha_, ImgIdx parentidx_)
     : area(1), alpha(alpha_), sumPix((double)pixelVal), minPix(pixelVal), maxPix(pixelVal), parentidx(parentidx_),
-      rootidx(ROOTIDX) {
+      _rootIdx(ROOTIDX) {
     // printf("AlphaNode<Pixel>::AlphaNode pixelVal = %d\n", (int)pixelVal);
 }
 
 template <class Pixel>
 AlphaNode<Pixel>::AlphaNode(double alpha_, ImgIdx parentidx_)
-    : area(0), alpha(alpha_), sumPix(0.0), minPix(0.0), maxPix(0.0), parentidx(parentidx_), rootidx(ROOTIDX) {}
+    : area(0), alpha(alpha_), sumPix(0.0), minPix(0.0), maxPix(0.0), parentidx(parentidx_), _rootIdx(ROOTIDX) {}
 
 template <class Pixel> void AlphaTree<Pixel>::clear() {
     if (node)
         Free(node);
     node = nullptr;
-    if (parentAry)
-        Free(parentAry);
-    parentAry = nullptr;
-    curSize = 0;
-    maxSize = 0;
-    height = 0;
-    width = 0;
-    channel = 0;
-    connectivity = 0;
+    if (_parentAry)
+        Free(_parentAry);
+    _parentAry = nullptr;
+    _curSize = 0;
+    _maxSize = 0;
+    _height = 0;
+    _width = 0;
+    _channel = 0;
+    _connectivity = 0;
 }
 
 template <class Pixel>
@@ -69,22 +69,22 @@ template <class Pixel> void AlphaNode<Pixel>::print(AlphaNode *node) {
     val = (double)this->sumPix;
 
     if (sizeof(Pixel) > 2) {
-        printf("Node idx: %d  alpha: %f area: %d, sumpix: %.0f, min-max: %d-%d  rootidx: %d  parent: %d\n",
+        printf("Node idx: %d  alpha: %f area: %d, sumpix: %.0f, min-max: %d-%d  _rootIdx: %d  parent: %d\n",
                (int)(this - node), (double)log2(this->alpha + 1), (int)this->area, (double)log2(val + 1),
-               (int)log2((double)(this->minPix + 1)), (int)log2((double)(this->maxPix + 1)), (int)this->rootidx,
+               (int)log2((double)(this->minPix + 1)), (int)log2((double)(this->maxPix + 1)), (int)this->_rootIdx,
                (int)this->parentidx);
     } else {
-        printf("Node idx: %d  alpha: %f area: %d, sumpix: %.0f, min-max: %d-%d  rootidx: %d  parent: %d\n",
+        printf("Node idx: %d  alpha: %f area: %d, sumpix: %.0f, min-max: %d-%d  _rootIdx: %d  parent: %d\n",
                (int)(this - node), (double)this->alpha, (int)this->area, (double)val, (int)this->minPix,
-               (int)this->maxPix, (int)this->rootidx, (int)this->parentidx);
+               (int)this->maxPix, (int)this->_rootIdx, (int)this->parentidx);
     }
 }
 
 template <class Pixel> void AlphaNode<Pixel>::print(AlphaNode *node, int heading) {
     printf("%d: Node idx: %d\talpha: %f\tparent: %d\n               area: %d, sumpix: %f\n               min-max: "
-           "%d-%d    rootidx: %d\n",
+           "%d-%d    _rootIdx: %d\n",
            heading, (int)(this - node), (double)this->alpha, (int)this->parentidx, (int)this->area,
-           (double)this->sumPix, (int)this->minPix, (int)this->maxPix, (int)this->rootidx);
+           (double)this->sumPix, (int)this->minPix, (int)this->maxPix, (int)this->_rootIdx);
 }
 
 template <class Pixel> void RankItem<Pixel>::operator=(const RankItem &item) {
@@ -92,22 +92,22 @@ template <class Pixel> void RankItem<Pixel>::operator=(const RankItem &item) {
     this->dimgidx = item.dimgidx;
 }
 
-template <class Pixel> ImgIdx RankItem<Pixel>::get_pidx0(ImgIdx connectivity) {
-    if (connectivity == 4)
+template <class Pixel> ImgIdx RankItem<Pixel>::get_pidx0(ImgIdx _connectivity) {
+    if (_connectivity == 4)
         return (this->dimgidx >> 1);
-    else if (connectivity == 8)
+    else if (_connectivity == 8)
         return (this->dimgidx >> 2);
     else {
         return -1;
     }
 }
 
-template <class Pixel> ImgIdx RankItem<Pixel>::get_pidx1(ImgIdx width, ImgIdx connectivity) {
-    if (connectivity == 4)
-        return (this->dimgidx >> 1) + width + (1 - width) * (this->dimgidx & 1);
-    else if (connectivity == 8) {
+template <class Pixel> ImgIdx RankItem<Pixel>::get_pidx1(ImgIdx _width, ImgIdx _connectivity) {
+    if (_connectivity == 4)
+        return (this->dimgidx >> 1) + _width + (1 - _width) * (this->dimgidx & 1);
+    else if (_connectivity == 8) {
         ImgIdx neighboridx = (this->dimgidx & 2);
-        return (this->dimgidx >> 2) + width * ((ImgIdx)(neighboridx < 2) - (ImgIdx)(neighboridx == 3)) +
+        return (this->dimgidx >> 2) + _width * ((ImgIdx)(neighboridx < 2) - (ImgIdx)(neighboridx == 3)) +
                (ImgIdx)(neighboridx > 0);
     } else {
         return -1;
@@ -118,14 +118,14 @@ template <class Pixel>
 void AlphaTree<Pixel>::BuildAlphaTree(Pixel *img, int height_in, int width_in, int channel_in, int connectivity_in,
                                       int algorithm, int numthreads, int tse, double fparam1, double fparam2,
                                       int iparam1) {
-    this->height = (ImgIdx)height_in;
-    this->width = (ImgIdx)width_in;
-    this->channel = (ImgIdx)channel_in;
-    this->connectivity = (ImgIdx)connectivity_in;
-    curSize = 0;
+    this->_height = (ImgIdx)height_in;
+    this->_width = (ImgIdx)width_in;
+    this->_channel = (ImgIdx)channel_in;
+    this->_connectivity = (ImgIdx)connectivity_in;
+    _curSize = 0;
 
-    if (connectivity != 4 && connectivity != 8) {
-        std::cout << "connectivity should be 4 or 8\n" << std::endl;
+    if (_connectivity != 4 && _connectivity != 8) {
+        std::cout << "_connectivity should be 4 or 8\n" << std::endl;
         return;
     }
 
@@ -171,12 +171,12 @@ template <class Pixel> void AlphaTree<Pixel>::AlphaFilter(double *outimg, double
     ImgIdx i, imgSize;
     AlphaNode<Pixel> *pNode;
 
-    alpha = node[rootidx].alpha * alpha;
+    alpha = node[_rootIdx].alpha * alpha;
 
-    imgSize = height * width;
+    imgSize = _height * _width;
     // val = 1;
     for (i = 0; i < imgSize; i++) {
-        pNode = parentAry ? &node[parentAry[i]] : &node[i];
+        pNode = _parentAry ? &node[_parentAry[i]] : &node[i];
         while (pNode->parentidx != -1 && pNode->alpha < alpha)
             pNode = &node[pNode->parentidx];
         outimg[i] = (double)pNode->area;
@@ -188,12 +188,12 @@ template <class Pixel> void AlphaTree<Pixel>::AreaFilter(double *outimg, double 
     ImgIdx iarea;
     AlphaNode<Pixel> *pNode;
 
-    imgSize = height * width;
+    imgSize = _height * _width;
     iarea = (ImgIdx)(area * (double)imgSize);
     iarea = _min(imgSize, _max(0, iarea));
     // val = 1;
     for (i = 0; i < imgSize; i++) {
-        pNode = parentAry ? &node[parentAry[i]] : &node[i];
+        pNode = _parentAry ? &node[_parentAry[i]] : &node[i];
         while (pNode->parentidx != -1 && pNode->area < iarea)
             pNode = &node[pNode->parentidx];
         outimg[i] = (double)pNode->alpha;
@@ -201,17 +201,17 @@ template <class Pixel> void AlphaTree<Pixel>::AreaFilter(double *outimg, double 
 }
 
 template <class Pixel> void AlphaTree<Pixel>::printTree() const {
-    for (int i = 0; i < curSize; i++)
+    for (int i = 0; i < _curSize; i++)
         node[i].print(node);
 }
 
 template <class Pixel> void AlphaTree<Pixel>::printGraph(_uint8 *isVisited, _uint8 *edge, Pixel *img) const {
     printf("Index |   Graph (Left)   |   Image (Right)\n");
     printf("------------------------------------------\n");
-    for (int i = 0; i < height - 1; i++) {
-        printf("%3d | ", i * width);
-        for (int j = 0; j < width - 1; j++) {
-            int imgIdx = i * width + j;
+    for (int i = 0; i < _height - 1; i++) {
+        printf("%3d | ", i * _width);
+        for (int j = 0; j < _width - 1; j++) {
+            int imgIdx = i * _width + j;
             int dimgIdx = imgIdx * 2 + 1;
             if (edge[dimgIdx] == 0)
                 printf("%d   ", (int)isVisited[imgIdx]);
@@ -226,16 +226,16 @@ template <class Pixel> void AlphaTree<Pixel>::printGraph(_uint8 *isVisited, _uin
             else
                 printf("%d ? ", (int)isVisited[imgIdx]);
         }
-        printf("%d   |   ", (int)isVisited[i * width + width - 1]);
+        printf("%d   |   ", (int)isVisited[i * _width + _width - 1]);
 
-        for (int j = 0; j < width; j++) {
-            int imgIdx = i * width + j;
+        for (int j = 0; j < _width; j++) {
+            int imgIdx = i * _width + j;
             printf("%2d ", (int)img[imgIdx]);
         }
         printf("\n    | ");
 
-        for (int j = 0; j < width; j++) {
-            int imgIdx = i * width + j;
+        for (int j = 0; j < _width; j++) {
+            int imgIdx = i * _width + j;
             int dimgIdx = imgIdx * 2;
             if (edge[dimgIdx] == 0)
                 printf("    ");
@@ -252,9 +252,9 @@ template <class Pixel> void AlphaTree<Pixel>::printGraph(_uint8 *isVisited, _uin
         }
         printf("|\n");
     }
-    printf("%3d | ", (height - 1) * width);
-    for (int j = 0; j < width - 1; j++) {
-        int imgIdx = (height - 1) * width + j;
+    printf("%3d | ", (_height - 1) * _width);
+    for (int j = 0; j < _width - 1; j++) {
+        int imgIdx = (_height - 1) * _width + j;
         int dimgIdx = imgIdx * 2 + 1;
         if (edge[dimgIdx] == 0)
             printf("%d   ", (int)isVisited[imgIdx]);
@@ -269,10 +269,10 @@ template <class Pixel> void AlphaTree<Pixel>::printGraph(_uint8 *isVisited, _uin
         else
             printf("%d ? ", (int)isVisited[imgIdx]);
     }
-    printf("%d   |   ", (int)isVisited[width * height - 1]);
+    printf("%d   |   ", (int)isVisited[_width * _height - 1]);
 
-    for (int j = 0; j < width; j++) {
-        int imgIdx = (height - 1) * width + j;
+    for (int j = 0; j < _width; j++) {
+        int imgIdx = (_height - 1) * _width + j;
         printf("%2d ", (int)img[imgIdx]);
     }
     printf("\n");
@@ -280,11 +280,11 @@ template <class Pixel> void AlphaTree<Pixel>::printGraph(_uint8 *isVisited, _uin
 
 template <class Pixel> void AlphaTree<Pixel>::printParentAry() const {
     printf("Parent Array\n");
-    for (int i = 0; i < height; i++) {
-        for (int j = 0; j < width; j++) {
-            int imgIdx = i * width + j;
-            if (parentAry[imgIdx] >= 0)
-                printf("%3d ", parentAry[imgIdx]);
+    for (int i = 0; i < _height; i++) {
+        for (int j = 0; j < _width; j++) {
+            int imgIdx = i * _width + j;
+            if (_parentAry[imgIdx] >= 0)
+                printf("%3d ", _parentAry[imgIdx]);
             else
                 printf("  . ");
         }
@@ -318,18 +318,18 @@ void AlphaTree<Pixel>::compute_dimg_par4(RankItem<double> *&rankitem, Pixel *img
     ImgIdx contidx, dimgidx, imgidx, i, j;
 
     contidx = imgidx = dimgidx = 0;
-    if (connectivity == 4) {
-        if (channel == 1) {
+    if (_connectivity == 4) {
+        if (_channel == 1) {
 #pragma omp parallel for schedule(guided, 1) private(imgidx, dimgidx, contidx, i, j)
-            for (i = 0; i < height; i++) {
+            for (i = 0; i < _height; i++) {
                 double d;
-                imgidx = i * width;
-                dimgidx = imgidx << (connectivity >> 2);
+                imgidx = i * _width;
+                dimgidx = imgidx << (_connectivity >> 2);
                 contidx = dimgidx - i;
-                if (i < height - 1) {
-                    for (j = 0; j < width - 1; j++) {
+                if (i < _height - 1) {
+                    for (j = 0; j < _width - 1; j++) {
                         // caclulate histogram here
-                        vals[contidx].val_ = abs_diff(img[imgidx + width], img[imgidx]);
+                        vals[contidx].val_ = abs_diff(img[imgidx + _width], img[imgidx]);
                         d = (double)(vals[contidx].val_);
                         rankitem[contidx].alpha = d;
                         rankitem[contidx++].dimgidx = dimgidx++;
@@ -340,14 +340,14 @@ void AlphaTree<Pixel>::compute_dimg_par4(RankItem<double> *&rankitem, Pixel *img
                         rankitem[contidx++].dimgidx = dimgidx++;
                         imgidx++;
                     }
-                    vals[contidx].val_ = abs_diff(img[imgidx + width], img[imgidx]);
+                    vals[contidx].val_ = abs_diff(img[imgidx + _width], img[imgidx]);
                     d = (double)(vals[contidx].val_);
                     rankitem[contidx].alpha = d;
                     rankitem[contidx++].dimgidx = dimgidx;
                     dimgidx += 2;
                     imgidx++;
                 } else {
-                    for (j = 0; j < width - 1; j++) {
+                    for (j = 0; j < _width - 1; j++) {
                         dimgidx++;
                         vals[contidx].val_ = abs_diff(img[imgidx + 1], img[imgidx]);
                         d = (double)(vals[contidx].val_);
@@ -358,23 +358,23 @@ void AlphaTree<Pixel>::compute_dimg_par4(RankItem<double> *&rankitem, Pixel *img
                 }
             }
         } else {
-            ImgIdx chstride = channel, chstride2 = channel * 2;
-            ImgIdx imgSize = height * width;
-            ImgIdx dimgsize = height * width * (connectivity >> 1);
-            double *dimg_3ch = (double *)Calloc(channel * dimgsize * sizeof(double));
-            ImgIdx linestride = width * (connectivity >> 1) - (connectivity >> 2);
+            ImgIdx chstride = _channel, chstride2 = _channel * 2;
+            ImgIdx imgSize = _height * _width;
+            ImgIdx dimgSize = _height * _width * (_connectivity >> 1);
+            double *dimg_3ch = (double *)Calloc(_channel * dimgSize * sizeof(double));
+            ImgIdx linestride = _width * (_connectivity >> 1) - (_connectivity >> 2);
 
 #pragma omp parallel for schedule(guided, 1) private(imgidx, dimgidx, i, j)
-            for (int hch = 0; hch < channel * height; hch++) {
+            for (int hch = 0; hch < _channel * _height; hch++) {
                 double d;
-                int ch = hch / height;
-                i = hch % height;
-                Pixel *pimg = img + ch * imgSize + i * width;
-                double *pdimg = dimg_3ch + ch + i * width * (connectivity >> 1) * channel;
+                int ch = hch / _height;
+                i = hch % _height;
+                Pixel *pimg = img + ch * imgSize + i * _width;
+                double *pdimg = dimg_3ch + ch + i * _width * (_connectivity >> 1) * _channel;
                 imgidx = dimgidx = 0;
-                if (i < height - 1) {
-                    for (j = 0; j < width - 1; j++) {
-                        d = (double)pimg[imgidx + width] - (double)pimg[imgidx];
+                if (i < _height - 1) {
+                    for (j = 0; j < _width - 1; j++) {
+                        d = (double)pimg[imgidx + _width] - (double)pimg[imgidx];
                         pdimg[dimgidx] = d * d;
                         dimgidx += chstride;
                         d = (double)pimg[imgidx + 1] - (double)pimg[imgidx];
@@ -382,12 +382,12 @@ void AlphaTree<Pixel>::compute_dimg_par4(RankItem<double> *&rankitem, Pixel *img
                         dimgidx += chstride;
                         imgidx++;
                     }
-                    d = (double)pimg[imgidx + width] - (double)pimg[imgidx];
+                    d = (double)pimg[imgidx + _width] - (double)pimg[imgidx];
                     pdimg[dimgidx] = d * d;
                     dimgidx += chstride2;
                     imgidx++;
                 } else {
-                    for (j = 0; j < width - 1; j++) {
+                    for (j = 0; j < _width - 1; j++) {
                         dimgidx += chstride;
                         d = (double)pimg[imgidx + 1] - (double)pimg[imgidx];
                         pdimg[dimgidx] = d * d;
@@ -398,17 +398,17 @@ void AlphaTree<Pixel>::compute_dimg_par4(RankItem<double> *&rankitem, Pixel *img
             }
 
 #pragma omp parallel for schedule(guided, 1) private(imgidx, dimgidx, contidx, i, j)
-            for (i = 0; i < height; i++) {
+            for (i = 0; i < _height; i++) {
                 double d;
-                double *pdimg = dimg_3ch + i * width * (connectivity >> 1) * channel;
+                double *pdimg = dimg_3ch + i * _width * (_connectivity >> 1) * _channel;
                 contidx = i * linestride;
-                imgidx = i * width;
+                imgidx = i * _width;
                 ImgIdx dimgidx_3 = 0;
-                dimgidx = i * width * (connectivity >> 1);
-                if (i < height - 1) {
-                    for (j = 0; j < width - 1; j++) {
+                dimgidx = i * _width * (_connectivity >> 1);
+                if (i < _height - 1) {
+                    for (j = 0; j < _width - 1; j++) {
                         d = pdimg[dimgidx_3] + pdimg[dimgidx_3 + 1] + pdimg[dimgidx_3 + 2]; // only for 3-ch
-                        rankitem[contidx].alpha = vals[contidx].val_ = sqrt(d / (double)channel);
+                        rankitem[contidx].alpha = vals[contidx].val_ = sqrt(d / (double)_channel);
                         rankitem[contidx].dimgidx = dimgidx;
                         contidx++;
 
@@ -416,7 +416,7 @@ void AlphaTree<Pixel>::compute_dimg_par4(RankItem<double> *&rankitem, Pixel *img
                         dimgidx++;
 
                         d = pdimg[dimgidx_3] + pdimg[dimgidx_3 + 1] + pdimg[dimgidx_3 + 2]; // only for 3-ch
-                        rankitem[contidx].alpha = vals[contidx].val_ = sqrt(d / (double)channel);
+                        rankitem[contidx].alpha = vals[contidx].val_ = sqrt(d / (double)_channel);
                         rankitem[contidx].dimgidx = dimgidx;
                         contidx++;
 
@@ -426,7 +426,7 @@ void AlphaTree<Pixel>::compute_dimg_par4(RankItem<double> *&rankitem, Pixel *img
                         imgidx++;
                     }
                     d = pdimg[dimgidx_3] + pdimg[dimgidx_3 + 1] + pdimg[dimgidx_3 + 2]; // only for 3-ch
-                    rankitem[contidx].alpha = vals[contidx].val_ = sqrt(d / (double)channel);
+                    rankitem[contidx].alpha = vals[contidx].val_ = sqrt(d / (double)_channel);
                     rankitem[contidx].dimgidx = dimgidx;
                     contidx++;
                     dimgidx++;
@@ -434,12 +434,12 @@ void AlphaTree<Pixel>::compute_dimg_par4(RankItem<double> *&rankitem, Pixel *img
                     dimgidx_3 += chstride2;
                     imgidx++;
                 } else {
-                    for (j = 0; j < width - 1; j++) {
+                    for (j = 0; j < _width - 1; j++) {
                         dimgidx++;
                         dimgidx_3 += chstride;
 
                         d = pdimg[dimgidx_3] + pdimg[dimgidx_3 + 1] + pdimg[dimgidx_3 + 2]; // only for 3-ch
-                        rankitem[contidx].alpha = vals[contidx].val_ = sqrt(d / (double)channel);
+                        rankitem[contidx].alpha = vals[contidx].val_ = sqrt(d / (double)_channel);
                         rankitem[contidx].dimgidx = dimgidx;
                         contidx++;
 
@@ -451,27 +451,27 @@ void AlphaTree<Pixel>::compute_dimg_par4(RankItem<double> *&rankitem, Pixel *img
             }
             Free(dimg_3ch);
         }
-    } else if (connectivity == 8) // not implemented yet
+    } else if (_connectivity == 8) // not implemented yet
     {
-        if (channel == 1) {
+        if (_channel == 1) {
 #pragma omp parallel for schedule(guided, 1) private(imgidx, dimgidx, contidx, i, j)
-            for (i = 0; i < height; i++) {
+            for (i = 0; i < _height; i++) {
                 double d;
-                imgidx = i * width;
-                dimgidx = imgidx << (connectivity >> 2);
-                contidx = dimgidx - ((connectivity == 4) ? (i) : (3 * i));
-                if (connectivity == 8 && i > 0)
-                    contidx -= width - 1;
+                imgidx = i * _width;
+                dimgidx = imgidx << (_connectivity >> 2);
+                contidx = dimgidx - ((_connectivity == 4) ? (i) : (3 * i));
+                if (_connectivity == 8 && i > 0)
+                    contidx -= _width - 1;
 
-                if (i < height - 1) {
-                    for (j = 0; j < width - 1; j++) {
+                if (i < _height - 1) {
+                    for (j = 0; j < _width - 1; j++) {
                         // caclulate histogram here
-                        vals[contidx].val_ = abs_diff(img[imgidx + width], img[imgidx]);
+                        vals[contidx].val_ = abs_diff(img[imgidx + _width], img[imgidx]);
                         d = (double)(vals[contidx].val_);
                         rankitem[contidx].alpha = d;
                         rankitem[contidx++].dimgidx = dimgidx++;
 
-                        vals[contidx].val_ = abs_diff(img[imgidx + width + 1], img[imgidx]);
+                        vals[contidx].val_ = abs_diff(img[imgidx + _width + 1], img[imgidx]);
                         d = (double)(vals[contidx].val_);
                         rankitem[contidx].alpha = d;
                         rankitem[contidx++].dimgidx = dimgidx++;
@@ -482,7 +482,7 @@ void AlphaTree<Pixel>::compute_dimg_par4(RankItem<double> *&rankitem, Pixel *img
                         rankitem[contidx++].dimgidx = dimgidx++;
 
                         if (i > 0) {
-                            vals[contidx].val_ = abs_diff(img[imgidx - width + 1], img[imgidx]);
+                            vals[contidx].val_ = abs_diff(img[imgidx - _width + 1], img[imgidx]);
                             d = (double)(vals[contidx].val_);
                             rankitem[contidx].alpha = d;
                             rankitem[contidx++].dimgidx = dimgidx;
@@ -492,21 +492,21 @@ void AlphaTree<Pixel>::compute_dimg_par4(RankItem<double> *&rankitem, Pixel *img
                         imgidx++;
                     }
 
-                    vals[contidx].val_ = abs_diff(img[imgidx + width], img[imgidx]);
+                    vals[contidx].val_ = abs_diff(img[imgidx + _width], img[imgidx]);
                     d = (double)(vals[contidx].val_);
                     rankitem[contidx].alpha = d;
                     rankitem[contidx++].dimgidx = dimgidx;
                     dimgidx += 4;
                     imgidx++;
                 } else {
-                    for (j = 0; j < width - 1; j++) {
+                    for (j = 0; j < _width - 1; j++) {
                         dimgidx += 2;
                         vals[contidx].val_ = abs_diff(img[imgidx + 1], img[imgidx]);
                         d = (double)(vals[contidx].val_);
                         rankitem[contidx].alpha = d;
                         rankitem[contidx++].dimgidx = dimgidx++;
 
-                        vals[contidx].val_ = abs_diff(img[imgidx - width + 1], img[imgidx]);
+                        vals[contidx].val_ = abs_diff(img[imgidx - _width + 1], img[imgidx]);
                         d = (double)(vals[contidx].val_);
                         rankitem[contidx].alpha = d;
                         rankitem[contidx++].dimgidx = dimgidx++;
@@ -524,18 +524,18 @@ void AlphaTree<Pixel>::compute_dimg_par4(RankItem<double> *&rankitem, Pixel *img
     ImgIdx contidx, dimgidx, imgidx, i, j;
 
     contidx = imgidx = dimgidx = 0;
-    if (connectivity == 4) {
-        if (channel == 1) {
+    if (_connectivity == 4) {
+        if (_channel == 1) {
 #pragma omp parallel for schedule(guided, 1) private(imgidx, dimgidx, contidx, i, j)
-            for (i = 0; i < height; i++) {
+            for (i = 0; i < _height; i++) {
                 double d;
-                imgidx = i * width;
-                dimgidx = imgidx << (connectivity >> 2);
+                imgidx = i * _width;
+                dimgidx = imgidx << (_connectivity >> 2);
                 contidx = dimgidx - i;
-                if (i < height - 1) {
-                    for (j = 0; j < width - 1; j++) {
+                if (i < _height - 1) {
+                    for (j = 0; j < _width - 1; j++) {
                         // caclulate histogram here
-                        vals[contidx].val_ = abs_diff(img[imgidx + width], img[imgidx]);
+                        vals[contidx].val_ = abs_diff(img[imgidx + _width], img[imgidx]);
                         d = (double)(vals[contidx].val_);
                         rankitem[contidx].alpha = d;
                         rankitem[contidx++].dimgidx = dimgidx++;
@@ -546,14 +546,14 @@ void AlphaTree<Pixel>::compute_dimg_par4(RankItem<double> *&rankitem, Pixel *img
                         rankitem[contidx++].dimgidx = dimgidx++;
                         imgidx++;
                     }
-                    vals[contidx].val_ = abs_diff(img[imgidx + width], img[imgidx]);
+                    vals[contidx].val_ = abs_diff(img[imgidx + _width], img[imgidx]);
                     d = (double)(vals[contidx].val_);
                     rankitem[contidx].alpha = d;
                     rankitem[contidx++].dimgidx = dimgidx;
                     dimgidx += 2;
                     imgidx++;
                 } else {
-                    for (j = 0; j < width - 1; j++) {
+                    for (j = 0; j < _width - 1; j++) {
                         dimgidx++;
                         vals[contidx].val_ = abs_diff(img[imgidx + 1], img[imgidx]);
                         d = (double)(vals[contidx].val_);
@@ -564,23 +564,23 @@ void AlphaTree<Pixel>::compute_dimg_par4(RankItem<double> *&rankitem, Pixel *img
                 }
             }
         } else {
-            ImgIdx chstride = channel, chstride2 = channel * 2;
-            ImgIdx imgSize = height * width;
-            ImgIdx dimgsize = height * width * (connectivity >> 1);
-            double *dimg_3ch = (double *)Calloc(channel * dimgsize * sizeof(double));
-            ImgIdx linestride = width * (connectivity >> 1) - (connectivity >> 2);
+            ImgIdx chstride = _channel, chstride2 = _channel * 2;
+            ImgIdx imgSize = _height * _width;
+            ImgIdx dimgSize = _height * _width * (_connectivity >> 1);
+            double *dimg_3ch = (double *)Calloc(_channel * dimgSize * sizeof(double));
+            ImgIdx linestride = _width * (_connectivity >> 1) - (_connectivity >> 2);
 
 #pragma omp parallel for schedule(guided, 1) private(imgidx, dimgidx, i, j)
-            for (int hch = 0; hch < channel * height; hch++) {
+            for (int hch = 0; hch < _channel * _height; hch++) {
                 double d;
-                int ch = hch / height;
-                i = hch % height;
-                Pixel *pimg = img + ch * imgSize + i * width;
-                double *pdimg = dimg_3ch + ch + i * width * (connectivity >> 1) * channel;
+                int ch = hch / _height;
+                i = hch % _height;
+                Pixel *pimg = img + ch * imgSize + i * _width;
+                double *pdimg = dimg_3ch + ch + i * _width * (_connectivity >> 1) * _channel;
                 imgidx = dimgidx = 0;
-                if (i < height - 1) {
-                    for (j = 0; j < width - 1; j++) {
-                        d = (double)pimg[imgidx + width] - (double)pimg[imgidx];
+                if (i < _height - 1) {
+                    for (j = 0; j < _width - 1; j++) {
+                        d = (double)pimg[imgidx + _width] - (double)pimg[imgidx];
                         pdimg[dimgidx] = d * d;
                         dimgidx += chstride;
                         d = (double)pimg[imgidx + 1] - (double)pimg[imgidx];
@@ -588,12 +588,12 @@ void AlphaTree<Pixel>::compute_dimg_par4(RankItem<double> *&rankitem, Pixel *img
                         dimgidx += chstride;
                         imgidx++;
                     }
-                    d = (double)pimg[imgidx + width] - (double)pimg[imgidx];
+                    d = (double)pimg[imgidx + _width] - (double)pimg[imgidx];
                     pdimg[dimgidx] = d * d;
                     dimgidx += chstride2;
                     imgidx++;
                 } else {
-                    for (j = 0; j < width - 1; j++) {
+                    for (j = 0; j < _width - 1; j++) {
                         dimgidx += chstride;
                         d = (double)pimg[imgidx + 1] - (double)pimg[imgidx];
                         pdimg[dimgidx] = d * d;
@@ -604,17 +604,17 @@ void AlphaTree<Pixel>::compute_dimg_par4(RankItem<double> *&rankitem, Pixel *img
             }
 
 #pragma omp parallel for schedule(guided, 1) private(imgidx, dimgidx, contidx, i, j)
-            for (i = 0; i < height; i++) {
+            for (i = 0; i < _height; i++) {
                 double d;
-                double *pdimg = dimg_3ch + i * width * (connectivity >> 1) * channel;
+                double *pdimg = dimg_3ch + i * _width * (_connectivity >> 1) * _channel;
                 contidx = i * linestride;
-                imgidx = i * width;
+                imgidx = i * _width;
                 ImgIdx dimgidx_3 = 0;
-                dimgidx = i * width * (connectivity >> 1);
-                if (i < height - 1) {
-                    for (j = 0; j < width - 1; j++) {
+                dimgidx = i * _width * (_connectivity >> 1);
+                if (i < _height - 1) {
+                    for (j = 0; j < _width - 1; j++) {
                         d = pdimg[dimgidx_3] + pdimg[dimgidx_3 + 1] + pdimg[dimgidx_3 + 2]; // only for 3-ch
-                        rankitem[contidx].alpha = vals[contidx].val_ = sqrt(d / (double)channel);
+                        rankitem[contidx].alpha = vals[contidx].val_ = sqrt(d / (double)_channel);
                         rankitem[contidx].dimgidx = dimgidx;
                         contidx++;
 
@@ -622,7 +622,7 @@ void AlphaTree<Pixel>::compute_dimg_par4(RankItem<double> *&rankitem, Pixel *img
                         dimgidx++;
 
                         d = pdimg[dimgidx_3] + pdimg[dimgidx_3 + 1] + pdimg[dimgidx_3 + 2]; // only for 3-ch
-                        rankitem[contidx].alpha = vals[contidx].val_ = sqrt(d / (double)channel);
+                        rankitem[contidx].alpha = vals[contidx].val_ = sqrt(d / (double)_channel);
                         rankitem[contidx].dimgidx = dimgidx;
                         contidx++;
 
@@ -632,7 +632,7 @@ void AlphaTree<Pixel>::compute_dimg_par4(RankItem<double> *&rankitem, Pixel *img
                         imgidx++;
                     }
                     d = pdimg[dimgidx_3] + pdimg[dimgidx_3 + 1] + pdimg[dimgidx_3 + 2]; // only for 3-ch
-                    rankitem[contidx].alpha = vals[contidx].val_ = sqrt(d / (double)channel);
+                    rankitem[contidx].alpha = vals[contidx].val_ = sqrt(d / (double)_channel);
                     rankitem[contidx].dimgidx = dimgidx;
                     contidx++;
                     dimgidx++;
@@ -640,12 +640,12 @@ void AlphaTree<Pixel>::compute_dimg_par4(RankItem<double> *&rankitem, Pixel *img
                     dimgidx_3 += chstride2;
                     imgidx++;
                 } else {
-                    for (j = 0; j < width - 1; j++) {
+                    for (j = 0; j < _width - 1; j++) {
                         dimgidx++;
                         dimgidx_3 += chstride;
 
                         d = pdimg[dimgidx_3] + pdimg[dimgidx_3 + 1] + pdimg[dimgidx_3 + 2]; // only for 3-ch
-                        rankitem[contidx].alpha = vals[contidx].val_ = sqrt(d / (double)channel);
+                        rankitem[contidx].alpha = vals[contidx].val_ = sqrt(d / (double)_channel);
                         rankitem[contidx].dimgidx = dimgidx;
                         contidx++;
 
@@ -657,27 +657,27 @@ void AlphaTree<Pixel>::compute_dimg_par4(RankItem<double> *&rankitem, Pixel *img
             }
             Free(dimg_3ch);
         }
-    } else if (connectivity == 8) // not implemented yet
+    } else if (_connectivity == 8) // not implemented yet
     {
-        if (channel == 1) {
+        if (_channel == 1) {
 #pragma omp parallel for schedule(guided, 1) private(imgidx, dimgidx, contidx, i, j)
-            for (i = 0; i < height; i++) {
+            for (i = 0; i < _height; i++) {
                 double d;
-                imgidx = i * width;
-                dimgidx = imgidx << (connectivity >> 2);
-                contidx = dimgidx - ((connectivity == 4) ? (i) : (3 * i));
-                if (connectivity == 8 && i > 0)
-                    contidx -= width - 1;
+                imgidx = i * _width;
+                dimgidx = imgidx << (_connectivity >> 2);
+                contidx = dimgidx - ((_connectivity == 4) ? (i) : (3 * i));
+                if (_connectivity == 8 && i > 0)
+                    contidx -= _width - 1;
 
-                if (i < height - 1) {
-                    for (j = 0; j < width - 1; j++) {
+                if (i < _height - 1) {
+                    for (j = 0; j < _width - 1; j++) {
                         // caclulate histogram here
-                        vals[contidx].val_ = abs_diff(img[imgidx + width], img[imgidx]);
+                        vals[contidx].val_ = abs_diff(img[imgidx + _width], img[imgidx]);
                         d = (double)(vals[contidx].val_);
                         rankitem[contidx].alpha = d;
                         rankitem[contidx++].dimgidx = dimgidx++;
 
-                        vals[contidx].val_ = abs_diff(img[imgidx + width + 1], img[imgidx]);
+                        vals[contidx].val_ = abs_diff(img[imgidx + _width + 1], img[imgidx]);
                         d = (double)(vals[contidx].val_);
                         rankitem[contidx].alpha = d;
                         rankitem[contidx++].dimgidx = dimgidx++;
@@ -688,7 +688,7 @@ void AlphaTree<Pixel>::compute_dimg_par4(RankItem<double> *&rankitem, Pixel *img
                         rankitem[contidx++].dimgidx = dimgidx++;
 
                         if (i > 0) {
-                            vals[contidx].val_ = abs_diff(img[imgidx - width + 1], img[imgidx]);
+                            vals[contidx].val_ = abs_diff(img[imgidx - _width + 1], img[imgidx]);
                             d = (double)(vals[contidx].val_);
                             rankitem[contidx].alpha = d;
                             rankitem[contidx++].dimgidx = dimgidx;
@@ -698,21 +698,21 @@ void AlphaTree<Pixel>::compute_dimg_par4(RankItem<double> *&rankitem, Pixel *img
                         imgidx++;
                     }
 
-                    vals[contidx].val_ = abs_diff(img[imgidx + width], img[imgidx]);
+                    vals[contidx].val_ = abs_diff(img[imgidx + _width], img[imgidx]);
                     d = (double)(vals[contidx].val_);
                     rankitem[contidx].alpha = d;
                     rankitem[contidx++].dimgidx = dimgidx;
                     dimgidx += 4;
                     imgidx++;
                 } else {
-                    for (j = 0; j < width - 1; j++) {
+                    for (j = 0; j < _width - 1; j++) {
                         dimgidx += 2;
                         vals[contidx].val_ = abs_diff(img[imgidx + 1], img[imgidx]);
                         d = (double)(vals[contidx].val_);
                         rankitem[contidx].alpha = d;
                         rankitem[contidx++].dimgidx = dimgidx++;
 
-                        vals[contidx].val_ = abs_diff(img[imgidx - width + 1], img[imgidx]);
+                        vals[contidx].val_ = abs_diff(img[imgidx - _width + 1], img[imgidx]);
                         d = (double)(vals[contidx].val_);
                         rankitem[contidx].alpha = d;
                         rankitem[contidx++].dimgidx = dimgidx++;
@@ -727,17 +727,17 @@ void AlphaTree<Pixel>::compute_dimg_par4(RankItem<double> *&rankitem, Pixel *img
 
 template <class Pixel> Pixel AlphaTree<Pixel>::compute_dimg(double *dimg, Pixel *img) {
     using Value = double;
-    ImgIdx dimgidx, imgidx, stride_w = width, i, j;
-    ImgIdx imgSize = width * height;
+    ImgIdx dimgidx, imgidx, stride_w = _width, i, j;
+    ImgIdx imgSize = _width * _height;
 
     Pixel *pimg = img;
     Pixel dmax = 0;
 
     imgidx = dimgidx = 0;
-    if (connectivity == 4) {
-        if (channel == 1) {
-            for (i = 0; i < height - 1; i++) {
-                for (j = 0; j < width - 1; j++) {
+    if (_connectivity == 4) {
+        if (_channel == 1) {
+            for (i = 0; i < _height - 1; i++) {
+                for (j = 0; j < _width - 1; j++) {
                     dimg[dimgidx] = (Value)(abs_diff(img[imgidx + stride_w], img[imgidx]));
                     dmax = _max(dmax, dimg[dimgidx]);
                     dimgidx++;
@@ -751,7 +751,7 @@ template <class Pixel> Pixel AlphaTree<Pixel>::compute_dimg(double *dimg, Pixel 
                 dimgidx += 2;
                 imgidx++;
             }
-            for (j = 0; j < width - 1; j++) {
+            for (j = 0; j < _width - 1; j++) {
                 dimgidx++;
                 dimg[dimgidx] = (Value)(abs_diff(img[imgidx + 1], img[imgidx]));
                 dmax = _max(dmax, dimg[dimgidx]);
@@ -760,14 +760,14 @@ template <class Pixel> Pixel AlphaTree<Pixel>::compute_dimg(double *dimg, Pixel 
             }
         } else {
             double d;
-            for (int ch = 0; ch < channel; ch++) {
+            for (int ch = 0; ch < _channel; ch++) {
                 imgidx = dimgidx = 0;
-                for (i = 0; i < height - 1; i++) {
-                    for (j = 0; j < width - 1; j++) {
+                for (i = 0; i < _height - 1; i++) {
+                    for (j = 0; j < _width - 1; j++) {
                         d = (double)pimg[imgidx + stride_w] - (double)pimg[imgidx];
                         if (ch == 0)
                             dimg[dimgidx] = d * d;
-                        else if (ch != channel - 1)
+                        else if (ch != _channel - 1)
                             dimg[dimgidx] += d * d;
                         else
                             dimg[dimgidx] = sqrt(dimg[dimgidx] + d * d);
@@ -777,7 +777,7 @@ template <class Pixel> Pixel AlphaTree<Pixel>::compute_dimg(double *dimg, Pixel 
                         d = (double)pimg[imgidx + 1] - (double)pimg[imgidx];
                         if (ch == 0)
                             dimg[dimgidx] = d * d;
-                        else if (ch != channel - 1)
+                        else if (ch != _channel - 1)
                             dimg[dimgidx] += d * d;
                         else
                             dimg[dimgidx] = sqrt(dimg[dimgidx] + d * d);
@@ -788,7 +788,7 @@ template <class Pixel> Pixel AlphaTree<Pixel>::compute_dimg(double *dimg, Pixel 
                     d = (double)pimg[imgidx + stride_w] - (double)pimg[imgidx];
                     if (ch == 0)
                         dimg[dimgidx] = d * d;
-                    else if (ch != channel - 1)
+                    else if (ch != _channel - 1)
                         dimg[dimgidx] += d * d;
                     else
                         dimg[dimgidx] = sqrt(dimg[dimgidx] + d * d);
@@ -796,12 +796,12 @@ template <class Pixel> Pixel AlphaTree<Pixel>::compute_dimg(double *dimg, Pixel 
                     dimgidx += 2;
                     imgidx++;
                 }
-                for (j = 0; j < width - 1; j++) {
+                for (j = 0; j < _width - 1; j++) {
                     dimgidx++;
                     d = (double)pimg[imgidx + 1] - (double)pimg[imgidx];
                     if (ch == 0)
                         dimg[dimgidx] = d * d;
-                    else if (ch != channel - 1)
+                    else if (ch != _channel - 1)
                         dimg[dimgidx] += d * d;
                     else
                         dimg[dimgidx] = sqrt(dimg[dimgidx] + d * d);
@@ -812,28 +812,28 @@ template <class Pixel> Pixel AlphaTree<Pixel>::compute_dimg(double *dimg, Pixel 
                 pimg += imgSize;
             }
         }
-    } else if (connectivity == 8) {
-        if (channel == 1) {
+    } else if (_connectivity == 8) {
+        if (_channel == 1) {
             //   -  -  3
             //   -  p  2
             //   -  0  1
             // top,middle
-            for (i = 0; i < height - 1; i++) {
-                for (j = 0; j < width - 1; j++) {
-                    dimg[dimgidx++] = (Value)(abs_diff((_int64)img[imgidx + width], (_int64)img[imgidx])); // 0
+            for (i = 0; i < _height - 1; i++) {
+                for (j = 0; j < _width - 1; j++) {
+                    dimg[dimgidx++] = (Value)(abs_diff((_int64)img[imgidx + _width], (_int64)img[imgidx])); // 0
                     dmax = _max(dmax, dimg[dimgidx - 1]);
-                    dimg[dimgidx++] = (Value)(abs_diff((_int64)img[imgidx + width + 1], (_int64)img[imgidx])); // 1
+                    dimg[dimgidx++] = (Value)(abs_diff((_int64)img[imgidx + _width + 1], (_int64)img[imgidx])); // 1
                     dmax = _max(dmax, dimg[dimgidx - 1]);
                     dimg[dimgidx++] = (Value)(abs_diff((_int64)img[imgidx + 1], (_int64)img[imgidx])); // 2
                     dmax = _max(dmax, dimg[dimgidx - 1]);
                     if (i > 0) {
-                        dimg[dimgidx] = (Value)(abs_diff((_int64)img[imgidx - width + 1], (_int64)img[imgidx])); // 3
+                        dimg[dimgidx] = (Value)(abs_diff((_int64)img[imgidx - _width + 1], (_int64)img[imgidx])); // 3
                         dmax = _max(dmax, dimg[dimgidx]);
                     }
                     dimgidx++;
                     imgidx++;
                 }
-                dimg[dimgidx] = (Value)(abs_diff((_int64)img[imgidx + width], (_int64)img[imgidx])); // 0
+                dimg[dimgidx] = (Value)(abs_diff((_int64)img[imgidx + _width], (_int64)img[imgidx])); // 0
                 dmax = _max(dmax, dimg[dimgidx]);
                 dimgidx += 4; // skip 1,2,3
                 imgidx++;
@@ -841,10 +841,10 @@ template <class Pixel> Pixel AlphaTree<Pixel>::compute_dimg(double *dimg, Pixel 
 
             // bottom
             dimgidx += 2; // skip 0,1
-            for (j = 0; j < width - 1; j++) {
+            for (j = 0; j < _width - 1; j++) {
                 dimg[dimgidx++] = (Value)(abs_diff((_int64)img[imgidx + 1], (_int64)img[imgidx])); // 2
                 dmax = _max(dmax, dimg[dimgidx - 1]);
-                dimg[dimgidx] = (Value)(abs_diff((_int64)img[imgidx - width + 1], (_int64)img[imgidx])); // 3
+                dimg[dimgidx] = (Value)(abs_diff((_int64)img[imgidx - _width + 1], (_int64)img[imgidx])); // 3
                 dmax = _max(dmax, dimg[dimgidx]);
                 dimgidx += 3;
                 imgidx++;
@@ -856,13 +856,13 @@ template <class Pixel> Pixel AlphaTree<Pixel>::compute_dimg(double *dimg, Pixel 
 }
 
 template <class Pixel> Pixel AlphaTree<Pixel>::compute_dimg1(Pixel *dimg, ImgIdx *dhist, Pixel *img) {
-    ImgIdx dimgidx, imgidx, stride_w = width, i, j;
+    ImgIdx dimgidx, imgidx, stride_w = _width, i, j;
     Pixel maxdiff = 0;
 
     imgidx = dimgidx = 0;
-    if (connectivity == 4) {
-        for (i = 0; i < height - 1; i++) {
-            for (j = 0; j < width - 1; j++) {
+    if (_connectivity == 4) {
+        for (i = 0; i < _height - 1; i++) {
+            for (j = 0; j < _width - 1; j++) {
                 dimg[dimgidx] = (Pixel)(abs((_int64)img[imgidx + stride_w] - (_int64)img[imgidx]));
                 maxdiff = _max(maxdiff, dimg[dimgidx]);
                 dhist[dimg[dimgidx++]]++;
@@ -878,38 +878,38 @@ template <class Pixel> Pixel AlphaTree<Pixel>::compute_dimg1(Pixel *dimg, ImgIdx
             dimgidx++;
             imgidx++;
         }
-        for (j = 0; j < width - 1; j++) {
+        for (j = 0; j < _width - 1; j++) {
             dimgidx++;
             dimg[dimgidx] = (Pixel)(abs((_int64)img[imgidx + 1] - (_int64)img[imgidx]));
             maxdiff = _max(maxdiff, dimg[dimgidx]);
             dhist[dimg[dimgidx++]]++;
             imgidx++;
         }
-    } else if (connectivity == 8) {
+    } else if (_connectivity == 8) {
         //   -  -  3
         //   -  p  2
         //   -  0  1
         // top,middle
-        for (i = 0; i < height - 1; i++) {
-            for (j = 0; j < width - 1; j++) {
-                dimg[dimgidx] = (Pixel)(abs((_int64)img[imgidx + width] - (_int64)img[imgidx])); // 0
+        for (i = 0; i < _height - 1; i++) {
+            for (j = 0; j < _width - 1; j++) {
+                dimg[dimgidx] = (Pixel)(abs((_int64)img[imgidx + _width] - (_int64)img[imgidx])); // 0
                 maxdiff = _max(maxdiff, dimg[dimgidx]);
                 dhist[dimg[dimgidx++]]++;
-                dimg[dimgidx] = (Pixel)(abs((_int64)img[imgidx + width + 1] - (_int64)img[imgidx])); // 1
+                dimg[dimgidx] = (Pixel)(abs((_int64)img[imgidx + _width + 1] - (_int64)img[imgidx])); // 1
                 maxdiff = _max(maxdiff, dimg[dimgidx]);
                 dhist[dimg[dimgidx++]]++;
                 dimg[dimgidx] = (Pixel)(abs((_int64)img[imgidx + 1] - (_int64)img[imgidx])); // 2
                 maxdiff = _max(maxdiff, dimg[dimgidx]);
                 dhist[dimg[dimgidx++]]++;
                 if (i > 0) {
-                    dimg[dimgidx] = (Pixel)(abs((_int64)img[imgidx - width + 1] - (_int64)img[imgidx])); // 3
+                    dimg[dimgidx] = (Pixel)(abs((_int64)img[imgidx - _width + 1] - (_int64)img[imgidx])); // 3
                     maxdiff = _max(maxdiff, dimg[dimgidx]);
                     dhist[dimg[dimgidx]]++;
                 }
                 dimgidx++;
                 imgidx++;
             }
-            dimg[dimgidx] = (Pixel)(abs((_int64)img[imgidx + width] - (_int64)img[imgidx])); // 0
+            dimg[dimgidx] = (Pixel)(abs((_int64)img[imgidx + _width] - (_int64)img[imgidx])); // 0
             maxdiff = _max(maxdiff, dimg[dimgidx]);
             dhist[dimg[dimgidx]]++;
             dimgidx += 4; // skip 1,2,3
@@ -918,11 +918,11 @@ template <class Pixel> Pixel AlphaTree<Pixel>::compute_dimg1(Pixel *dimg, ImgIdx
 
         // bottom
         dimgidx += 2; // skip 0,1
-        for (j = 0; j < width - 1; j++) {
+        for (j = 0; j < _width - 1; j++) {
             dimg[dimgidx] = (Pixel)(abs((_int64)img[imgidx + 1] - (_int64)img[imgidx])); // 2
             maxdiff = _max(maxdiff, dimg[dimgidx]);
             dhist[dimg[dimgidx++]]++;
-            dimg[dimgidx] = (Pixel)(abs((_int64)img[imgidx - width + 1] - (_int64)img[imgidx])); // 3
+            dimg[dimgidx] = (Pixel)(abs((_int64)img[imgidx - _width + 1] - (_int64)img[imgidx])); // 3
             maxdiff = _max(maxdiff, dimg[dimgidx]);
             dhist[dimg[dimgidx]]++;
             dimgidx += 3;
@@ -935,25 +935,25 @@ template <class Pixel> Pixel AlphaTree<Pixel>::compute_dimg1(Pixel *dimg, ImgIdx
 
 template <class Pixel>
 void AlphaTree<Pixel>::compute_dimg(ImgIdx &minidx, double &mindiff, Pixel *dimg, ImgIdx *dhist, Pixel *img, double a) {
-    ImgIdx dimgidx, imgidx, stride_w = width, i, j;
+    ImgIdx dimgidx, imgidx, stride_w = _width, i, j;
     int hidx;
     mindiff = (double)((Pixel)(-1));
     imgidx = dimgidx = 0;
 
-    if (connectivity == 4) {
-        for (i = 0; i < height - 1; i++) {
-            for (j = 0; j < width - 1; j++) {
+    if (_connectivity == 4) {
+        for (i = 0; i < _height - 1; i++) {
+            for (j = 0; j < _width - 1; j++) {
                 dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + stride_w], img[imgidx]));
                 if (dimg[dimgidx] < mindiff) {
                     mindiff = dimg[dimgidx];
-                    minidx = i * width + j;
+                    minidx = i * _width + j;
                 }
                 hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
                 dhist[hidx]++;
                 dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + 1], img[imgidx]));
                 if (dimg[dimgidx] < mindiff) {
                     mindiff = dimg[dimgidx];
-                    minidx = i * width + j;
+                    minidx = i * _width + j;
                 }
                 hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
                 dhist[hidx]++;
@@ -962,57 +962,57 @@ void AlphaTree<Pixel>::compute_dimg(ImgIdx &minidx, double &mindiff, Pixel *dimg
             dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + stride_w], img[imgidx]));
             if (dimg[dimgidx] < mindiff) {
                 mindiff = dimg[dimgidx];
-                minidx = i * width + j;
+                minidx = i * _width + j;
             }
             hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
             dhist[hidx]++;
             dimgidx++;
             imgidx++;
         }
-        for (j = 0; j < width - 1; j++) {
+        for (j = 0; j < _width - 1; j++) {
             dimgidx++;
             dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + 1], img[imgidx]));
             if (dimg[dimgidx] < mindiff) {
                 mindiff = dimg[dimgidx];
-                minidx = i * width + j;
+                minidx = i * _width + j;
             }
             hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
             dhist[hidx]++;
             imgidx++;
         }
-    } else if (connectivity == 8) {
+    } else if (_connectivity == 8) {
         //   -  -  3
         //   -  p  2
         //   -  0  1
         // top,middle
-        for (i = 0; i < height - 1; i++) {
-            for (j = 0; j < width - 1; j++) {
-                dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + width], img[imgidx])); // 0
+        for (i = 0; i < _height - 1; i++) {
+            for (j = 0; j < _width - 1; j++) {
+                dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + _width], img[imgidx])); // 0
                 if (dimg[dimgidx] < mindiff) {
                     mindiff = dimg[dimgidx];
-                    minidx = i * width + j;
+                    minidx = i * _width + j;
                 }
                 hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
                 dhist[hidx]++;
-                dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + width + 1], img[imgidx])); // 1
+                dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + _width + 1], img[imgidx])); // 1
                 if (dimg[dimgidx] < mindiff) {
                     mindiff = dimg[dimgidx];
-                    minidx = i * width + j;
+                    minidx = i * _width + j;
                 }
                 hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
                 dhist[hidx]++;
                 dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + 1], img[imgidx])); // 2
                 if (dimg[dimgidx] < mindiff) {
                     mindiff = dimg[dimgidx];
-                    minidx = i * width + j;
+                    minidx = i * _width + j;
                 }
                 hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
                 dhist[hidx]++;
                 if (i > 0) {
-                    dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx - width + 1], img[imgidx])); // 3
+                    dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx - _width + 1], img[imgidx])); // 3
                     if (dimg[dimgidx] < mindiff) {
                         mindiff = dimg[dimgidx];
-                        minidx = i * width + j;
+                        minidx = i * _width + j;
                     }
                     hidx = (int)(a * log2(1 + (double)dimg[dimgidx]));
                     dhist[hidx]++;
@@ -1020,10 +1020,10 @@ void AlphaTree<Pixel>::compute_dimg(ImgIdx &minidx, double &mindiff, Pixel *dimg
                 dimgidx++;
                 imgidx++;
             }
-            dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + width], img[imgidx])); // 0
+            dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + _width], img[imgidx])); // 0
             if (dimg[dimgidx] < mindiff) {
                 mindiff = dimg[dimgidx];
-                minidx = i * width + j;
+                minidx = i * _width + j;
             }
             hidx = (int)(a * log2(1 + (double)dimg[dimgidx]));
             dhist[hidx]++;
@@ -1033,18 +1033,18 @@ void AlphaTree<Pixel>::compute_dimg(ImgIdx &minidx, double &mindiff, Pixel *dimg
 
         // bottom
         dimgidx += 2; // skip 0,1
-        for (j = 0; j < width - 1; j++) {
+        for (j = 0; j < _width - 1; j++) {
             dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + 1], img[imgidx])); // 2
             if (dimg[dimgidx] < mindiff) {
                 mindiff = dimg[dimgidx];
-                minidx = i * width + j;
+                minidx = i * _width + j;
             }
             hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
             dhist[hidx]++;
-            dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx - width + 1], img[imgidx])); // 3
+            dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx - _width + 1], img[imgidx])); // 3
             if (dimg[dimgidx] < mindiff) {
                 mindiff = dimg[dimgidx];
-                minidx = i * width + j;
+                minidx = i * _width + j;
             }
             hidx = (int)(a * log2(1 + (double)dimg[dimgidx]));
             dhist[hidx]++;
@@ -1055,13 +1055,13 @@ void AlphaTree<Pixel>::compute_dimg(ImgIdx &minidx, double &mindiff, Pixel *dimg
 }
 
 template <class Pixel> void AlphaTree<Pixel>::compute_dimg(Pixel *dimg, ImgIdx *dhist, Pixel *img, double a) {
-    ImgIdx dimgidx, imgidx, stride_w = width, i, j;
+    ImgIdx dimgidx, imgidx, stride_w = _width, i, j;
     int hidx;
     imgidx = dimgidx = 0;
 
-    if (connectivity == 4) {
-        for (i = 0; i < height - 1; i++) {
-            for (j = 0; j < width - 1; j++) {
+    if (_connectivity == 4) {
+        for (i = 0; i < _height - 1; i++) {
+            for (j = 0; j < _width - 1; j++) {
                 dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + stride_w], img[imgidx]));
                 hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
                 dhist[hidx]++;
@@ -1076,38 +1076,38 @@ template <class Pixel> void AlphaTree<Pixel>::compute_dimg(Pixel *dimg, ImgIdx *
             dimgidx++;
             imgidx++;
         }
-        for (j = 0; j < width - 1; j++) {
+        for (j = 0; j < _width - 1; j++) {
             dimgidx++;
             dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + 1], img[imgidx]));
             hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
             dhist[hidx]++;
             imgidx++;
         }
-    } else if (connectivity == 8) {
+    } else if (_connectivity == 8) {
         //   -  -  3
         //   -  p  2
         //   -  0  1
         // top,middle
-        for (i = 0; i < height - 1; i++) {
-            for (j = 0; j < width - 1; j++) {
-                dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + width], img[imgidx])); // 0
+        for (i = 0; i < _height - 1; i++) {
+            for (j = 0; j < _width - 1; j++) {
+                dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + _width], img[imgidx])); // 0
                 hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
                 dhist[hidx]++;
-                dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + width + 1], img[imgidx])); // 1
+                dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + _width + 1], img[imgidx])); // 1
                 hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
                 dhist[hidx]++;
                 dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + 1], img[imgidx])); // 2
                 hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
                 dhist[hidx]++;
                 if (i > 0) {
-                    dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx - width + 1], img[imgidx])); // 3
+                    dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx - _width + 1], img[imgidx])); // 3
                     hidx = (int)(a * log2(1 + (double)dimg[dimgidx]));
                     dhist[hidx]++;
                 }
                 dimgidx++;
                 imgidx++;
             }
-            dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + width], img[imgidx])); // 0
+            dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + _width], img[imgidx])); // 0
             hidx = (int)(a * log2(1 + (double)dimg[dimgidx]));
             dhist[hidx]++;
             dimgidx += 4; // skip 1,2,3
@@ -1116,11 +1116,11 @@ template <class Pixel> void AlphaTree<Pixel>::compute_dimg(Pixel *dimg, ImgIdx *
 
         // bottom
         dimgidx += 2; // skip 0,1
-        for (j = 0; j < width - 1; j++) {
+        for (j = 0; j < _width - 1; j++) {
             dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + 1], img[imgidx])); // 2
             hidx = (int)(a * log2(1 + (double)dimg[dimgidx++]));
             dhist[hidx]++;
-            dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx - width + 1], img[imgidx])); // 3
+            dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx - _width + 1], img[imgidx])); // 3
             hidx = (int)(a * log2(1 + (double)dimg[dimgidx]));
             dhist[hidx]++;
             dimgidx += 3;
@@ -1130,13 +1130,13 @@ template <class Pixel> void AlphaTree<Pixel>::compute_dimg(Pixel *dimg, ImgIdx *
 }
 
 template <class Pixel> Pixel AlphaTree<Pixel>::compute_dimg(Pixel *dimg, ImgIdx *dhist, Pixel *img) {
-    ImgIdx dimgidx, imgidx, stride_w = width, i, j;
+    ImgIdx dimgidx, imgidx, stride_w = _width, i, j;
     Pixel dmax = 0;
 
     imgidx = dimgidx = 0;
-    if (connectivity == 4) {
-        for (i = 0; i < height - 1; i++) {
-            for (j = 0; j < width - 1; j++) {
+    if (_connectivity == 4) {
+        for (i = 0; i < _height - 1; i++) {
+            for (j = 0; j < _width - 1; j++) {
                 dimg[dimgidx] = (Pixel)(abs((_int64)img[imgidx + stride_w] - (_int64)img[imgidx]));
                 dmax = _max(dmax, dimg[dimgidx]);
                 dhist[dimg[dimgidx++]]++;
@@ -1151,38 +1151,38 @@ template <class Pixel> Pixel AlphaTree<Pixel>::compute_dimg(Pixel *dimg, ImgIdx 
             dimgidx++;
             imgidx++;
         }
-        for (j = 0; j < width - 1; j++) {
+        for (j = 0; j < _width - 1; j++) {
             dimgidx++;
             dimg[dimgidx] = (Pixel)(abs((_int64)img[imgidx + 1] - (_int64)img[imgidx]));
             dmax = _max(dmax, dimg[dimgidx]);
             dhist[dimg[dimgidx++]]++;
             imgidx++;
         }
-    } else if (connectivity == 8) {
+    } else if (_connectivity == 8) {
         //   -  -  3
         //   -  p  2
         //   -  0  1
         // top,middle
-        for (i = 0; i < height - 1; i++) {
-            for (j = 0; j < width - 1; j++) {
-                dimg[dimgidx] = (Pixel)(abs((_int64)img[imgidx + width] - (_int64)img[imgidx])); // 0
+        for (i = 0; i < _height - 1; i++) {
+            for (j = 0; j < _width - 1; j++) {
+                dimg[dimgidx] = (Pixel)(abs((_int64)img[imgidx + _width] - (_int64)img[imgidx])); // 0
                 dmax = _max(dmax, dimg[dimgidx]);
                 dhist[dimg[dimgidx++]]++;
-                dimg[dimgidx] = (Pixel)(abs((_int64)img[imgidx + width + 1] - (_int64)img[imgidx])); // 1
+                dimg[dimgidx] = (Pixel)(abs((_int64)img[imgidx + _width + 1] - (_int64)img[imgidx])); // 1
                 dmax = _max(dmax, dimg[dimgidx]);
                 dhist[dimg[dimgidx++]]++;
                 dimg[dimgidx] = (Pixel)(abs((_int64)img[imgidx + 1] - (_int64)img[imgidx])); // 2
                 dmax = _max(dmax, dimg[dimgidx]);
                 dhist[dimg[dimgidx++]]++;
                 if (i > 0) {
-                    dimg[dimgidx] = (Pixel)(abs((_int64)img[imgidx - width + 1] - (_int64)img[imgidx])); // 3
+                    dimg[dimgidx] = (Pixel)(abs((_int64)img[imgidx - _width + 1] - (_int64)img[imgidx])); // 3
                     dmax = _max(dmax, dimg[dimgidx]);
                     dhist[dimg[dimgidx]]++;
                 }
                 dimgidx++;
                 imgidx++;
             }
-            dimg[dimgidx] = (Pixel)(abs((_int64)img[imgidx + width] - (_int64)img[imgidx])); // 0
+            dimg[dimgidx] = (Pixel)(abs((_int64)img[imgidx + _width] - (_int64)img[imgidx])); // 0
             dmax = _max(dmax, dimg[dimgidx]);
             dhist[dimg[dimgidx]]++;
             dimgidx += 4; // skip 1,2,3
@@ -1191,11 +1191,11 @@ template <class Pixel> Pixel AlphaTree<Pixel>::compute_dimg(Pixel *dimg, ImgIdx 
 
         // bottom
         dimgidx += 2; // skip 0,1
-        for (j = 0; j < width - 1; j++) {
+        for (j = 0; j < _width - 1; j++) {
             dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx + 1], img[imgidx])); // 2
             dmax = _max(dmax, dimg[dimgidx]);
             dhist[dimg[dimgidx++]]++;
-            dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx - width + 1], img[imgidx])); // 3
+            dimg[dimgidx] = (Pixel)(abs_diff(img[imgidx - _width + 1], img[imgidx])); // 3
             dmax = _max(dmax, dimg[dimgidx]);
             dhist[dimg[dimgidx]]++;
             dimgidx += 3;
@@ -1206,14 +1206,14 @@ template <class Pixel> Pixel AlphaTree<Pixel>::compute_dimg(Pixel *dimg, ImgIdx 
 }
 
 template <class Pixel> double AlphaTree<Pixel>::compute_dimg(double *dimg, ImgIdx *dhist, Pixel *img) {
-    ImgIdx dimgidx, imgidx, stride_w = width, i, j;
+    ImgIdx dimgidx, imgidx, stride_w = _width, i, j;
     Pixel d;
     double dmax = 0;
 
     imgidx = dimgidx = 0;
-    if (connectivity == 4) {
-        for (i = 0; i < height - 1; i++) {
-            for (j = 0; j < width - 1; j++) {
+    if (_connectivity == 4) {
+        for (i = 0; i < _height - 1; i++) {
+            for (j = 0; j < _width - 1; j++) {
                 d = abs_diff(img[imgidx + stride_w], img[imgidx]);
                 dimg[dimgidx] = (double)d;
                 dmax = _max(dmax, dimg[dimgidx]);
@@ -1233,7 +1233,7 @@ template <class Pixel> double AlphaTree<Pixel>::compute_dimg(double *dimg, ImgId
             dimgidx += 2;
             imgidx++;
         }
-        for (j = 0; j < width - 1; j++) {
+        for (j = 0; j < _width - 1; j++) {
             dimgidx++;
             d = abs_diff(img[imgidx + 1], img[imgidx]);
             dimg[dimgidx] = (double)d;
@@ -1242,18 +1242,18 @@ template <class Pixel> double AlphaTree<Pixel>::compute_dimg(double *dimg, ImgId
             dimgidx++;
             imgidx++;
         }
-    } else if (connectivity == 8) {
+    } else if (_connectivity == 8) {
         //   -  -  3
         //   -  p  2
         //   -  0  1
         // top,middle
-        for (i = 0; i < height - 1; i++) {
-            for (j = 0; j < width - 1; j++) {
-                d = (Pixel)(abs_diff((_int64)img[imgidx + width], (_int64)img[imgidx])); // 0
+        for (i = 0; i < _height - 1; i++) {
+            for (j = 0; j < _width - 1; j++) {
+                d = (Pixel)(abs_diff((_int64)img[imgidx + _width], (_int64)img[imgidx])); // 0
                 dhist[d]++;
                 dimg[dimgidx++] = (double)d;
                 dmax = _max(dmax, dimg[dimgidx]);
-                d = (Pixel)(abs_diff((_int64)img[imgidx + width + 1], (_int64)img[imgidx])); // 1
+                d = (Pixel)(abs_diff((_int64)img[imgidx + _width + 1], (_int64)img[imgidx])); // 1
                 dhist[d]++;
                 dimg[dimgidx++] = (double)d;
                 dmax = _max(dmax, dimg[dimgidx]);
@@ -1262,7 +1262,7 @@ template <class Pixel> double AlphaTree<Pixel>::compute_dimg(double *dimg, ImgId
                 dimg[dimgidx++] = (double)d;
                 dmax = _max(dmax, dimg[dimgidx]);
                 if (i > 0) {
-                    d = (Pixel)(abs_diff((_int64)img[imgidx - width + 1], (_int64)img[imgidx])); // 3
+                    d = (Pixel)(abs_diff((_int64)img[imgidx - _width + 1], (_int64)img[imgidx])); // 3
                     dhist[d]++;
                     dimg[dimgidx] = (double)d;
                     dmax = _max(dmax, dimg[dimgidx]);
@@ -1270,7 +1270,7 @@ template <class Pixel> double AlphaTree<Pixel>::compute_dimg(double *dimg, ImgId
                 dimgidx++;
                 imgidx++;
             }
-            d = (Pixel)(abs_diff((_int64)img[imgidx + width], (_int64)img[imgidx])); // 0
+            d = (Pixel)(abs_diff((_int64)img[imgidx + _width], (_int64)img[imgidx])); // 0
             dhist[d]++;
             dimg[dimgidx] = (double)d;
             dmax = _max(dmax, dimg[dimgidx]);
@@ -1280,7 +1280,7 @@ template <class Pixel> double AlphaTree<Pixel>::compute_dimg(double *dimg, ImgId
 
         // bottom
         dimgidx += 2; // skip 0,1
-        for (j = 0; j < width - 1; j++) {
+        for (j = 0; j < _width - 1; j++) {
             d = (Pixel)(abs_diff((_int64)img[imgidx + 1], (_int64)img[imgidx])); // 3
             dhist[d]++;
             dimg[dimgidx] = (double)d;
@@ -1294,9 +1294,9 @@ template <class Pixel> double AlphaTree<Pixel>::compute_dimg(double *dimg, ImgId
 
 template <class Pixel> void AlphaTree<Pixel>::set_isAvailable(_uint8 *isAvailable) {
     _int32 i, j, k;
-    _int32 imgSize = width * height;
+    _int32 imgSize = _width * _height;
 
-    if (connectivity == 4) {
+    if (_connectivity == 4) {
         //		    Neighbour Index
         // 			       3
         // 			2    pixel    1
@@ -1310,20 +1310,20 @@ template <class Pixel> void AlphaTree<Pixel>::set_isAvailable(_uint8 *isAvailabl
         for (i = 0; i < imgSize; i++)
             isAvailable[i] = 0xff;
 
-        j = width * (height - 1);
-        for (i = 0; i < width; i++) {
+        j = _width * (_height - 1);
+        for (i = 0; i < _width; i++) {
             isAvailable[i] &= 0x07;
             isAvailable[j] &= 0x0e;
             j++;
         }
 
         j = 0;
-        k = width - 1;
-        for (i = 0; i < height; i++) {
+        k = _width - 1;
+        for (i = 0; i < _height; i++) {
             isAvailable[j] &= 0xb;
             isAvailable[k] &= 0xd;
-            j += width;
-            k += width;
+            j += _width;
+            k += _width;
         }
     } else {
         //		    Neighbour Index
@@ -1342,20 +1342,20 @@ template <class Pixel> void AlphaTree<Pixel>::set_isAvailable(_uint8 *isAvailabl
             isAvailable[i] = 0b11111111;
 
         // top and bottom row
-        for (i = 0; i < width; i++)
+        for (i = 0; i < _width; i++)
             isAvailable[i] &= 0b11000111;
 
-        for (i = width * (height - 1); i < imgSize; i++)
+        for (i = _width * (_height - 1); i < imgSize; i++)
             isAvailable[i] &= 0b01111100;
 
         // leftest and rightest column
         j = 0;
-        k = width - 1;
-        for (i = 0; i < height; i++) {
+        k = _width - 1;
+        for (i = 0; i < _height; i++) {
             isAvailable[j] &= 0b00011111;
             isAvailable[k] &= 0b11110001;
-            j += width;
-            k += width;
+            j += _width;
+            k += _width;
         }
     }
 }
@@ -1363,30 +1363,30 @@ template <class Pixel> void AlphaTree<Pixel>::set_isAvailable(_uint8 *isAvailabl
 template <class Pixel>
 void AlphaTree<Pixel>::set_isAvailable(_uint8 *isAvailable, int npartitions_hor, int npartitions_ver) {
     _int32 i, j, k;
-    ImgIdx imgSize = width * height;
-    ImgIdx wstride = width / npartitions_ver;
-    ImgIdx hstride = height / npartitions_hor;
+    ImgIdx imgSize = _width * _height;
+    ImgIdx wstride = _width / npartitions_ver;
+    ImgIdx hstride = _height / npartitions_hor;
 
     set_isAvailable(isAvailable);
 
-    if (connectivity == 4) {
+    if (_connectivity == 4) {
         // hor partitions
-        j = (hstride - 1) * width;
+        j = (hstride - 1) * _width;
         for (i = 0; i < npartitions_hor - 1; i++) {
-            k = j + width;
+            k = j + _width;
             for (; j < k; j++) {
                 isAvailable[j] &= 0xe;
-                isAvailable[j + width] &= 0x7;
+                isAvailable[j + _width] &= 0x7;
             }
 
-            j += (hstride - 1) * width;
+            j += (hstride - 1) * _width;
         }
 
         // ver partitions
 
         for (i = 0; i < npartitions_ver - 1; i++) {
             j = (i + 1) * wstride - 1;
-            for (; j < imgSize; j += width) {
+            for (; j < imgSize; j += _width) {
                 isAvailable[j] &= 0xd;
                 isAvailable[j + 1] &= 0xb;
             }
@@ -1406,7 +1406,7 @@ template <class Pixel> _uint8 AlphaTree<Pixel>::get_field(_uint8 *arr, ImgIdx id
 template <class Pixel> void AlphaTree<Pixel>::connectPix2Node(ImgIdx pidx, Pixel pix_val, ImgIdx iNode, Pixel level) {
     AlphaNode<Pixel> *pNode;
     pNode = node + iNode;
-    parentAry[pidx] = iNode;
+    _parentAry[pidx] = iNode;
     if (pNode->area) // possibly unnecessary branch..
         pNode->add(pix_val);
     else
@@ -1415,68 +1415,68 @@ template <class Pixel> void AlphaTree<Pixel>::connectPix2Node(ImgIdx pidx, Pixel
 
 template <class Pixel> void AlphaTree<Pixel>::connectPix2Node(ImgIdx pidx, Pixel pix_val, ImgIdx iNode) {
     AlphaNode<Pixel> *pNode = &node[iNode];
-    parentAry[pidx] = iNode;
+    _parentAry[pidx] = iNode;
     pNode->add(pix_val);
 }
 
 template <class Pixel> void AlphaTree<Pixel>::connectPix2Node0(ImgIdx pidx, Pixel pix_val, ImgIdx iNode, Pixel level) {
     AlphaNode<Pixel> *pNode;
     pNode = node + iNode;
-    parentAry[pidx] = iNode;
+    _parentAry[pidx] = iNode;
     pNode->set(1, level, (double)pix_val, pix_val, pix_val);
 }
 
 template <class Pixel> ImgIdx AlphaTree<Pixel>::NewAlphaNode() {
-    if (curSize == maxSize) {
+    if (_curSize == _maxSize) {
         std::cout << "Reallocating...\n";
-        maxSize = _min((1 + (connectivity >> 1)) * height * width, maxSize + (ImgIdx)(2 * height * width * 0.1));
+        _maxSize = _min((1 + (_connectivity >> 1)) * _height * _width, _maxSize + (ImgIdx)(2 * _height * _width * 0.1));
 
-        node = (AlphaNode<Pixel> *)Realloc(node, maxSize * sizeof(AlphaNode<Pixel>));
+        node = (AlphaNode<Pixel> *)Realloc(node, _maxSize * sizeof(AlphaNode<Pixel>));
     }
-    return curSize++;
+    return _curSize++;
 }
 
 template <class Pixel> ImgIdx AlphaTree<Pixel>::NewAlphaNode(Pixel level, AlphaNode<Pixel> *pCopy) {
-    AlphaNode<Pixel> *pNew = node + curSize;
+    AlphaNode<Pixel> *pNew = node + _curSize;
 
-    if (curSize == maxSize) {
+    if (_curSize == _maxSize) {
         std::cout << "Reallocating...\n";
-        maxSize = _min((1 + (connectivity >> 1)) * height * width, maxSize + (ImgIdx)(2 * height * width * 0.1));
+        _maxSize = _min((1 + (_connectivity >> 1)) * _height * _width, _maxSize + (ImgIdx)(2 * _height * _width * 0.1));
 
-        node = (AlphaNode<Pixel> *)Realloc(node, maxSize * sizeof(AlphaNode<Pixel>));
-        pNew = node + curSize;
+        node = (AlphaNode<Pixel> *)Realloc(node, _maxSize * sizeof(AlphaNode<Pixel>));
+        pNew = node + _curSize;
     }
     pNew->alpha = level;
     pNew->copy(pCopy);
-    return curSize++;
+    return _curSize++;
 }
 
 template <class Pixel> ImgIdx AlphaTree<Pixel>::NewAlphaNode1(double level, AlphaNode<Pixel> *pCopy) {
-    AlphaNode<Pixel> *pNew = node + curSize;
+    AlphaNode<Pixel> *pNew = node + _curSize;
 
-    if (curSize == maxSize) {
+    if (_curSize == _maxSize) {
         std::cout << "Reallocating...\n";
-        maxSize = _min((1 + (connectivity >> 1)) * height * width, maxSize + (ImgIdx)(2 * height * width * 0.1));
+        _maxSize = _min((1 + (_connectivity >> 1)) * _height * _width, _maxSize + (ImgIdx)(2 * _height * _width * 0.1));
 
-        node = (AlphaNode<Pixel> *)Realloc(node, maxSize * sizeof(AlphaNode<Pixel>));
-        pNew = node + curSize;
+        node = (AlphaNode<Pixel> *)Realloc(node, _maxSize * sizeof(AlphaNode<Pixel>));
+        pNew = node + _curSize;
     }
     pNew->alpha = level;
     pNew->copy(pCopy);
-    return curSize++;
+    return _curSize++;
 }
 
 template <class Pixel>
 ImgIdx AlphaTree<Pixel>::NewAlphaNode(Pixel level) // Fix it later - no need to initialize
 {
-    AlphaNode<Pixel> *pNew = node + curSize;
+    AlphaNode<Pixel> *pNew = node + _curSize;
 
-    if (curSize == maxSize) {
+    if (_curSize == _maxSize) {
         std::cout << "Reallocating...\n";
-        maxSize = _min((1 + (connectivity >> 1)) * height * width, maxSize + (ImgIdx)(height * width * 0.1));
+        _maxSize = _min((1 + (_connectivity >> 1)) * _height * _width, _maxSize + (ImgIdx)(_height * _width * 0.1));
 
-        node = (AlphaNode<Pixel> *)Realloc(node, maxSize * sizeof(AlphaNode<Pixel>));
-        pNew = node + curSize;
+        node = (AlphaNode<Pixel> *)Realloc(node, _maxSize * sizeof(AlphaNode<Pixel>));
+        pNew = node + _curSize;
     }
     pNew->alpha = level;
     pNew->minPix = (_uint8)-1;
@@ -1485,7 +1485,7 @@ ImgIdx AlphaTree<Pixel>::NewAlphaNode(Pixel level) // Fix it later - no need to 
     //		pNew->parentidx = 0;
     pNew->area = 0;
 
-    return curSize++;
+    return _curSize++;
 }
 
 template <class Pixel> _uint8 AlphaTree<Pixel>::is_visited(_uint8 *isVisited, ImgIdx p) { return isVisited[p]; }
@@ -1544,12 +1544,12 @@ template <class Pixel> void AlphaTree<Pixel>::remove_redundant_node(ImgIdx &prev
     if (node[prevTop].parentidx == stackTop && node[prevTop].area == node[stackTop].area) {
         node[prevTop].parentidx = node[stackTop].parentidx;
         stackTop = prevTop;
-        curSize--;
+        _curSize--;
     }
 }
 
 template <class Pixel> void AlphaTree<Pixel>::FloodHierarQueueNoCache(Pixel *img, int tse) {
-    if (sizeof(Pixel) > 2 || channel > 1) {
+    if (sizeof(Pixel) > 2 || _channel > 1) {
         printf("Error: Hierarchical queues do not work on >16 bits images or multispectral images\n");
         printf("Try Unionfind (algorithm code %d), flooding using Heapqueue (%d), trie queue (%d) or cached trie queue "
                "(%d) \n",
@@ -1557,33 +1557,33 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarQueueNoCache(Pixel *img
         return;
     }
 
-    ImgIdx imgSize, dimgsize, nredges, x0;
+    ImgIdx imgSize, dimgSize, nredges, x0;
     _uint64 numlevels, max_level, currentLevel;
     ImgIdx *dhist;
     ImgIdx prevTop, stackTop, iNode;
     _uint8 *isVisited, *isAvailable, isAv;
     ImgIdx p, q;
-    imgSize = width * height;
-    nredges =
-        width * (height - 1) + (width - 1) * height + ((connectivity == 8) ? ((width - 1) * (height - 1) * 2) : 0);
-    dimgsize = (connectivity >> 1) * width * height;
+    imgSize = _width * _height;
+    nredges = _width * (_height - 1) + (_width - 1) * _height +
+              ((_connectivity == 8) ? ((_width - 1) * (_height - 1) * 2) : 0);
+    dimgSize = (_connectivity >> 1) * _width * _height;
     max_level = (sizeof(Pixel) == 8) ? 0xffffffffffffffff : (_int64)((Pixel)(-1));
     numlevels = max_level + 1;
 
     Pixel *dimg;
     dhist = (ImgIdx *)Malloc((size_t)numlevels * sizeof(ImgIdx));
     memset(dhist, 0, (size_t)numlevels * sizeof(_int32));
-    dimg = (Pixel *)Malloc((size_t)dimgsize * sizeof(Pixel));
+    dimg = (Pixel *)Malloc((size_t)dimgSize * sizeof(Pixel));
     compute_dimg(dimg, dhist, img); // calculate pixel differences and make histogram
 
     // create hierarchical queue from dhist
     HierarQueue *queue = new HierarQueue(nredges + 1, dhist, numlevels); // +1 for the dummy node
-    curSize = 0;
+    _curSize = 0;
 
     if (!tse || imgSize < 10000 || sizeof(Pixel) > 1) // for small imags do not use TSE
-        maxSize = 1 + imgSize + nredges;
+        _maxSize = 1 + imgSize + nredges;
     else
-        maxSize = TreeSizeEstimation(dhist, numlevels, imgSize, nredges);
+        _maxSize = TreeSizeEstimation(dhist, numlevels, imgSize, nredges);
 
     if (dhist)
         Free(dhist);
@@ -1592,8 +1592,8 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarQueueNoCache(Pixel *img
     isAvailable = (_uint8 *)Malloc((size_t)(imgSize));
     set_isAvailable(isAvailable);
 
-    parentAry = (ImgIdx *)Malloc((size_t)imgSize * sizeof(_int32));
-    node = (AlphaNode<Pixel> *)Malloc((size_t)maxSize * sizeof(AlphaNode<Pixel>));
+    _parentAry = (ImgIdx *)Malloc((size_t)imgSize * sizeof(_int32));
+    node = (AlphaNode<Pixel> *)Malloc((size_t)_maxSize * sizeof(AlphaNode<Pixel>));
 
     stackTop = NewAlphaNode(); /*dummy root*/
     AlphaNode<Pixel> *pNode = node + stackTop;
@@ -1615,35 +1615,35 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarQueueNoCache(Pixel *img
             }
             isVisited[p] = 1;
             isAv = isAvailable[p];
-            if (connectivity == 4) {
+            if (_connectivity == 4) {
                 q = p << 1;
-                if (is_available(isAv, 0) && !isVisited[p + width])
-                    queue->push(p + width, dimg[q]);
+                if (is_available(isAv, 0) && !isVisited[p + _width])
+                    queue->push(p + _width, dimg[q]);
                 if (is_available(isAv, 1) && !isVisited[p + 1])
                     queue->push(p + 1, dimg[q + 1]);
                 if (is_available(isAv, 2) && !isVisited[p - 1])
                     queue->push(p - 1, dimg[q - 1]);
-                if (is_available(isAv, 3) && !isVisited[p - width])
-                    queue->push(p - width, dimg[q - (width << 1)]);
-            } else if (connectivity == 8) {
-                ImgIdx width4 = width << 2;
+                if (is_available(isAv, 3) && !isVisited[p - _width])
+                    queue->push(p - _width, dimg[q - (_width << 1)]);
+            } else if (_connectivity == 8) {
+                ImgIdx width4 = _width << 2;
                 q = p << 2;
-                if (is_available(isAv, 0) && !isVisited[p + width])
-                    queue->push(p + width, dimg[q]);
-                if (is_available(isAv, 1) && !isVisited[p + width + 1])
-                    queue->push(p + width + 1, dimg[q + 1]);
+                if (is_available(isAv, 0) && !isVisited[p + _width])
+                    queue->push(p + _width, dimg[q]);
+                if (is_available(isAv, 1) && !isVisited[p + _width + 1])
+                    queue->push(p + _width + 1, dimg[q + 1]);
                 if (is_available(isAv, 2) && !isVisited[p + 1])
                     queue->push(p + 1, dimg[q + 2]);
-                if (is_available(isAv, 3) && !isVisited[p - width + 1])
-                    queue->push(p - width + 1, dimg[q + 3]);
-                if (is_available(isAv, 4) && !isVisited[p - width])
-                    queue->push(p - width, dimg[q - width4]);
-                if (is_available(isAv, 5) && !isVisited[p - width - 1])
-                    queue->push(p - width - 1, dimg[q - width4 - 3]);
+                if (is_available(isAv, 3) && !isVisited[p - _width + 1])
+                    queue->push(p - _width + 1, dimg[q + 3]);
+                if (is_available(isAv, 4) && !isVisited[p - _width])
+                    queue->push(p - _width, dimg[q - width4]);
+                if (is_available(isAv, 5) && !isVisited[p - _width - 1])
+                    queue->push(p - _width - 1, dimg[q - width4 - 3]);
                 if (is_available(isAv, 6) && !isVisited[p - 1])
                     queue->push(p - 1, dimg[q - 2]);
-                if (is_available(isAv, 7) && !isVisited[p + width - 1])
-                    queue->push(p + width - 1, dimg[q + width4 - 1]);
+                if (is_available(isAv, 7) && !isVisited[p + _width - 1])
+                    queue->push(p + _width - 1, dimg[q + width4 - 1]);
             } else {
                 //?
             }
@@ -1658,17 +1658,17 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarQueueNoCache(Pixel *img
                     iNode = NewAlphaNode();
                     node[iNode].set(1, currentLevel, (double)pix_val, pix_val, pix_val);
                     node[iNode].parentidx = stackTop;
-                    node[iNode].rootidx = ROOTIDX;
+                    node[iNode]._rootIdx = ROOTIDX;
                     stackTop = iNode;
                 }
                 if (currentLevel) {
                     iNode = NewAlphaNode(0, node + stackTop);
                     node[iNode].parentidx = stackTop;
-                    node[iNode].rootidx = ROOTIDX;
-                    parentAry[p] = iNode;
+                    node[iNode]._rootIdx = ROOTIDX;
+                    _parentAry[p] = iNode;
                     prevTop = iNode;
                 } else
-                    parentAry[p] = stackTop;
+                    _parentAry[p] = stackTop;
             } else {
                 queue->find_minlev();
 
@@ -1678,8 +1678,8 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarQueueNoCache(Pixel *img
                     node[iNode].set(1, 0, (double)pix_val, pix_val, pix_val);
                     node[stackTop].add(node + iNode);
                     node[iNode].parentidx = stackTop;
-                    node[iNode].rootidx = ROOTIDX;
-                    parentAry[p] = iNode;
+                    node[iNode]._rootIdx = ROOTIDX;
+                    _parentAry[p] = iNode;
                 } else
                     connectPix2Node(p, img[p], stackTop);
             }
@@ -1693,7 +1693,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarQueueNoCache(Pixel *img
         {
             iNode = NewAlphaNode(queue->min_level, node + stackTop);
             node[iNode].parentidx = node[stackTop].parentidx;
-            node[iNode].rootidx = ROOTIDX;
+            node[iNode]._rootIdx = ROOTIDX;
             node[stackTop].parentidx = iNode;
         } else // go to existing node
         {
@@ -1709,8 +1709,8 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarQueueNoCache(Pixel *img
         stackTop = iNode;
         currentLevel = (_uint64)node[stackTop].alpha;
     }
-    rootidx = (node[stackTop].area == imgSize) ? stackTop : iNode; // remove redundant root
-    node[rootidx].parentidx = ROOTIDX;
+    _rootIdx = (node[stackTop].area == imgSize) ? stackTop : iNode; // remove redundant root
+    node[_rootIdx].parentidx = ROOTIDX;
 
     delete queue;
     Free(dimg);
@@ -1721,44 +1721,44 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarQueueNoCache(Pixel *img
 template <class Pixel> void AlphaTree<Pixel>::FloodHeapQueueNoCache(Pixel *img) {
     HeapQueue<double> *queue;
 
-    ImgIdx imgSize, dimgsize, nredges, x0;
+    ImgIdx imgSize, dimgSize, nredges, x0;
     _uint64 numlevels, max_level;
     ImgIdx *dhist;
     ImgIdx stackTop, prevTop, iNode;
     _uint8 *isVisited, *isAvailable, isAv;
     ImgIdx p, q;
-    imgSize = width * height;
-    nredges =
-        width * (height - 1) + (width - 1) * height + ((connectivity == 8) ? ((width - 1) * (height - 1) * 2) : 0);
-    dimgsize = (connectivity >> 1) * width * height;
+    imgSize = _width * _height;
+    nredges = _width * (_height - 1) + (_width - 1) * _height +
+              ((_connectivity == 8) ? ((_width - 1) * (_height - 1) * 2) : 0);
+    dimgSize = (_connectivity >> 1) * _width * _height;
     max_level = (Pixel)(-1);
     numlevels = max_level + 1;
     double currentLevel;
     double *dimg;
 
-    dimg = (double *)Malloc((size_t)dimgsize * sizeof(double));
+    dimg = (double *)Malloc((size_t)dimgSize * sizeof(double));
 
-    if (sizeof(Pixel) == 1 && channel == 1) {
+    if (sizeof(Pixel) == 1 && _channel == 1) {
         dhist = (ImgIdx *)Calloc(numlevels * sizeof(ImgIdx));
         compute_dimg(dimg, dhist, img); // calculate pixel differences and make histogram
-        maxSize = TreeSizeEstimation(dhist, numlevels, imgSize, nredges);
+        _maxSize = TreeSizeEstimation(dhist, numlevels, imgSize, nredges);
     } else {
         dhist = 0;
         compute_dimg(dimg, img);
-        maxSize = 1 + imgSize + nredges;
+        _maxSize = 1 + imgSize + nredges;
     }
 
     // create heap-based priority queue
     queue = new HeapQueue<double>(nredges);
-    curSize = 0;
+    _curSize = 0;
 
     if (dhist)
         Free(dhist);
     isVisited = (_uint8 *)Calloc((size_t)((imgSize)));
     isAvailable = (_uint8 *)Malloc((size_t)(imgSize));
     set_isAvailable(isAvailable);
-    parentAry = (ImgIdx *)Malloc((size_t)imgSize * sizeof(_int32));
-    node = (AlphaNode<Pixel> *)Malloc((size_t)maxSize * sizeof(AlphaNode<Pixel>));
+    _parentAry = (ImgIdx *)Malloc((size_t)imgSize * sizeof(_int32));
+    node = (AlphaNode<Pixel> *)Malloc((size_t)_maxSize * sizeof(AlphaNode<Pixel>));
 
     x0 = 0; /*arbitrary starting point*/
     currentLevel = DBL_MAX;
@@ -1781,35 +1781,35 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHeapQueueNoCache(Pixel *img) 
             isVisited[p] = 1;
 
             isAv = isAvailable[p];
-            if (connectivity == 4) {
+            if (_connectivity == 4) {
                 q = p << 1;
-                if (is_available(isAv, 0) && !isVisited[p + width])
-                    queue->push(p + width, dimg[q]);
+                if (is_available(isAv, 0) && !isVisited[p + _width])
+                    queue->push(p + _width, dimg[q]);
                 if (is_available(isAv, 1) && !isVisited[p + 1])
                     queue->push(p + 1, dimg[q + 1]);
                 if (is_available(isAv, 2) && !isVisited[p - 1])
                     queue->push(p - 1, dimg[q - 1]);
-                if (is_available(isAv, 3) && !isVisited[p - width])
-                    queue->push(p - width, dimg[q - (width << 1)]);
-            } else if (connectivity == 8) {
-                ImgIdx width4 = width << 2;
+                if (is_available(isAv, 3) && !isVisited[p - _width])
+                    queue->push(p - _width, dimg[q - (_width << 1)]);
+            } else if (_connectivity == 8) {
+                ImgIdx width4 = _width << 2;
                 q = p << 2;
-                if (is_available(isAv, 0) && !isVisited[p + width])
-                    queue->push(p + width, dimg[q]);
-                if (is_available(isAv, 1) && !isVisited[p + width + 1])
-                    queue->push(p + width + 1, dimg[q + 1]);
+                if (is_available(isAv, 0) && !isVisited[p + _width])
+                    queue->push(p + _width, dimg[q]);
+                if (is_available(isAv, 1) && !isVisited[p + _width + 1])
+                    queue->push(p + _width + 1, dimg[q + 1]);
                 if (is_available(isAv, 2) && !isVisited[p + 1])
                     queue->push(p + 1, dimg[q + 2]);
-                if (is_available(isAv, 3) && !isVisited[p - width + 1])
-                    queue->push(p - width + 1, dimg[q + 3]);
-                if (is_available(isAv, 4) && !isVisited[p - width])
-                    queue->push(p - width, dimg[q - width4]);
-                if (is_available(isAv, 5) && !isVisited[p - width - 1])
-                    queue->push(p - width - 1, dimg[q - width4 - 3]);
+                if (is_available(isAv, 3) && !isVisited[p - _width + 1])
+                    queue->push(p - _width + 1, dimg[q + 3]);
+                if (is_available(isAv, 4) && !isVisited[p - _width])
+                    queue->push(p - _width, dimg[q - width4]);
+                if (is_available(isAv, 5) && !isVisited[p - _width - 1])
+                    queue->push(p - _width - 1, dimg[q - width4 - 3]);
                 if (is_available(isAv, 6) && !isVisited[p - 1])
                     queue->push(p - 1, dimg[q - 2]);
-                if (is_available(isAv, 7) && !isVisited[p + width - 1])
-                    queue->push(p + width - 1, dimg[q + width4 - 1]);
+                if (is_available(isAv, 7) && !isVisited[p + _width - 1])
+                    queue->push(p + _width - 1, dimg[q + width4 - 1]);
             } else {
                 //?
             }
@@ -1821,16 +1821,16 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHeapQueueNoCache(Pixel *img) 
                 iNode = NewAlphaNode();
                 node[iNode].set(1, currentLevel, (double)pix_val, pix_val, pix_val);
                 node[iNode].parentidx = stackTop;
-                node[iNode].rootidx = ROOTIDX;
+                node[iNode]._rootIdx = ROOTIDX;
                 stackTop = iNode;
                 if (currentLevel) {
                     iNode = NewAlphaNode(0, node + stackTop);
                     node[iNode].parentidx = stackTop;
-                    node[iNode].rootidx = ROOTIDX;
-                    parentAry[p] = iNode;
+                    node[iNode]._rootIdx = ROOTIDX;
+                    _parentAry[p] = iNode;
                     prevTop = iNode;
                 } else
-                    parentAry[p] = stackTop;
+                    _parentAry[p] = stackTop;
             } else {
                 if (currentLevel) {
                     Pixel pix_val = img[p];
@@ -1838,8 +1838,8 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHeapQueueNoCache(Pixel *img) 
                     node[iNode].set(1, 0, (double)pix_val, pix_val, pix_val);
                     node[stackTop].add(node + iNode);
                     node[iNode].parentidx = stackTop;
-                    node[iNode].rootidx = ROOTIDX;
-                    parentAry[p] = iNode;
+                    node[iNode]._rootIdx = ROOTIDX;
+                    _parentAry[p] = iNode;
                 } else
                     connectPix2Node(p, img[p], stackTop);
                 if (node[stackTop].area == imgSize)
@@ -1856,7 +1856,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHeapQueueNoCache(Pixel *img) 
         if (queue->get_minlev() < node[iNode].alpha) {
             iNode = NewAlphaNode1(queue->get_minlev(), node + stackTop);
             node[iNode].parentidx = node[stackTop].parentidx;
-            node[iNode].rootidx = ROOTIDX;
+            node[iNode]._rootIdx = ROOTIDX;
             node[stackTop].parentidx = iNode;
         } else
             node[iNode].add(node + stackTop);
@@ -1879,44 +1879,44 @@ FLOOD_END:
 template <class Pixel> void AlphaTree<Pixel>::FloodHeapQueueNaiveNoCache(Pixel *img) {
     HeapQueue_naive<double> *queue;
 
-    ImgIdx imgSize, dimgsize, nredges, x0;
+    ImgIdx imgSize, dimgSize, nredges, x0;
     _uint64 numlevels, max_level;
     ImgIdx *dhist;
     ImgIdx stackTop, prevTop, iNode;
     _uint8 *isVisited, *isAvailable, isAv;
     ImgIdx p, q;
-    imgSize = width * height;
-    nredges =
-        width * (height - 1) + (width - 1) * height + ((connectivity == 8) ? ((width - 1) * (height - 1) * 2) : 0);
-    dimgsize = (connectivity >> 1) * width * height;
+    imgSize = _width * _height;
+    nredges = _width * (_height - 1) + (_width - 1) * _height +
+              ((_connectivity == 8) ? ((_width - 1) * (_height - 1) * 2) : 0);
+    dimgSize = (_connectivity >> 1) * _width * _height;
     max_level = (Pixel)(-1);
     numlevels = max_level + 1;
     double currentLevel;
     double *dimg;
 
-    dimg = (double *)Malloc((size_t)dimgsize * sizeof(double));
+    dimg = (double *)Malloc((size_t)dimgSize * sizeof(double));
 
-    if (sizeof(Pixel) == 1 && channel == 1) {
+    if (sizeof(Pixel) == 1 && _channel == 1) {
         dhist = (ImgIdx *)Calloc(numlevels * sizeof(ImgIdx));
         compute_dimg(dimg, dhist, img); // calculate pixel differences and make histogram
-        maxSize = TreeSizeEstimation(dhist, numlevels, imgSize, nredges);
+        _maxSize = TreeSizeEstimation(dhist, numlevels, imgSize, nredges);
     } else {
         dhist = 0;
         compute_dimg(dimg, img);
-        maxSize = 1 + imgSize + nredges;
+        _maxSize = 1 + imgSize + nredges;
     }
 
     // create heap-based priority queue
     queue = new HeapQueue_naive<double>(nredges + 1);
-    curSize = 0;
+    _curSize = 0;
 
     if (dhist)
         Free(dhist);
     isVisited = (_uint8 *)Calloc((size_t)((imgSize)));
     isAvailable = (_uint8 *)Malloc((size_t)(imgSize));
     set_isAvailable(isAvailable);
-    parentAry = (ImgIdx *)Malloc((size_t)imgSize * sizeof(_int32));
-    node = (AlphaNode<Pixel> *)Malloc((size_t)maxSize * sizeof(AlphaNode<Pixel>));
+    _parentAry = (ImgIdx *)Malloc((size_t)imgSize * sizeof(_int32));
+    node = (AlphaNode<Pixel> *)Malloc((size_t)_maxSize * sizeof(AlphaNode<Pixel>));
 
     x0 = 0; /*arbitrary starting point*/
     currentLevel = DBL_MAX;
@@ -1939,35 +1939,35 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHeapQueueNaiveNoCache(Pixel *
             isVisited[p] = 1;
 
             isAv = isAvailable[p];
-            if (connectivity == 4) {
+            if (_connectivity == 4) {
                 q = p << 1;
-                if (is_available(isAv, 0) && !isVisited[p + width])
-                    queue->push(p + width, dimg[q]);
+                if (is_available(isAv, 0) && !isVisited[p + _width])
+                    queue->push(p + _width, dimg[q]);
                 if (is_available(isAv, 1) && !isVisited[p + 1])
                     queue->push(p + 1, dimg[q + 1]);
                 if (is_available(isAv, 2) && !isVisited[p - 1])
                     queue->push(p - 1, dimg[q - 1]);
-                if (is_available(isAv, 3) && !isVisited[p - width])
-                    queue->push(p - width, dimg[q - (width << 1)]);
-            } else if (connectivity == 8) {
-                ImgIdx width4 = width << 2;
+                if (is_available(isAv, 3) && !isVisited[p - _width])
+                    queue->push(p - _width, dimg[q - (_width << 1)]);
+            } else if (_connectivity == 8) {
+                ImgIdx width4 = _width << 2;
                 q = p << 2;
-                if (is_available(isAv, 0) && !isVisited[p + width])
-                    queue->push(p + width, dimg[q]);
-                if (is_available(isAv, 1) && !isVisited[p + width + 1])
-                    queue->push(p + width + 1, dimg[q + 1]);
+                if (is_available(isAv, 0) && !isVisited[p + _width])
+                    queue->push(p + _width, dimg[q]);
+                if (is_available(isAv, 1) && !isVisited[p + _width + 1])
+                    queue->push(p + _width + 1, dimg[q + 1]);
                 if (is_available(isAv, 2) && !isVisited[p + 1])
                     queue->push(p + 1, dimg[q + 2]);
-                if (is_available(isAv, 3) && !isVisited[p - width + 1])
-                    queue->push(p - width + 1, dimg[q + 3]);
-                if (is_available(isAv, 4) && !isVisited[p - width])
-                    queue->push(p - width, dimg[q - width4]);
-                if (is_available(isAv, 5) && !isVisited[p - width - 1])
-                    queue->push(p - width - 1, dimg[q - width4 - 3]);
+                if (is_available(isAv, 3) && !isVisited[p - _width + 1])
+                    queue->push(p - _width + 1, dimg[q + 3]);
+                if (is_available(isAv, 4) && !isVisited[p - _width])
+                    queue->push(p - _width, dimg[q - width4]);
+                if (is_available(isAv, 5) && !isVisited[p - _width - 1])
+                    queue->push(p - _width - 1, dimg[q - width4 - 3]);
                 if (is_available(isAv, 6) && !isVisited[p - 1])
                     queue->push(p - 1, dimg[q - 2]);
-                if (is_available(isAv, 7) && !isVisited[p + width - 1])
-                    queue->push(p + width - 1, dimg[q + width4 - 1]);
+                if (is_available(isAv, 7) && !isVisited[p + _width - 1])
+                    queue->push(p + _width - 1, dimg[q + width4 - 1]);
             } else {
                 //?
             }
@@ -1978,16 +1978,16 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHeapQueueNaiveNoCache(Pixel *
                 iNode = NewAlphaNode();
                 node[iNode].set(1, currentLevel, (double)pix_val, pix_val, pix_val);
                 node[iNode].parentidx = stackTop;
-                node[iNode].rootidx = ROOTIDX;
+                node[iNode]._rootIdx = ROOTIDX;
                 stackTop = iNode;
                 if (currentLevel) {
                     iNode = NewAlphaNode(0, node + stackTop);
                     node[iNode].parentidx = stackTop;
-                    node[iNode].rootidx = ROOTIDX;
-                    parentAry[p] = iNode;
+                    node[iNode]._rootIdx = ROOTIDX;
+                    _parentAry[p] = iNode;
                     prevTop = iNode;
                 } else
-                    parentAry[p] = stackTop;
+                    _parentAry[p] = stackTop;
             } else {
                 if (currentLevel) {
                     Pixel pix_val = img[p];
@@ -1995,8 +1995,8 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHeapQueueNaiveNoCache(Pixel *
                     node[iNode].set(1, 0, (double)pix_val, pix_val, pix_val);
                     node[stackTop].add(node + iNode);
                     node[iNode].parentidx = stackTop;
-                    node[iNode].rootidx = ROOTIDX;
-                    parentAry[p] = iNode;
+                    node[iNode]._rootIdx = ROOTIDX;
+                    _parentAry[p] = iNode;
                 } else
                     connectPix2Node(p, img[p], stackTop);
                 if (node[stackTop].area == imgSize)
@@ -2013,7 +2013,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHeapQueueNaiveNoCache(Pixel *
         if (queue->get_minlev() < node[iNode].alpha) {
             iNode = NewAlphaNode1(queue->get_minlev(), node + stackTop);
             node[iNode].parentidx = node[stackTop].parentidx;
-            node[iNode].rootidx = ROOTIDX;
+            node[iNode]._rootIdx = ROOTIDX;
             node[stackTop].parentidx = iNode;
         } else
             node[iNode].add(node + stackTop);
@@ -2036,44 +2036,44 @@ FLOOD_END:
 template <class Pixel> void AlphaTree<Pixel>::FloodHeapQueue(Pixel *img) {
     Cache_Quad_Heapqueue<double> *queue;
 
-    ImgIdx imgSize, dimgsize, nredges, x0;
+    ImgIdx imgSize, dimgSize, nredges, x0;
     _uint64 numlevels, max_level;
     ImgIdx *dhist;
     ImgIdx stackTop, prevTop, iNode;
     _uint8 *isVisited, *isAvailable, isAv;
     ImgIdx p, q;
-    imgSize = width * height;
-    nredges =
-        width * (height - 1) + (width - 1) * height + ((connectivity == 8) ? ((width - 1) * (height - 1) * 2) : 0);
-    dimgsize = (connectivity >> 1) * width * height;
+    imgSize = _width * _height;
+    nredges = _width * (_height - 1) + (_width - 1) * _height +
+              ((_connectivity == 8) ? ((_width - 1) * (_height - 1) * 2) : 0);
+    dimgSize = (_connectivity >> 1) * _width * _height;
     max_level = (Pixel)(-1);
     numlevels = max_level + 1;
     double currentLevel;
     double *dimg;
 
-    dimg = (double *)Malloc((size_t)dimgsize * sizeof(double));
+    dimg = (double *)Malloc((size_t)dimgSize * sizeof(double));
 
-    if (sizeof(Pixel) == 1 && channel == 1) {
+    if (sizeof(Pixel) == 1 && _channel == 1) {
         dhist = (ImgIdx *)Calloc(numlevels * sizeof(ImgIdx));
         compute_dimg(dimg, dhist, img); // calculate pixel differences and make histogram
-        maxSize = TreeSizeEstimation(dhist, numlevels, imgSize, nredges);
+        _maxSize = TreeSizeEstimation(dhist, numlevels, imgSize, nredges);
     } else {
         dhist = 0;
         compute_dimg(dimg, img);
-        maxSize = 1 + imgSize + nredges;
+        _maxSize = 1 + imgSize + nredges;
     }
 
     // create heap-based priority queue
     queue = new Cache_Quad_Heapqueue<double>(nredges);
-    curSize = 0;
+    _curSize = 0;
 
     if (dhist)
         Free(dhist);
     isVisited = (_uint8 *)Calloc((size_t)((imgSize)));
     isAvailable = (_uint8 *)Malloc((size_t)(imgSize));
     set_isAvailable(isAvailable);
-    parentAry = (ImgIdx *)Malloc((size_t)imgSize * sizeof(_int32));
-    node = (AlphaNode<Pixel> *)Malloc((size_t)maxSize * sizeof(AlphaNode<Pixel>));
+    _parentAry = (ImgIdx *)Malloc((size_t)imgSize * sizeof(_int32));
+    node = (AlphaNode<Pixel> *)Malloc((size_t)_maxSize * sizeof(AlphaNode<Pixel>));
 
     x0 = 0; /*arbitrary starting point*/
     currentLevel = DBL_MAX;
@@ -2096,35 +2096,35 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHeapQueue(Pixel *img) {
             isVisited[p] = 1;
 
             isAv = isAvailable[p];
-            if (connectivity == 4) {
+            if (_connectivity == 4) {
                 q = p << 1;
-                if (is_available(isAv, 0) && !isVisited[p + width])
-                    queue->push(p + width, dimg[q]);
+                if (is_available(isAv, 0) && !isVisited[p + _width])
+                    queue->push(p + _width, dimg[q]);
                 if (is_available(isAv, 1) && !isVisited[p + 1])
                     queue->push(p + 1, dimg[q + 1]);
                 if (is_available(isAv, 2) && !isVisited[p - 1])
                     queue->push(p - 1, dimg[q - 1]);
-                if (is_available(isAv, 3) && !isVisited[p - width])
-                    queue->push(p - width, dimg[q - (width << 1)]);
-            } else if (connectivity == 8) {
-                ImgIdx width4 = width << 2;
+                if (is_available(isAv, 3) && !isVisited[p - _width])
+                    queue->push(p - _width, dimg[q - (_width << 1)]);
+            } else if (_connectivity == 8) {
+                ImgIdx width4 = _width << 2;
                 q = p << 2;
-                if (is_available(isAv, 0) && !isVisited[p + width])
-                    queue->push(p + width, dimg[q]);
-                if (is_available(isAv, 1) && !isVisited[p + width + 1])
-                    queue->push(p + width + 1, dimg[q + 1]);
+                if (is_available(isAv, 0) && !isVisited[p + _width])
+                    queue->push(p + _width, dimg[q]);
+                if (is_available(isAv, 1) && !isVisited[p + _width + 1])
+                    queue->push(p + _width + 1, dimg[q + 1]);
                 if (is_available(isAv, 2) && !isVisited[p + 1])
                     queue->push(p + 1, dimg[q + 2]);
-                if (is_available(isAv, 3) && !isVisited[p - width + 1])
-                    queue->push(p - width + 1, dimg[q + 3]);
-                if (is_available(isAv, 4) && !isVisited[p - width])
-                    queue->push(p - width, dimg[q - width4]);
-                if (is_available(isAv, 5) && !isVisited[p - width - 1])
-                    queue->push(p - width - 1, dimg[q - width4 - 3]);
+                if (is_available(isAv, 3) && !isVisited[p - _width + 1])
+                    queue->push(p - _width + 1, dimg[q + 3]);
+                if (is_available(isAv, 4) && !isVisited[p - _width])
+                    queue->push(p - _width, dimg[q - width4]);
+                if (is_available(isAv, 5) && !isVisited[p - _width - 1])
+                    queue->push(p - _width - 1, dimg[q - width4 - 3]);
                 if (is_available(isAv, 6) && !isVisited[p - 1])
                     queue->push(p - 1, dimg[q - 2]);
-                if (is_available(isAv, 7) && !isVisited[p + width - 1])
-                    queue->push(p + width - 1, dimg[q + width4 - 1]);
+                if (is_available(isAv, 7) && !isVisited[p + _width - 1])
+                    queue->push(p + _width - 1, dimg[q + width4 - 1]);
             } else {
                 //?
             }
@@ -2137,16 +2137,16 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHeapQueue(Pixel *img) {
                 iNode = NewAlphaNode();
                 node[iNode].set(1, currentLevel, (double)pix_val, pix_val, pix_val);
                 node[iNode].parentidx = stackTop;
-                node[iNode].rootidx = ROOTIDX;
+                node[iNode]._rootIdx = ROOTIDX;
                 stackTop = iNode;
                 if (currentLevel) {
                     iNode = NewAlphaNode(0, node + stackTop);
                     node[iNode].parentidx = stackTop;
-                    node[iNode].rootidx = ROOTIDX;
-                    parentAry[p] = iNode;
+                    node[iNode]._rootIdx = ROOTIDX;
+                    _parentAry[p] = iNode;
                     prevTop = iNode;
                 } else
-                    parentAry[p] = stackTop;
+                    _parentAry[p] = stackTop;
             } else {
                 if (currentLevel) {
                     Pixel pix_val = img[p];
@@ -2154,8 +2154,8 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHeapQueue(Pixel *img) {
                     node[iNode].set(1, 0, (double)pix_val, pix_val, pix_val);
                     node[stackTop].add(node + iNode);
                     node[iNode].parentidx = stackTop;
-                    node[iNode].rootidx = ROOTIDX;
-                    parentAry[p] = iNode;
+                    node[iNode]._rootIdx = ROOTIDX;
+                    _parentAry[p] = iNode;
                 } else
                     connectPix2Node(p, img[p], stackTop);
                 if (node[stackTop].area == imgSize)
@@ -2171,7 +2171,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHeapQueue(Pixel *img) {
         if (queue->get_minlev() < node[iNode].alpha) {
             iNode = NewAlphaNode1(queue->get_minlev(), node + stackTop);
             node[iNode].parentidx = node[stackTop].parentidx;
-            node[iNode].rootidx = ROOTIDX;
+            node[iNode]._rootIdx = ROOTIDX;
             node[stackTop].parentidx = iNode;
         } else
             node[iNode].add(node + stackTop);
@@ -2193,42 +2193,42 @@ FLOOD_END:
 
 template <class Pixel> void AlphaTree<Pixel>::FloodHierarQueue(Pixel *img) {
     HierarQueueCache<Pixel> *queue;
-    ImgIdx imgSize, dimgsize, nredges, x0;
+    ImgIdx imgSize, dimgSize, nredges, x0;
     _uint64 numlevels, max_level, currentLevel;
     ImgIdx *dhist;
     ImgIdx prevTop, stackTop, iNode;
     _uint8 *isVisited, *isAvailable, isAv;
     ImgIdx p, q;
-    imgSize = width * height;
-    nredges =
-        width * (height - 1) + (width - 1) * height + ((connectivity == 8) ? ((width - 1) * (height - 1) * 2) : 0);
-    dimgsize = (connectivity >> 1) * width * height;
+    imgSize = _width * _height;
+    nredges = _width * (_height - 1) + (_width - 1) * _height +
+              ((_connectivity == 8) ? ((_width - 1) * (_height - 1) * 2) : 0);
+    dimgSize = (_connectivity >> 1) * _width * _height;
     max_level = (sizeof(Pixel) == 8) ? 0xffffffffffffffff : (_int64)((Pixel)(-1));
     numlevels = max_level + 1;
 
     Pixel *dimg;
     dhist = (ImgIdx *)Calloc((size_t)numlevels * sizeof(ImgIdx));
-    dimg = (Pixel *)Malloc((size_t)dimgsize * sizeof(Pixel));
+    dimg = (Pixel *)Malloc((size_t)dimgSize * sizeof(Pixel));
 
     max_level = compute_dimg1(dimg, dhist, img); // calculate pixel differences and make histogram
     numlevels = max_level + 1;
 
     // create hierarchical queue from dhist
     queue = new HierarQueueCache<Pixel>(nredges + 1, dhist, numlevels); // +1 for the dummy node
-    curSize = 0;
+    _curSize = 0;
 
     if (imgSize < 10000 || sizeof(Pixel) > 2) // for small imags do not use TSE
-        maxSize = 1 + imgSize + dimgsize;
+        _maxSize = 1 + imgSize + dimgSize;
     else
-        maxSize = TreeSizeEstimation(dhist, numlevels, imgSize, nredges);
+        _maxSize = TreeSizeEstimation(dhist, numlevels, imgSize, nredges);
     if (dhist)
         Free(dhist);
 
     isVisited = (_uint8 *)Calloc((size_t)((imgSize)));
     isAvailable = (_uint8 *)Malloc((size_t)(imgSize));
     set_isAvailable(isAvailable);
-    parentAry = (ImgIdx *)Malloc((size_t)imgSize * sizeof(_int32));
-    node = (AlphaNode<Pixel> *)Malloc((size_t)maxSize * sizeof(AlphaNode<Pixel>));
+    _parentAry = (ImgIdx *)Malloc((size_t)imgSize * sizeof(_int32));
+    node = (AlphaNode<Pixel> *)Malloc((size_t)_maxSize * sizeof(AlphaNode<Pixel>));
 
     stackTop = NewAlphaNode(); /*dummy root*/
     AlphaNode<Pixel> *pNode = node + stackTop;
@@ -2252,35 +2252,35 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarQueue(Pixel *img) {
             queue->start_pushes();
             isVisited[p] = 1;
             isAv = isAvailable[p];
-            if (connectivity == 4) {
+            if (_connectivity == 4) {
                 q = p << 1;
-                if (is_available(isAv, 0) && !isVisited[p + width])
-                    queue->push(p + width, dimg[q]);
+                if (is_available(isAv, 0) && !isVisited[p + _width])
+                    queue->push(p + _width, dimg[q]);
                 if (is_available(isAv, 1) && !isVisited[p + 1])
                     queue->push(p + 1, dimg[q + 1]);
                 if (is_available(isAv, 2) && !isVisited[p - 1])
                     queue->push(p - 1, dimg[q - 1]);
-                if (is_available(isAv, 3) && !isVisited[p - width])
-                    queue->push(p - width, dimg[q - (width << 1)]);
-            } else if (connectivity == 8) {
-                ImgIdx width4 = width << 2;
+                if (is_available(isAv, 3) && !isVisited[p - _width])
+                    queue->push(p - _width, dimg[q - (_width << 1)]);
+            } else if (_connectivity == 8) {
+                ImgIdx width4 = _width << 2;
                 q = p << 2;
-                if (is_available(isAv, 0) && !isVisited[p + width])
-                    queue->push(p + width, dimg[q]);
-                if (is_available(isAv, 1) && !isVisited[p + width + 1])
-                    queue->push(p + width + 1, dimg[q + 1]);
+                if (is_available(isAv, 0) && !isVisited[p + _width])
+                    queue->push(p + _width, dimg[q]);
+                if (is_available(isAv, 1) && !isVisited[p + _width + 1])
+                    queue->push(p + _width + 1, dimg[q + 1]);
                 if (is_available(isAv, 2) && !isVisited[p + 1])
                     queue->push(p + 1, dimg[q + 2]);
-                if (is_available(isAv, 3) && !isVisited[p - width + 1])
-                    queue->push(p - width + 1, dimg[q + 3]);
-                if (is_available(isAv, 4) && !isVisited[p - width])
-                    queue->push(p - width, dimg[q - width4]);
-                if (is_available(isAv, 5) && !isVisited[p - width - 1])
-                    queue->push(p - width - 1, dimg[q - width4 - 3]);
+                if (is_available(isAv, 3) && !isVisited[p - _width + 1])
+                    queue->push(p - _width + 1, dimg[q + 3]);
+                if (is_available(isAv, 4) && !isVisited[p - _width])
+                    queue->push(p - _width, dimg[q - width4]);
+                if (is_available(isAv, 5) && !isVisited[p - _width - 1])
+                    queue->push(p - _width - 1, dimg[q - width4 - 3]);
                 if (is_available(isAv, 6) && !isVisited[p - 1])
                     queue->push(p - 1, dimg[q - 2]);
-                if (is_available(isAv, 7) && !isVisited[p + width - 1])
-                    queue->push(p + width - 1, dimg[q + width4 - 1]);
+                if (is_available(isAv, 7) && !isVisited[p + _width - 1])
+                    queue->push(p + _width - 1, dimg[q + width4 - 1]);
             } else {
                 //?
             }
@@ -2293,16 +2293,16 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarQueue(Pixel *img) {
                 iNode = NewAlphaNode();
                 node[iNode].set(1, currentLevel, (double)pix_val, pix_val, pix_val);
                 node[iNode].parentidx = stackTop;
-                node[iNode].rootidx = ROOTIDX;
+                node[iNode]._rootIdx = ROOTIDX;
                 stackTop = iNode;
                 if (currentLevel) {
                     iNode = NewAlphaNode(0, node + stackTop);
                     node[iNode].parentidx = stackTop;
-                    node[iNode].rootidx = ROOTIDX;
-                    parentAry[p] = iNode;
+                    node[iNode]._rootIdx = ROOTIDX;
+                    _parentAry[p] = iNode;
                     prevTop = iNode;
                 } else
-                    parentAry[p] = stackTop;
+                    _parentAry[p] = stackTop;
             } else {
                 if (currentLevel) {
                     Pixel pix_val = img[p];
@@ -2310,8 +2310,8 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarQueue(Pixel *img) {
                     node[iNode].set(1, 0, (double)pix_val, pix_val, pix_val);
                     node[stackTop].add(node + iNode);
                     node[iNode].parentidx = stackTop;
-                    node[iNode].rootidx = ROOTIDX;
-                    parentAry[p] = iNode;
+                    node[iNode]._rootIdx = ROOTIDX;
+                    _parentAry[p] = iNode;
                 } else
                     connectPix2Node(p, img[p], stackTop);
                 if (node[stackTop].area == imgSize)
@@ -2329,7 +2329,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarQueue(Pixel *img) {
         if ((_int32)queue->top_alpha() < (_int32)node[iNode].alpha) {
             iNode = NewAlphaNode1(queue->top_alpha(), node + stackTop);
             node[iNode].parentidx = node[stackTop].parentidx;
-            node[iNode].rootidx = ROOTIDX;
+            node[iNode]._rootIdx = ROOTIDX;
             node[stackTop].parentidx = iNode;
         } else // go to existing node
         {
@@ -2344,8 +2344,8 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarQueue(Pixel *img) {
     }
 
 FLOOD_END:
-    rootidx = (node[stackTop].area == imgSize) ? stackTop : iNode; // remove redundant root
-    node[rootidx].parentidx = ROOTIDX;
+    _rootIdx = (node[stackTop].area == imgSize) ? stackTop : iNode; // remove redundant root
+    node[_rootIdx].parentidx = ROOTIDX;
 
     delete queue;
     Free(dimg);
@@ -2356,45 +2356,45 @@ FLOOD_END:
 template <class Pixel> void AlphaTree<Pixel>::FloodLadderQueue(Pixel *img, int thres) {
     LadderQueue *queue;
 
-    ImgIdx imgSize, dimgsize, nredges, x0;
+    ImgIdx imgSize, dimgSize, nredges, x0;
     _uint64 numlevels, max_level;
     ImgIdx *dhist;
     ImgIdx stackTop, prevTop, iNode;
     _uint8 *isVisited, *isAvailable, isAv;
     ImgIdx p, q;
-    imgSize = width * height;
-    nredges =
-        width * (height - 1) + (width - 1) * height + ((connectivity == 8) ? ((width - 1) * (height - 1) * 2) : 0);
-    dimgsize = (connectivity >> 1) * width * height;
+    imgSize = _width * _height;
+    nredges = _width * (_height - 1) + (_width - 1) * _height +
+              ((_connectivity == 8) ? ((_width - 1) * (_height - 1) * 2) : 0);
+    dimgSize = (_connectivity >> 1) * _width * _height;
     max_level = (Pixel)(-1);
     numlevels = max_level + 1;
     double currentLevel;
     double *dimg;
     Pixel dmax;
 
-    dimg = (double *)Malloc((size_t)dimgsize * sizeof(double));
+    dimg = (double *)Malloc((size_t)dimgSize * sizeof(double));
 
-    if (sizeof(Pixel) == 1 && channel == 1) {
+    if (sizeof(Pixel) == 1 && _channel == 1) {
         dhist = (ImgIdx *)Calloc(numlevels * sizeof(ImgIdx));
         dmax = compute_dimg(dimg, dhist, img); // calculate pixel differences and make histogram
-        maxSize = TreeSizeEstimation(dhist, numlevels, imgSize, nredges);
+        _maxSize = TreeSizeEstimation(dhist, numlevels, imgSize, nredges);
     } else {
         dhist = 0;
         dmax = compute_dimg(dimg, img);
-        maxSize = 1 + imgSize + nredges;
+        _maxSize = 1 + imgSize + nredges;
     }
 
     // create heap-based priority queue
     queue = new LadderQueue(thres);
-    curSize = 0;
+    _curSize = 0;
 
     if (dhist)
         Free(dhist);
     isVisited = (_uint8 *)Calloc((size_t)((imgSize)));
     isAvailable = (_uint8 *)Malloc((size_t)(imgSize));
     set_isAvailable(isAvailable);
-    parentAry = (ImgIdx *)Malloc((size_t)imgSize * sizeof(_int32));
-    node = (AlphaNode<Pixel> *)Malloc((size_t)maxSize * sizeof(AlphaNode<Pixel>));
+    _parentAry = (ImgIdx *)Malloc((size_t)imgSize * sizeof(_int32));
+    node = (AlphaNode<Pixel> *)Malloc((size_t)_maxSize * sizeof(AlphaNode<Pixel>));
 
     x0 = 0; /*arbitrary starting point*/
     currentLevel = dmax;
@@ -2415,35 +2415,35 @@ template <class Pixel> void AlphaTree<Pixel>::FloodLadderQueue(Pixel *img, int t
             isVisited[p] = 1;
 
             isAv = isAvailable[p];
-            if (connectivity == 4) {
+            if (_connectivity == 4) {
                 q = p << 1;
-                if (is_available(isAv, 0) && !isVisited[p + width])
-                    queue->enqueue(p + width, dimg[q]);
+                if (is_available(isAv, 0) && !isVisited[p + _width])
+                    queue->enqueue(p + _width, dimg[q]);
                 if (is_available(isAv, 1) && !isVisited[p + 1])
                     queue->enqueue(p + 1, dimg[q + 1]);
                 if (is_available(isAv, 2) && !isVisited[p - 1])
                     queue->enqueue(p - 1, dimg[q - 1]);
-                if (is_available(isAv, 3) && !isVisited[p - width])
-                    queue->enqueue(p - width, dimg[q - (width << 1)]);
-            } else if (connectivity == 8) {
-                ImgIdx width4 = width << 2;
+                if (is_available(isAv, 3) && !isVisited[p - _width])
+                    queue->enqueue(p - _width, dimg[q - (_width << 1)]);
+            } else if (_connectivity == 8) {
+                ImgIdx width4 = _width << 2;
                 q = p << 2;
-                if (is_available(isAv, 0) && !isVisited[p + width])
-                    queue->enqueue(p + width, dimg[q]);
-                if (is_available(isAv, 1) && !isVisited[p + width + 1])
-                    queue->enqueue(p + width + 1, dimg[q + 1]);
+                if (is_available(isAv, 0) && !isVisited[p + _width])
+                    queue->enqueue(p + _width, dimg[q]);
+                if (is_available(isAv, 1) && !isVisited[p + _width + 1])
+                    queue->enqueue(p + _width + 1, dimg[q + 1]);
                 if (is_available(isAv, 2) && !isVisited[p + 1])
                     queue->enqueue(p + 1, dimg[q + 2]);
-                if (is_available(isAv, 3) && !isVisited[p - width + 1])
-                    queue->enqueue(p - width + 1, dimg[q + 3]);
-                if (is_available(isAv, 4) && !isVisited[p - width])
-                    queue->enqueue(p - width, dimg[q - width4]);
-                if (is_available(isAv, 5) && !isVisited[p - width - 1])
-                    queue->enqueue(p - width - 1, dimg[q - width4 - 3]);
+                if (is_available(isAv, 3) && !isVisited[p - _width + 1])
+                    queue->enqueue(p - _width + 1, dimg[q + 3]);
+                if (is_available(isAv, 4) && !isVisited[p - _width])
+                    queue->enqueue(p - _width, dimg[q - width4]);
+                if (is_available(isAv, 5) && !isVisited[p - _width - 1])
+                    queue->enqueue(p - _width - 1, dimg[q - width4 - 3]);
                 if (is_available(isAv, 6) && !isVisited[p - 1])
                     queue->enqueue(p - 1, dimg[q - 2]);
-                if (is_available(isAv, 7) && !isVisited[p + width - 1])
-                    queue->enqueue(p + width - 1, dimg[q + width4 - 1]);
+                if (is_available(isAv, 7) && !isVisited[p + _width - 1])
+                    queue->enqueue(p + _width - 1, dimg[q + width4 - 1]);
             } else {
                 //?
             }
@@ -2455,16 +2455,16 @@ template <class Pixel> void AlphaTree<Pixel>::FloodLadderQueue(Pixel *img, int t
                 iNode = NewAlphaNode();
                 node[iNode].set(1, currentLevel, (double)pix_val, pix_val, pix_val);
                 node[iNode].parentidx = stackTop;
-                node[iNode].rootidx = ROOTIDX;
+                node[iNode]._rootIdx = ROOTIDX;
                 stackTop = iNode;
                 if (currentLevel) {
                     iNode = NewAlphaNode(0, node + stackTop);
                     node[iNode].parentidx = stackTop;
-                    node[iNode].rootidx = ROOTIDX;
-                    parentAry[p] = iNode;
+                    node[iNode]._rootIdx = ROOTIDX;
+                    _parentAry[p] = iNode;
                     prevTop = iNode;
                 } else
-                    parentAry[p] = stackTop;
+                    _parentAry[p] = stackTop;
             } else {
                 if (currentLevel) {
                     Pixel pix_val = img[p];
@@ -2472,8 +2472,8 @@ template <class Pixel> void AlphaTree<Pixel>::FloodLadderQueue(Pixel *img, int t
                     node[iNode].set(1, 0, (double)pix_val, pix_val, pix_val);
                     node[stackTop].add(node + iNode);
                     node[iNode].parentidx = stackTop;
-                    node[iNode].rootidx = ROOTIDX;
-                    parentAry[p] = iNode;
+                    node[iNode]._rootIdx = ROOTIDX;
+                    _parentAry[p] = iNode;
                 } else
                     connectPix2Node(p, img[p], stackTop);
                 if (node[stackTop].area == imgSize)
@@ -2491,7 +2491,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodLadderQueue(Pixel *img, int t
         if (top_level < node[iNode].alpha) {
             iNode = NewAlphaNode1(top_level, node + stackTop);
             node[iNode].parentidx = node[stackTop].parentidx;
-            node[iNode].rootidx = ROOTIDX;
+            node[iNode]._rootIdx = ROOTIDX;
             node[stackTop].parentidx = iNode;
         } else
             node[iNode].add(node + stackTop);
@@ -2524,41 +2524,41 @@ template <class Pixel>
 void AlphaTree<Pixel>::FloodHierarHeapQueueNoCache(Pixel *img, double a, double r, int listsize) {
     HierarHeapQueue<Pixel> *queue;
 
-    ImgIdx imgSize, dimgsize, nredges, x0;
+    ImgIdx imgSize, dimgSize, nredges, x0;
     _uint64 numlevels, max_level;
     double currentLevel;
     ImgIdx *dhist;
     ImgIdx stackTop, iNode;
     _uint8 *isVisited, *isAvailable, isAv;
     ImgIdx p, q;
-    imgSize = width * height;
-    nredges =
-        width * (height - 1) + (width - 1) * height + ((connectivity == 8) ? ((width - 1) * (height - 1) * 2) : 0);
-    dimgsize = (1 + (connectivity >> 1)) * width * height;
+    imgSize = _width * _height;
+    nredges = _width * (_height - 1) + (_width - 1) * _height +
+              ((_connectivity == 8) ? ((_width - 1) * (_height - 1) * 2) : 0);
+    dimgSize = (1 + (_connectivity >> 1)) * _width * _height;
 
     max_level = (sizeof(Pixel) == 8) ? 0xffffffffffffffff : (_int64)((Pixel)(-1));
     numlevels = (_uint64)(a * log2(1 + (double)max_level)) + 1;
 
     Pixel *dimg;
     dhist = (ImgIdx *)Calloc((size_t)numlevels * sizeof(ImgIdx));
-    dimg = (Pixel *)Malloc((size_t)dimgsize * sizeof(Pixel));
+    dimg = (Pixel *)Malloc((size_t)dimgSize * sizeof(Pixel));
 
     compute_dimg(x0, currentLevel, dimg, dhist, img, a); // calculate pixel differences and make histogram
 
     // create hierarchical queue from dhist
     queue =
-        new HierarHeapQueue<Pixel>(dhist, numlevels, nredges, a, listsize, connectivity, r); // +1 for the dummy node
-    curSize = 0;
+        new HierarHeapQueue<Pixel>(dhist, numlevels, nredges, a, listsize, _connectivity, r); // +1 for the dummy node
+    _curSize = 0;
 
-    maxSize = 1 + imgSize +
-              dimgsize; // Do not use TSE here, becasue dhist is a logged histogram (also this algorithm is for hdr)
+    _maxSize = 1 + imgSize +
+               dimgSize; // Do not use TSE here, becasue dhist is a logged histogram (also this algorithm is for hdr)
 
     dhist = 0;
     isVisited = (_uint8 *)Calloc((size_t)((imgSize)));
     isAvailable = (_uint8 *)Malloc((size_t)(imgSize));
     set_isAvailable(isAvailable);
-    parentAry = (ImgIdx *)Malloc((size_t)imgSize * sizeof(_int32));
-    node = (AlphaNode<Pixel> *)Malloc((size_t)maxSize * sizeof(AlphaNode<Pixel>));
+    _parentAry = (ImgIdx *)Malloc((size_t)imgSize * sizeof(_int32));
+    node = (AlphaNode<Pixel> *)Malloc((size_t)_maxSize * sizeof(AlphaNode<Pixel>));
 
     stackTop = NewAlphaNode(); /*dummy root*/
     AlphaNode<Pixel> *pNode = node + stackTop;
@@ -2569,7 +2569,7 @@ void AlphaTree<Pixel>::FloodHierarHeapQueueNoCache(Pixel *img, double a, double 
     bool firstpixel = 1;
     p = x0;
     ImgIdx prevTop = stackTop;
-    while (1) // flooding
+    while (true) // flooding
     {
         while (firstpixel || (double)queue->top_alpha() <= (double)currentLevel) // flood all levels below currentLevel
         {
@@ -2582,42 +2582,42 @@ void AlphaTree<Pixel>::FloodHierarHeapQueueNoCache(Pixel *img, double a, double 
 
             isVisited[p] = 1;
             isAv = isAvailable[p];
-            if (connectivity == 4) {
+            if (_connectivity == 4) {
                 q = p << 1;
-                if (is_available(isAv, 0) && !isVisited[p + width])
-                    queue->push(p + width, dimg[q]);
+                if (is_available(isAv, 0) && !isVisited[p + _width])
+                    queue->push(p + _width, dimg[q]);
                 if (is_available(isAv, 1) && !isVisited[p + 1])
                     queue->push(p + 1, dimg[q + 1]);
                 if (is_available(isAv, 2) && !isVisited[p - 1])
                     queue->push(p - 1, dimg[q - 1]);
-                if (is_available(isAv, 3) && !isVisited[p - width])
-                    queue->push(p - width, dimg[q - (width << 1)]);
-            } else if (connectivity == 8) {
-                ImgIdx width4 = width << 2;
+                if (is_available(isAv, 3) && !isVisited[p - _width])
+                    queue->push(p - _width, dimg[q - (_width << 1)]);
+            } else if (_connectivity == 8) {
+                ImgIdx width4 = _width << 2;
                 q = p << 2;
-                if (is_available(isAv, 0) && !isVisited[p + width]) {
-                    queue->push(p + width, dimg[q]);
+                if (is_available(isAv, 0) && !isVisited[p + _width]) {
+                    queue->push(p + _width, dimg[q]);
                 };
-                if (is_available(isAv, 1) && !isVisited[p + width + 1]) {
-                    queue->push(p + width + 1, dimg[q + 1]);
+                if (is_available(isAv, 1) && !isVisited[p + _width + 1]) {
+                    queue->push(p + _width + 1, dimg[q + 1]);
                 };
                 if (is_available(isAv, 2) && !isVisited[p + 1]) {
                     queue->push(p + 1, dimg[q + 2]);
                 };
-                if (is_available(isAv, 3) && !isVisited[p - width + 1]) {
-                    queue->push(p - width + 1, dimg[q + 3]);
+                if (is_available(isAv, 3) && !isVisited[p - _width + 1]) {
+                    queue->push(p - _width + 1, dimg[q + 3]);
                 };
-                if (is_available(isAv, 4) && !isVisited[p - width]) {
-                    queue->push(p - width, dimg[q - width4]);
+                if (is_available(isAv, 4) && !isVisited[p - _width]) {
+                    queue->push(p - _width, dimg[q - width4]);
                 };
-                if (is_available(isAv, 5) && !isVisited[p - width - 1]) {
-                    queue->push(p - width - 1, dimg[q - width4 - 3]);
+                if (is_available(isAv, 5) && !isVisited[p - _width - 1]) {
+                    queue->push(p - _width - 1, dimg[q - width4 - 3]);
                 };
                 if (is_available(isAv, 6) && !isVisited[p - 1]) {
                     queue->push(p - 1, dimg[q - 2]);
                 };
-                if (is_available(isAv, 7) && !isVisited[p + width - 1]) {
-                    queue->push(p + width - 1, dimg[q + width4 - 1]);
+                if (is_available(isAv, 7) && !isVisited[p + _width - 1]) {
+                    queue->push(p + _width - 1, dimg[q + width4 - 1]);
                 };
             } else {
                 //?
@@ -2630,16 +2630,16 @@ void AlphaTree<Pixel>::FloodHierarHeapQueueNoCache(Pixel *img, double a, double 
                 iNode = NewAlphaNode();
                 node[iNode].set(1, currentLevel, (double)pix_val, pix_val, pix_val);
                 node[iNode].parentidx = stackTop;
-                node[iNode].rootidx = ROOTIDX;
+                node[iNode]._rootIdx = ROOTIDX;
                 prevTop = stackTop;
                 stackTop = iNode;
                 if (currentLevel > 0) {
                     iNode = NewAlphaNode(0, node + stackTop);
                     node[iNode].parentidx = stackTop;
-                    node[iNode].rootidx = ROOTIDX;
-                    parentAry[p] = iNode;
+                    node[iNode]._rootIdx = ROOTIDX;
+                    _parentAry[p] = iNode;
                 } else
-                    parentAry[p] = stackTop;
+                    _parentAry[p] = stackTop;
             } else {
                 if (currentLevel > 0) {
                     Pixel pix_val = img[p];
@@ -2647,8 +2647,8 @@ void AlphaTree<Pixel>::FloodHierarHeapQueueNoCache(Pixel *img, double a, double 
                     node[iNode].set(1, 0, (double)pix_val, pix_val, pix_val);
                     node[stackTop].add(node + iNode);
                     node[iNode].parentidx = stackTop;
-                    node[iNode].rootidx = ROOTIDX;
-                    parentAry[p] = iNode;
+                    node[iNode]._rootIdx = ROOTIDX;
+                    _parentAry[p] = iNode;
                 } else
                     connectPix2Node(p, img[p], stackTop);
                 if (node[stackTop].area == imgSize)
@@ -2659,32 +2659,31 @@ void AlphaTree<Pixel>::FloodHierarHeapQueueNoCache(Pixel *img, double a, double 
         if (node[prevTop].parentidx == stackTop && node[prevTop].area == node[stackTop].area) {
             node[prevTop].parentidx = node[stackTop].parentidx;
             stackTop = prevTop;
-            curSize--;
+            _curSize--;
         }
 
         if (node[stackTop].area == imgSize) // root node found...done
             break;
 
         // go to higher level
-        iNode = node[stackTop].parentidx;
-        if ((double)queue->top_alpha() < (double)node[iNode].alpha) {
-            iNode = NewAlphaNode1(queue->top_alpha(), node + stackTop);
-            node[iNode].parentidx = node[stackTop].parentidx;
-            node[iNode].rootidx = ROOTIDX;
-            node[stackTop].parentidx = iNode;
+        ImgIdx parentNodeIdx = node[stackTop].parentidx;
+        if ((double)queue->top_alpha() < (double)node[parentNodeIdx].alpha) {
+            parentNodeIdx = NewAlphaNode1(queue->top_alpha(), node + stackTop);
+            node[parentNodeIdx].parentidx = node[stackTop].parentidx;
+            node[parentNodeIdx]._rootIdx = ROOTIDX;
+            node[stackTop].parentidx = parentNodeIdx;
         } else // go to existing node
-        {
-            node[iNode].add(node + stackTop);
-        }
+            node[parentNodeIdx].add(node + stackTop);
+
         prevTop = stackTop;
-        stackTop = iNode;
+        stackTop = parentNodeIdx;
         currentLevel = node[stackTop].alpha;
         if (node[stackTop].area == imgSize) // root node found...done
             break;
     }
 FLOOD_END:
-    rootidx = (node[stackTop].area == imgSize) ? stackTop : iNode; // remove redundant root
-    node[rootidx].parentidx = ROOTIDX;
+    _rootIdx = (node[stackTop].area == imgSize) ? stackTop : iNode; // remove redundant root
+    node[_rootIdx].parentidx = ROOTIDX;
 
     delete queue;
     Free(dimg);
@@ -2693,36 +2692,33 @@ FLOOD_END:
 }
 
 template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueue(Pixel *img, double a, double r, int listsize) {
+    const ImgIdx imgSize = _width * _height;
+    const ImgIdx nredges = _width * (_height - 1) + (_width - 1) * _height +
+                           ((_connectivity == 8) ? ((_width - 1) * (_height - 1) * 2) : 0);
+    const ImgIdx dimgSize = (1 + (_connectivity >> 1)) * _width * _height;
 
-    ImgIdx iNode;
-    const ImgIdx imgSize = width * height;
-    const ImgIdx nredges =
-        width * (height - 1) + (width - 1) * height + ((connectivity == 8) ? ((width - 1) * (height - 1) * 2) : 0);
-    const ImgIdx dimgsize = (1 + (connectivity >> 1)) * width * height;
-
-    // double a = 4.0;
     const _uint64 max_level = (sizeof(Pixel) == 8) ? 0xffffffffffffffff : (_int64)((Pixel)(-1));
     const _uint64 numlevels = (_uint64)(a * log2(1 + (double)max_level)) + 1;
 
     ImgIdx *dhist = (ImgIdx *)Calloc((size_t)numlevels * sizeof(ImgIdx));
-    Pixel *dimg = (Pixel *)Malloc((size_t)dimgsize * sizeof(Pixel));
+    Pixel *dimg = (Pixel *)Malloc((size_t)dimgSize * sizeof(Pixel));
 
     compute_dimg(dimg, dhist, img, a); // calculate pixel differences and make histogram
 
     // create hierarchical queue from dhist
     HierarHeapQueue_cache<Pixel> *queue =
-        new HierarHeapQueue_cache<Pixel>(dhist, numlevels, nredges, a, listsize, connectivity,
+        new HierarHeapQueue_cache<Pixel>(dhist, numlevels, nredges, a, listsize, _connectivity,
                                          r); // +1 for the dummy node
-    curSize = 0;
-    maxSize = 1 + imgSize +
-              dimgsize; // Do not use TSE here, becasue dhist is a logged histogram (also this algorithm is for hdr)
+    _curSize = 0;
+    _maxSize = 1 + imgSize +
+               dimgSize; // Do not use TSE here, becasue dhist is a logged histogram (also this algorithm is for hdr)
 
     dhist = 0;
     _uint8 *isVisited = (_uint8 *)Calloc((size_t)((imgSize)));
     _uint8 *isAvailable = (_uint8 *)Malloc((size_t)(imgSize));
     set_isAvailable(isAvailable);
-    parentAry = (ImgIdx *)Malloc((size_t)imgSize * sizeof(_int32));
-    node = (AlphaNode<Pixel> *)Malloc((size_t)maxSize * sizeof(AlphaNode<Pixel>));
+    _parentAry = (ImgIdx *)Malloc((size_t)imgSize * sizeof(_int32));
+    node = (AlphaNode<Pixel> *)Malloc((size_t)_maxSize * sizeof(AlphaNode<Pixel>));
 
     ImgIdx stackTop = NewAlphaNode(); /*dummy root*/
     AlphaNode<Pixel> *pNode = node + stackTop;
@@ -2733,7 +2729,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueue(Pixel *img, d
 
     ImgIdx prevTop = stackTop;
     queue->push_1stitem(startingPixel, (Pixel)currentLevel);
-    while (1) // flooding
+    while (true) // flooding
     {
         while ((double)queue->top_alpha() <= (double)currentLevel) // flood all levels below currentLevel
         {
@@ -2748,43 +2744,43 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueue(Pixel *img, d
             isVisited[p] = 1;
 
             auto isAv = isAvailable[p];
-            if (connectivity == 4) {
+            if (_connectivity == 4) {
                 ImgIdx q = p << 1;
-                if (is_available(isAv, 0) && !isVisited[p + width])
-                    queue->push(p + width, dimg[q]);
+                if (is_available(isAv, 0) && !isVisited[p + _width])
+                    queue->push(p + _width, dimg[q]);
                 if (is_available(isAv, 1) && !isVisited[p + 1])
                     queue->push(p + 1, dimg[q + 1]);
                 if (is_available(isAv, 2) && !isVisited[p - 1])
                     queue->push(p - 1, dimg[q - 1]);
-                if (is_available(isAv, 3) && !isVisited[p - width])
-                    queue->push(p - width, dimg[q - (width << 1)]);
-            } else if (connectivity == 8) {
-                const ImgIdx width4 = width << 2;
+                if (is_available(isAv, 3) && !isVisited[p - _width])
+                    queue->push(p - _width, dimg[q - (_width << 1)]);
+            } else if (_connectivity == 8) {
+                const ImgIdx width4 = _width << 2;
                 ImgIdx q = p << 2;
-                if (is_available(isAv, 0) && !isVisited[p + width]) {
-                    queue->push(p + width, dimg[q]);
-                }; // printf("0:pushing %d at %.3f \n",(int)(p + width),log2((double)dimg[q] + 1));}
-                if (is_available(isAv, 1) && !isVisited[p + width + 1]) {
-                    queue->push(p + width + 1, dimg[q + 1]);
-                }; // printf("1:pushing %d at %.3f \n",(int)(p + width + 1),log2((double)dimg[q + 1] + 1));}
+                if (is_available(isAv, 0) && !isVisited[p + _width]) {
+                    queue->push(p + _width, dimg[q]);
+                }; // printf("0:pushing %d at %.3f \n",(int)(p + _width),log2((double)dimg[q] + 1));}
+                if (is_available(isAv, 1) && !isVisited[p + _width + 1]) {
+                    queue->push(p + _width + 1, dimg[q + 1]);
+                }; // printf("1:pushing %d at %.3f \n",(int)(p + _width + 1),log2((double)dimg[q + 1] + 1));}
                 if (is_available(isAv, 2) && !isVisited[p + 1]) {
                     queue->push(p + 1, dimg[q + 2]);
                 }; // printf("2:pushing %d at %.3f \n",(int)(p + 1),log2((double)dimg[q + 2] + 1));}
-                if (is_available(isAv, 3) && !isVisited[p - width + 1]) {
-                    queue->push(p - width + 1, dimg[q + 3]);
-                }; // printf("3:pushing %d at %.3f \n",(int)(p - width + 1),log2((double)dimg[q + 3] + 1));}
-                if (is_available(isAv, 4) && !isVisited[p - width]) {
-                    queue->push(p - width, dimg[q - width4]);
-                }; // printf("4:pushing %d at %.3f \n",(int)(p - width),log2((double)dimg[q - width4] + 1));}
-                if (is_available(isAv, 5) && !isVisited[p - width - 1]) {
-                    queue->push(p - width - 1, dimg[q - width4 - 3]);
-                }; // printf("5:pushing %d at %.3f \n",(int)(p - width - 1),log2((double)dimg[q - width4 - 3] + 1));}
+                if (is_available(isAv, 3) && !isVisited[p - _width + 1]) {
+                    queue->push(p - _width + 1, dimg[q + 3]);
+                }; // printf("3:pushing %d at %.3f \n",(int)(p - _width + 1),log2((double)dimg[q + 3] + 1));}
+                if (is_available(isAv, 4) && !isVisited[p - _width]) {
+                    queue->push(p - _width, dimg[q - width4]);
+                }; // printf("4:pushing %d at %.3f \n",(int)(p - _width),log2((double)dimg[q - width4] + 1));}
+                if (is_available(isAv, 5) && !isVisited[p - _width - 1]) {
+                    queue->push(p - _width - 1, dimg[q - width4 - 3]);
+                }; // printf("5:pushing %d at %.3f \n",(int)(p - _width - 1),log2((double)dimg[q - width4 - 3] + 1));}
                 if (is_available(isAv, 6) && !isVisited[p - 1]) {
                     queue->push(p - 1, dimg[q - 2]);
                 }; // printf("6:pushing %d at %.3f \n",(int)(p - 1),log2((double)dimg[q - 2] + 1));}
-                if (is_available(isAv, 7) && !isVisited[p + width - 1]) {
-                    queue->push(p + width - 1, dimg[q + width4 - 1]);
-                }; // printf("7:pushing %d at %.3f \n",(int)(p + width - 1),log2((double)dimg[q + width4 - 1] + 1));}
+                if (is_available(isAv, 7) && !isVisited[p + _width - 1]) {
+                    queue->push(p + _width - 1, dimg[q + width4 - 1]);
+                }; // printf("7:pushing %d at %.3f \n",(int)(p + _width - 1),log2((double)dimg[q + width4 - 1] + 1));}
             } else {
                 //?
             }
@@ -2792,25 +2788,22 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueue(Pixel *img, d
             if ((double)currentLevel > (double)queue->top_alpha()) // go to lower level
             {
                 currentLevel = (double)queue->top_alpha();
-                const ImgIdx newNodeIdx = curSize++;
+                const ImgIdx newNodeIdx = _curSize++;
                 node[newNodeIdx] = AlphaNode<Pixel>(img[p], queue->top_alpha(), stackTop);
                 prevTop = stackTop;
                 stackTop = newNodeIdx;
                 if (currentLevel > 0) {
-                    const ImgIdx singletonNodeIdx = curSize++;
+                    const ImgIdx singletonNodeIdx = _curSize++;
                     node[singletonNodeIdx] = AlphaNode<Pixel>(img[p], 0.0, newNodeIdx);
-                    parentAry[p] = singletonNodeIdx;
+                    _parentAry[p] = singletonNodeIdx;
                 } else
-                    parentAry[p] = stackTop;
+                    _parentAry[p] = stackTop;
             } else {
                 if (currentLevel > 0) {
-                    Pixel pix_val = img[p];
-                    const ImgIdx singletonNodeIdx = NewAlphaNode();
-                    node[singletonNodeIdx].set(1, 0, (double)pix_val, pix_val, pix_val);
+                    const ImgIdx singletonNodeIdx = _curSize++;
+                    node[singletonNodeIdx] = AlphaNode<Pixel>(img[p], 0.0, stackTop);
                     node[stackTop].add(node + singletonNodeIdx);
-                    node[singletonNodeIdx].parentidx = stackTop;
-                    node[singletonNodeIdx].rootidx = ROOTIDX;
-                    parentAry[p] = singletonNodeIdx;
+                    _parentAry[p] = singletonNodeIdx;
                 } else
                     connectPix2Node(p, img[p], stackTop);
                 if (node[stackTop].area == imgSize)
@@ -2822,32 +2815,30 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueue(Pixel *img, d
             // queue->redundant(node[stackTop].alpha);
             node[prevTop].parentidx = node[stackTop].parentidx;
             stackTop = prevTop;
-            curSize--;
+            _curSize--;
         }
 
         if (node[stackTop].area == imgSize) // root node found...done
             break;
 
         // go to higher level
-        iNode = node[stackTop].parentidx;
-        if ((double)queue->top_alpha() < (double)node[iNode].alpha) {
-            iNode = NewAlphaNode1(queue->top_alpha(), node + stackTop);
-            node[iNode].parentidx = node[stackTop].parentidx;
-            node[iNode].rootidx = ROOTIDX;
-            node[stackTop].parentidx = iNode;
+        ImgIdx newParentIdx = node[stackTop].parentidx;
+        if ((double)queue->top_alpha() < (double)node[newParentIdx].alpha) {
+            newParentIdx = NewAlphaNode1(queue->top_alpha(), node + stackTop);
+            node[newParentIdx].parentidx = node[stackTop].parentidx;
+            node[newParentIdx]._rootIdx = ROOTIDX;
+            node[stackTop].parentidx = newParentIdx;
         } else // go to existing node
-        {
-            node[iNode].add(node + stackTop);
-        }
+            node[newParentIdx].add(node + stackTop);
+
         prevTop = stackTop;
-        stackTop = iNode;
+        stackTop = newParentIdx;
         currentLevel = node[stackTop].alpha;
         if (node[stackTop].area == imgSize) // root node found...done
             break;
     }
 FLOOD_END:
-    rootidx = (node[stackTop].area == imgSize) ? stackTop : iNode; // remove redundant root
-    node[rootidx].parentidx = ROOTIDX;
+    node[_rootIdx].parentidx = ROOTIDX;
 
     // print_tree();
 
@@ -2860,16 +2851,16 @@ FLOOD_END:
 template <class Pixel> void AlphaTree<Pixel>::FloodHierHeapQueueHisteq(Pixel *img, int listsize, int a) {
     HierarHeapQueue_HEQ<Pixel> *queue;
 
-    ImgIdx imgSize, dimgsize, nredges, x0;
+    ImgIdx imgSize, dimgSize, nredges, x0;
     _uint64 numlevels, max_level, currentLevel;
     ImgIdx *dhist;
     ImgIdx stackTop, iNode;
     _uint8 *isVisited, *isAvailable, isAv;
     ImgIdx p, q;
-    imgSize = width * height;
-    nredges =
-        width * (height - 1) + (width - 1) * height + ((connectivity == 8) ? ((width - 1) * (height - 1) * 2) : 0);
-    dimgsize = (connectivity >> 1) * width * height;
+    imgSize = _width * _height;
+    nredges = _width * (_height - 1) + (_width - 1) * _height +
+              ((_connectivity == 8) ? ((_width - 1) * (_height - 1) * 2) : 0);
+    dimgSize = (_connectivity >> 1) * _width * _height;
 
     // double a = 4.0;
     max_level = (sizeof(Pixel) == 8) ? 0xffffffffffffffff : (_int64)((Pixel)(-1));
@@ -2884,7 +2875,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierHeapQueueHisteq(Pixel *im
 
     Pixel *dimg;
     dhist = (ImgIdx *)Calloc((size_t)numlevels * sizeof(ImgIdx));
-    dimg = (Pixel *)Malloc((size_t)dimgsize * sizeof(Pixel));
+    dimg = (Pixel *)Malloc((size_t)dimgSize * sizeof(Pixel));
     compute_dimg(dimg, dhist, img, coeff); // calculate pixel differences and make histogram
     ImgIdx *eqhist = (ImgIdx *)Calloc(eqhistsize * sizeof(ImgIdx));
 
@@ -2899,18 +2890,18 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierHeapQueueHisteq(Pixel *im
 
     queue = new HierarHeapQueue_HEQ<Pixel>(eqhist, histeqmap, eqhistsize, nredges, coeff,
                                            listsize); // +1 for the dummy node
-    curSize = 0;
+    _curSize = 0;
 
-    maxSize = 1 + imgSize +
-              dimgsize; // Do not use TSE here, becasue dhist is a logged histogram (also this algorithm is for hdr)
+    _maxSize = 1 + imgSize +
+               dimgSize; // Do not use TSE here, becasue dhist is a logged histogram (also this algorithm is for hdr)
 
     if (dhist)
         Free(dhist);
     isVisited = (_uint8 *)Calloc((size_t)((imgSize)));
     isAvailable = (_uint8 *)Malloc((size_t)(imgSize));
     set_isAvailable(isAvailable);
-    parentAry = (ImgIdx *)Malloc((size_t)imgSize * sizeof(_int32));
-    node = (AlphaNode<Pixel> *)Malloc((size_t)maxSize * sizeof(AlphaNode<Pixel>));
+    _parentAry = (ImgIdx *)Malloc((size_t)imgSize * sizeof(_int32));
+    node = (AlphaNode<Pixel> *)Malloc((size_t)_maxSize * sizeof(AlphaNode<Pixel>));
 
     stackTop = NewAlphaNode(); /*dummy root*/
     AlphaNode<Pixel> *pNode = node + stackTop;
@@ -2934,35 +2925,35 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierHeapQueueHisteq(Pixel *im
             queue->start_pushes();
             isVisited[p] = 1;
             isAv = isAvailable[p];
-            if (connectivity == 4) {
+            if (_connectivity == 4) {
                 q = p << 1;
-                if (is_available(isAv, 0) && !isVisited[p + width])
-                    queue->push(p + width, dimg[q]);
+                if (is_available(isAv, 0) && !isVisited[p + _width])
+                    queue->push(p + _width, dimg[q]);
                 if (is_available(isAv, 1) && !isVisited[p + 1])
                     queue->push(p + 1, dimg[q + 1]);
                 if (is_available(isAv, 2) && !isVisited[p - 1])
                     queue->push(p - 1, dimg[q - 1]);
-                if (is_available(isAv, 3) && !isVisited[p - width])
-                    queue->push(p - width, dimg[q - (width << 1)]);
-            } else if (connectivity == 8) {
-                ImgIdx width4 = width << 2;
+                if (is_available(isAv, 3) && !isVisited[p - _width])
+                    queue->push(p - _width, dimg[q - (_width << 1)]);
+            } else if (_connectivity == 8) {
+                ImgIdx width4 = _width << 2;
                 q = p << 2;
-                if (is_available(isAv, 0) && !isVisited[p + width])
-                    queue->push(p + width, dimg[q]);
-                if (is_available(isAv, 1) && !isVisited[p + width + 1])
-                    queue->push(p + width + 1, dimg[q + 1]);
+                if (is_available(isAv, 0) && !isVisited[p + _width])
+                    queue->push(p + _width, dimg[q]);
+                if (is_available(isAv, 1) && !isVisited[p + _width + 1])
+                    queue->push(p + _width + 1, dimg[q + 1]);
                 if (is_available(isAv, 2) && !isVisited[p + 1])
                     queue->push(p + 1, dimg[q + 2]);
-                if (is_available(isAv, 3) && !isVisited[p - width + 1])
-                    queue->push(p - width + 1, dimg[q + 3]);
-                if (is_available(isAv, 4) && !isVisited[p - width])
-                    queue->push(p - width, dimg[q - width4]);
-                if (is_available(isAv, 5) && !isVisited[p - width - 1])
-                    queue->push(p - width - 1, dimg[q - width4 - 3]);
+                if (is_available(isAv, 3) && !isVisited[p - _width + 1])
+                    queue->push(p - _width + 1, dimg[q + 3]);
+                if (is_available(isAv, 4) && !isVisited[p - _width])
+                    queue->push(p - _width, dimg[q - width4]);
+                if (is_available(isAv, 5) && !isVisited[p - _width - 1])
+                    queue->push(p - _width - 1, dimg[q - width4 - 3]);
                 if (is_available(isAv, 6) && !isVisited[p - 1])
                     queue->push(p - 1, dimg[q - 2]);
-                if (is_available(isAv, 7) && !isVisited[p + width - 1])
-                    queue->push(p + width - 1, dimg[q + width4 - 1]);
+                if (is_available(isAv, 7) && !isVisited[p + _width - 1])
+                    queue->push(p + _width - 1, dimg[q + width4 - 1]);
             } else {
                 //?
             }
@@ -2975,16 +2966,16 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierHeapQueueHisteq(Pixel *im
                 iNode = NewAlphaNode();
                 node[iNode].set(1, currentLevel, (double)pix_val, pix_val, pix_val);
                 node[iNode].parentidx = stackTop;
-                node[iNode].rootidx = ROOTIDX;
+                node[iNode]._rootIdx = ROOTIDX;
                 stackTop = iNode;
                 if (currentLevel) {
                     iNode = NewAlphaNode(0, node + stackTop);
                     node[iNode].parentidx = stackTop;
-                    node[iNode].rootidx = ROOTIDX;
-                    parentAry[p] = iNode;
+                    node[iNode]._rootIdx = ROOTIDX;
+                    _parentAry[p] = iNode;
                     // prevTop = iNode;
                 } else
-                    parentAry[p] = stackTop;
+                    _parentAry[p] = stackTop;
             } else {
                 if (currentLevel) {
                     Pixel pix_val = img[p];
@@ -2992,8 +2983,8 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierHeapQueueHisteq(Pixel *im
                     node[iNode].set(1, 0, (double)pix_val, pix_val, pix_val);
                     node[stackTop].add(node + iNode);
                     node[iNode].parentidx = stackTop;
-                    node[iNode].rootidx = ROOTIDX;
-                    parentAry[p] = iNode;
+                    node[iNode]._rootIdx = ROOTIDX;
+                    _parentAry[p] = iNode;
                 } else
                     connectPix2Node(p, img[p], stackTop);
                 if (node[stackTop].area == imgSize)
@@ -3008,7 +2999,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierHeapQueueHisteq(Pixel *im
         if ((double)queue->top_alpha() < (double)node[iNode].alpha) {
             iNode = NewAlphaNode1(queue->top_alpha(), node + stackTop);
             node[iNode].parentidx = node[stackTop].parentidx;
-            node[iNode].rootidx = ROOTIDX;
+            node[iNode]._rootIdx = ROOTIDX;
             node[stackTop].parentidx = iNode;
         } else // go to existing node
         {
@@ -3021,8 +3012,8 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierHeapQueueHisteq(Pixel *im
             break;
     }
 FLOOD_END:
-    rootidx = (node[stackTop].area == imgSize) ? stackTop : iNode; // remove redundant root
-    node[rootidx].parentidx = ROOTIDX;
+    _rootIdx = (node[stackTop].area == imgSize) ? stackTop : iNode; // remove redundant root
+    node[_rootIdx].parentidx = ROOTIDX;
 
     delete queue;
     Free(dimg);
@@ -3031,11 +3022,11 @@ FLOOD_END:
 }
 
 template <class Pixel> ImgIdx AlphaTree<Pixel>::initialize_node(Pixel *img, Pixel *dimg, Pixel maxpixval) {
-    ImgIdx p, imgSize = width * height;
+    ImgIdx p, imgSize = _width * _height;
     ImgIdx maxdiffidx = 0;
     Pixel maxdiffval = 0;
 
-    for (p = 0; p < maxSize; p++) {
+    for (p = 0; p < _maxSize; p++) {
         if (p < imgSize)
             node[p].set(1, 0, (double)img[p], img[p], img[p]);
         else {
@@ -3053,23 +3044,23 @@ template <class Pixel> ImgIdx AlphaTree<Pixel>::initialize_node(Pixel *img, Pixe
 
 template <class Pixel>
 void AlphaTree<Pixel>::initialize_node1(Pixel *img, RankItem<double> *rankitem, Pixel maxpixval) {
-    ImgIdx p, imgSize = width * height;
+    ImgIdx p, imgSize = _width * _height;
 
-    for (p = 0; p < maxSize; p++) {
+    for (p = 0; p < _maxSize; p++) {
         if (p < imgSize)
             node[p].set(1, 0, (double)img[p], img[p], img[p]);
         else
             node[p].set(0, rankitem[p - imgSize].alpha, 0.0, maxpixval, 0);
-        node[p].rootidx = node[p].parentidx = ROOTIDX;
+        node[p]._rootIdx = node[p].parentidx = ROOTIDX;
     }
 }
 
 template <class Pixel>
 void AlphaTree<Pixel>::initialize_node1(Pixel *img, RankItem<double> *rankitem, Pixel maxpixval,
                                         _int32 *rank2rankitem) {
-    ImgIdx p, imgSize = width * height;
+    ImgIdx p, imgSize = _width * _height;
 
-    for (p = 0; p < maxSize; p++) {
+    for (p = 0; p < _maxSize; p++) {
         ImgIdx q = p;
         if (p < imgSize)
             node[p].set(1, 0, (double)img[p], img[p], img[p]);
@@ -3078,34 +3069,34 @@ void AlphaTree<Pixel>::initialize_node1(Pixel *img, RankItem<double> *rankitem, 
             node[p].set(0, rankitem[q].alpha, 0.0, maxpixval, 0);
             q = q + imgSize;
         }
-        node[q].rootidx = node[q].parentidx = ROOTIDX;
+        node[q]._rootIdx = node[q].parentidx = ROOTIDX;
     }
 }
 
 template <class Pixel> void AlphaTree<Pixel>::initialize_node(Pixel *img, RankItem<Pixel> *rankitem, Pixel maxpixval) {
-    ImgIdx p, imgSize = width * height;
+    ImgIdx p, imgSize = _width * _height;
 
-    for (p = 0; p < maxSize; p++) {
+    for (p = 0; p < _maxSize; p++) {
         if (p < imgSize)
             node[p].set(1, 0, (double)img[p], img[p], img[p]);
         else
             node[p].set(0, rankitem[p - imgSize].alpha, 0.0, maxpixval, 0);
-        node[p].rootidx = node[p].parentidx = ROOTIDX;
+        node[p]._rootIdx = node[p].parentidx = ROOTIDX;
     }
 }
 
 template <class Pixel>
 void AlphaTree<Pixel>::initialize_node_par(Pixel *img, RankItem<Pixel> *rankitem, Pixel maxpixval) {
-    ImgIdx p, imgSize = width * height;
+    ImgIdx p, imgSize = _width * _height;
 
 #pragma omp parallel for schedule(guided, 1)
-    for (p = 0; p < maxSize; p++) {
+    for (p = 0; p < _maxSize; p++) {
         if (p < imgSize) {
             node[p].set(1, 0, (double)img[p], img[p], img[p]);
-            node[p].parentidx = node[p].rootidx = ROOTIDX;
+            node[p].parentidx = node[p]._rootIdx = ROOTIDX;
         } else {
             node[p].set(0, rankitem[p - imgSize].alpha, 0.0, maxpixval, 0);
-            node[p].parentidx = node[p].rootidx = ROOTIDX;
+            node[p].parentidx = node[p]._rootIdx = ROOTIDX;
         }
         // node[p].print(node);
 
@@ -3116,38 +3107,38 @@ void AlphaTree<Pixel>::initialize_node_par(Pixel *img, RankItem<Pixel> *rankitem
 template <class Pixel>
 void AlphaTree<Pixel>::initialize_node_par1(Pixel *img, RankItem<double> *rankitem, Pixel maxpixval,
                                             _int32 *rank2rankitem) {
-    ImgIdx p, imgSize = width * height;
+    ImgIdx p, imgSize = _width * _height;
 
 #pragma omp parallel for schedule(guided, 1)
-    for (p = 0; p < maxSize; p++) {
+    for (p = 0; p < _maxSize; p++) {
         if (p < imgSize) {
             node[p].set(1, 0, (double)img[p], img[p], img[p]);
-            node[p].parentidx = node[p].rootidx = ROOTIDX;
+            node[p].parentidx = node[p]._rootIdx = ROOTIDX;
         } else {
             if (rank2rankitem)
                 node[p].set(0, rankitem[rank2rankitem[p - imgSize]].alpha, 0.0, maxpixval, 0);
             else
                 node[p].set(0, rankitem[p - imgSize].alpha, 0.0, maxpixval, 0);
-            node[p].parentidx = node[p].rootidx = ROOTIDX;
+            node[p].parentidx = node[p]._rootIdx = ROOTIDX;
         }
     }
 }
 
 template <class Pixel> void AlphaTree<Pixel>::init_hypergraph_nodes(Pixel *dimg) {
-    if (connectivity == 4) {
-        ImgIdx imgSize = height * width;
+    if (_connectivity == 4) {
+        ImgIdx imgSize = _height * _width;
         ImgIdx p = 0;
-        ImgIdx wstride = width << 1;
-        for (ImgIdx y = 0; y < height; y++) {
-            for (ImgIdx x = 0; x < width; x++) {
+        ImgIdx wstride = _width << 1;
+        for (ImgIdx y = 0; y < _height; y++) {
+            for (ImgIdx x = 0; x < _width; x++) {
                 ImgIdx q = p << 1;
                 Pixel minalpha = (Pixel)(-1), minneighidx = 0;
 
-                if ((y < height - 1) && (dimg[q] < minalpha)) {
+                if ((y < _height - 1) && (dimg[q] < minalpha)) {
                     minalpha = dimg[q];
                     minneighidx = q;
                 }
-                if ((x < width - 1) && (dimg[q + 1] < minalpha)) {
+                if ((x < _width - 1) && (dimg[q + 1] < minalpha)) {
                     minalpha = dimg[q + 1];
                     minneighidx = q + 1;
                 }
@@ -3171,18 +3162,18 @@ template <class Pixel> void AlphaTree<Pixel>::init_hypergraph_nodes(Pixel *dimg)
 // pixels are no longer needed to be inspected to make the min-tree implementation
 // easier
 template <class Pixel> void AlphaTree<Pixel>::init_hypergraph_nodes(ImgIdx *rank) {
-    if (connectivity == 4) {
-        ImgIdx imgSize = height * width;
+    if (_connectivity == 4) {
+        ImgIdx imgSize = _height * _width;
         for (ImgIdx p = 0; p < imgSize; p++) {
             ImgIdx q = p << 1;
-            ImgIdx y = p / width;
-            ImgIdx x = p % width;
+            ImgIdx y = p / _width;
+            ImgIdx x = p % _width;
             ImgIdx minRank = 2 * imgSize;
 
-            ((y < height - 1) && (rank[q] < minRank)) ? (minRank = rank[q]) : (ImgIdx)0;
-            ((x < width - 1) && (rank[q + 1] < minRank)) ? (minRank = rank[q + 1]) : (ImgIdx)0;
+            ((y < _height - 1) && (rank[q] < minRank)) ? (minRank = rank[q]) : (ImgIdx)0;
+            ((x < _width - 1) && (rank[q + 1] < minRank)) ? (minRank = rank[q + 1]) : (ImgIdx)0;
             ((x > 0) && (rank[q - 1] < minRank)) ? (minRank = rank[q - 1]) : (ImgIdx)0;
-            ((y > 0) && (rank[q - (width << 1)] < minRank)) ? (minRank = rank[q - (width << 1)]) : (ImgIdx)0;
+            ((y > 0) && (rank[q - (_width << 1)] < minRank)) ? (minRank = rank[q - (_width << 1)]) : (ImgIdx)0;
 
             node[p].connect_to_parent(&node_in[minRank], minRank + imgSize);
         }
@@ -3191,10 +3182,10 @@ template <class Pixel> void AlphaTree<Pixel>::init_hypergraph_nodes(ImgIdx *rank
 }
 
 template <class Pixel> void AlphaTree<Pixel>::set_isAvailable_hypergraph(_uint8 *isAvailable) {
-    if (connectivity == 4) {
+    if (_connectivity == 4) {
         ImgIdx dimgidx;
-        ImgIdx width2 = 2 * width;
-        ImgIdx dimgsize = width * height * 2;
+        ImgIdx width2 = 2 * _width;
+        ImgIdx dimgSize = _width * _height * 2;
 
         // first row
         for (dimgidx = 0; dimgidx < width2;) {
@@ -3202,20 +3193,20 @@ template <class Pixel> void AlphaTree<Pixel>::set_isAvailable_hypergraph(_uint8 
             isAvailable[dimgidx++] |= 0x30; // odd neighbor 4, 5
         }
 
-        for (dimgidx -= 3; dimgidx < dimgsize; dimgidx += width2) {
+        for (dimgidx -= 3; dimgidx < dimgSize; dimgidx += width2) {
             isAvailable[dimgidx] |= 0x02;     // odd neighbor 1
             isAvailable[dimgidx + 1] |= 0x09; // even neighbor 0, 3
         }
 
-        for (dimgidx = 0; dimgidx < dimgsize; dimgidx += width2) {
+        for (dimgidx = 0; dimgidx < dimgSize; dimgidx += width2) {
             isAvailable[dimgidx] |= 0x12;     // even neighbor 1, 4
             isAvailable[dimgidx + 1] |= 0x08; // odd neighbor 3
         }
 
         // last 2 rows
-        for (dimgidx = width * (height - 2) * 2; dimgidx < dimgsize - width2; dimgidx += 2)
+        for (dimgidx = _width * (_height - 2) * 2; dimgidx < dimgSize - width2; dimgidx += 2)
             isAvailable[dimgidx] |= 0x04; // even neighbor 2
-        for (dimgidx += 1; dimgidx < dimgsize; dimgidx += 2)
+        for (dimgidx += 1; dimgidx < dimgSize; dimgidx += 2)
             isAvailable[dimgidx] |= 0x05; // odd neighbor 0, 2
 
     } else // later
@@ -3230,7 +3221,7 @@ _uint8 AlphaTree<Pixel>::push_neighbor(Trie<TrieIdx> *queue, _uint8 *isVisited, 
 }
 
 template <class Pixel> void AlphaTree<Pixel>::FloodTrieHypergraph(Pixel *img) {
-    ImgIdx imgSize, dimgsize, nredges;
+    ImgIdx imgSize, dimgSize, nredges;
     ImgIdx current_rank = 0, next_rank = 0;
     RankItem<double> *rankitem, *pRank;
     Pixel maxpixval;
@@ -3238,22 +3229,22 @@ template <class Pixel> void AlphaTree<Pixel>::FloodTrieHypergraph(Pixel *img) {
     _int8 nbits;
     _uint8 *isVisited, *isAvailable, isAv;
     ImgIdx p;
-    imgSize = width * height;
-    nredges =
-        width * (height - 1) + (width - 1) * height + ((connectivity == 8) ? ((width - 1) * (height - 1) * 2) : 0);
-    dimgsize = (connectivity >> 1) * width * height;
-    maxSize = imgSize + nredges;
-    num_node = maxSize;
+    imgSize = _width * _height;
+    nredges = _width * (_height - 1) + (_width - 1) * _height +
+              ((_connectivity == 8) ? ((_width - 1) * (_height - 1) * 2) : 0);
+    dimgSize = (_connectivity >> 1) * _width * _height;
+    _maxSize = imgSize + nredges;
+    num_node = _maxSize;
     num_node_in = nredges;
     nbits = ((sizeof(Pixel) << 3) - 1);
     maxpixval = ~(1 << nbits);
     rankitem = (RankItem<double> *)Malloc(nredges * sizeof(RankItem<double>));
-    parentAry = 0;
-    rank = (ImgIdx *)Malloc((size_t)dimgsize * sizeof(ImgIdx));
-    node = (AlphaNode<Pixel> *)Malloc((size_t)maxSize * sizeof(AlphaNode<Pixel>));
+    _parentAry = 0;
+    rank = (ImgIdx *)Malloc((size_t)dimgSize * sizeof(ImgIdx));
+    node = (AlphaNode<Pixel> *)Malloc((size_t)_maxSize * sizeof(AlphaNode<Pixel>));
     node_in = node + imgSize;
 
-    ImgIdx wstride_d = width << 1;
+    ImgIdx wstride_d = _width << 1;
 
     Trie<TrieIdx> *queue = new Trie<TrieIdx>(nredges);
 
@@ -3264,8 +3255,8 @@ template <class Pixel> void AlphaTree<Pixel>::FloodTrieHypergraph(Pixel *img) {
 
     init_hypergraph_nodes(rank);
 
-    isVisited = (_uint8 *)Calloc(dimgsize * sizeof(_uint8));
-    isAvailable = (_uint8 *)Calloc(dimgsize * sizeof(_uint8));
+    isVisited = (_uint8 *)Calloc(dimgSize * sizeof(_uint8));
+    isAvailable = (_uint8 *)Calloc(dimgSize * sizeof(_uint8));
 
     set_isAvailable_hypergraph(isAvailable);
 
@@ -3281,7 +3272,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodTrieHypergraph(Pixel *img) {
             p = pRank->dimgidx;
 
             _uint8 gotolowerlevel = 0;
-            if (connectivity == 4) {
+            if (_connectivity == 4) {
                 isAv = ~isAvailable[p];
 
                 if (p & 1)
@@ -3335,8 +3326,8 @@ template <class Pixel> void AlphaTree<Pixel>::FloodTrieHypergraph(Pixel *img) {
         current_rank = next_rank;
     }
 
-    rootidx = (node_in[current_rank].area == imgSize) ? current_rank + imgSize : next_rank + imgSize;
-    node[rootidx].parentidx = ROOTIDX;
+    _rootIdx = (node_in[current_rank].area == imgSize) ? current_rank + imgSize : next_rank + imgSize;
+    node[_rootIdx].parentidx = ROOTIDX;
 
     delete queue;
     Free(rank2rankitem);
@@ -3381,15 +3372,15 @@ X : don't care
 */
 template <class Pixel>
 void AlphaTree<Pixel>::set_isAvailable_par_hypergraph(_uint8 *isAvailable, _int8 npartition_x, _int8 npartition_y) {
-    ImgIdx wstride = width / npartition_x * 2;
-    ImgIdx wres2 = (width % npartition_x) * 2;
-    ImgIdx hstride = height / npartition_y;
-    ImgIdx hres = height % npartition_y;
+    ImgIdx wstride = _width / npartition_x * 2;
+    ImgIdx wres2 = (_width % npartition_x) * 2;
+    ImgIdx hstride = _height / npartition_y;
+    ImgIdx hres = _height % npartition_y;
 
-    if (connectivity == 4) {
+    if (_connectivity == 4) {
         ImgIdx dimgidx;
-        ImgIdx width2 = 2 * width;
-        ImgIdx dimgsize = width * height * 2;
+        ImgIdx width2 = 2 * _width;
+        ImgIdx dimgSize = _width * _height * 2;
 
         // subimage first rows
         for (int y = 0; y < npartition_y; y++) {
@@ -3404,21 +3395,21 @@ void AlphaTree<Pixel>::set_isAvailable_par_hypergraph(_uint8 *isAvailable, _int8
         for (int x = 0; x < npartition_x; x++) {
             if (x == 0) {
                 dimgidx = width2 - 3;
-                for (; dimgidx < dimgsize; dimgidx += width2) {
+                for (; dimgidx < dimgSize; dimgidx += width2) {
                     isAvailable[dimgidx] |= 0x02;     // odd neighbor 1
                     isAvailable[dimgidx + 1] |= 0x09; // even neighbor 0, 3
                 }
             } else {
                 // edges on subblock borders belong to subblocks on the left
                 dimgidx = width2 - 1 - x * wstride - wres2;
-                for (; dimgidx < dimgsize; dimgidx += width2)
+                for (; dimgidx < dimgSize; dimgidx += width2)
                     isAvailable[dimgidx] |= 0x23; // odd neighbor 0, 1, 5
             }
         }
 
         // subimage left edges
         for (int x = 0; x < npartition_x; x++) {
-            for (dimgidx = x * wstride; dimgidx < dimgsize; dimgidx += width2) {
+            for (dimgidx = x * wstride; dimgidx < dimgSize; dimgidx += width2) {
                 isAvailable[dimgidx] |= 0x12;     // even neighbor 1, 4
                 isAvailable[dimgidx + 1] |= 0x08; // odd neighbor 3
             }
@@ -3428,14 +3419,14 @@ void AlphaTree<Pixel>::set_isAvailable_par_hypergraph(_uint8 *isAvailable, _int8
         for (int y = 0; y < npartition_y; y++) {
             if (y == 0) {
 
-                ImgIdx subimgend = (height - 1) * width2;
-                for (dimgidx = (height - 2) * width2; dimgidx < subimgend; dimgidx += 2)
+                ImgIdx subimgend = (_height - 1) * width2;
+                for (dimgidx = (_height - 2) * width2; dimgidx < subimgend; dimgidx += 2)
                     isAvailable[dimgidx] |= 0x04; // even neighbor 2
-                subimgend = height * width2;
-                for (dimgidx = (height - 1) * width2 + 1; dimgidx < subimgend; dimgidx += 2)
+                subimgend = _height * width2;
+                for (dimgidx = (_height - 1) * width2 + 1; dimgidx < subimgend; dimgidx += 2)
                     isAvailable[dimgidx] |= 0x05; // odd neighbor 0, 2
             } else {
-                dimgidx = (height - 1 - y * hstride - hres) * width2;
+                dimgidx = (_height - 1 - y * hstride - hres) * width2;
                 ImgIdx subimgend = dimgidx + width2;
                 for (; dimgidx < subimgend; dimgidx += 2)
                     isAvailable[dimgidx] |= 0x1c; // even neighbor 2, 3, 4
@@ -3497,7 +3488,7 @@ _uint8 AlphaTree<Pixel>::push_neighbor(HierarQueue *queue, _uint8 *isVisited, _u
 }
 
 template <class Pixel> void AlphaTree<Pixel>::FloodHierarQueueHypergraph(Pixel *img) {
-    if (sizeof(Pixel) > 2 || channel > 1) {
+    if (sizeof(Pixel) > 2 || _channel > 1) {
         printf("Error: Hierarchical queues do not work on >16 bits images or multispectral images\n");
         printf("Try Unionfind (algorithm code %d), flooding using Heapqueue (%d), trie queue (%d) or cached trie queue "
                "(%d) \n",
@@ -3507,29 +3498,29 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarQueueHypergraph(Pixel *
 
     HierarQueue *queue;
 
-    ImgIdx imgSize, dimgsize, nredges;
+    ImgIdx imgSize, dimgSize, nredges;
     _int64 numlevels, max_level, currentLevel;
     ImgIdx *dhist;
     Pixel *dimg;
     ImgIdx stackTop, iNode;
     _uint8 *isVisited, *isAvailable;
-    ImgIdx p, wstride_d = width << 1;
+    ImgIdx p, wstride_d = _width << 1;
 
-    imgSize = width * height;
-    nredges =
-        width * (height - 1) + (width - 1) * height + ((connectivity == 8) ? ((width - 1) * (height - 1) * 2) : 0);
-    dimgsize = (connectivity >> 1) * width * height;
+    imgSize = _width * _height;
+    nredges = _width * (_height - 1) + (_width - 1) * _height +
+              ((_connectivity == 8) ? ((_width - 1) * (_height - 1) * 2) : 0);
+    dimgSize = (_connectivity >> 1) * _width * _height;
     max_level = (_int64)((Pixel)(-1));
     numlevels = max_level + 1;
 
     dhist = (ImgIdx *)Malloc((size_t)numlevels * sizeof(ImgIdx));
     memset(dhist, 0, (size_t)numlevels * sizeof(_int32));
-    dimg = (Pixel *)Calloc((size_t)dimgsize * sizeof(Pixel));
+    dimg = (Pixel *)Calloc((size_t)dimgSize * sizeof(Pixel));
 
     compute_dimg(dimg, dhist, img); // calculate pixel differences and make histogram
 
-    maxSize = imgSize + dimgsize;
-    node = (AlphaNode<Pixel> *)Calloc((size_t)maxSize * sizeof(AlphaNode<Pixel>));
+    _maxSize = imgSize + dimgSize;
+    node = (AlphaNode<Pixel> *)Calloc((size_t)_maxSize * sizeof(AlphaNode<Pixel>));
     node_in = node + imgSize;
 
     ImgIdx maxdiffidx = initialize_node(img, dimg, max_level);
@@ -3539,11 +3530,11 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarQueueHypergraph(Pixel *
 
     // create hierarchical queue from dhist
     queue = new HierarQueue(nredges, dhist, numlevels);
-    curSize = 0;
+    _curSize = 0;
 
     Free(dhist);
-    isVisited = (_uint8 *)Calloc(dimgsize * sizeof(_uint8));
-    isAvailable = (_uint8 *)Calloc(dimgsize * sizeof(_uint8));
+    isVisited = (_uint8 *)Calloc(dimgSize * sizeof(_uint8));
+    isAvailable = (_uint8 *)Calloc(dimgSize * sizeof(_uint8));
 
     omp_set_num_threads(1);
     _int8 npartition_x = 1, npartition_y = 1;
@@ -3562,7 +3553,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarQueueHypergraph(Pixel *
             p = queue->top();
 
             _uint8 gotolowerlevel = 0;
-            if (connectivity == 4) {
+            if (_connectivity == 4) {
                 _uint8 isAv = ~isAvailable[p];
 
                 if (p & 1)
@@ -3642,8 +3633,8 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarQueueHypergraph(Pixel *
         currentLevel = node[stackTop].alpha;
     }
 
-    rootidx = node[iNode].area == imgSize ? iNode : stackTop;
-    node[rootidx].parentidx = ROOTIDX;
+    _rootIdx = node[iNode].area == imgSize ? iNode : stackTop;
+    node[_rootIdx].parentidx = ROOTIDX;
 
     delete queue;
     Free(dimg);
@@ -3685,7 +3676,7 @@ ImgIdx AlphaTree<Pixel>::merge_subtrees(Pixel *dimg, _int64 blksz_x, _int64 blks
 
     ImgIdx npartition_x0 = npartition_x;
     ImgIdx npartition_y0 = npartition_y;
-    ImgIdx blkrow = width * blksz_y0;
+    ImgIdx blkrow = _width * blksz_y0;
     while (npartition_x > 1 || npartition_y > 1) {
         // merge horizontal borders
         if ((npartition_x == 1 || blksz_x >= blksz_y) && npartition_y > 1) {
@@ -3698,12 +3689,12 @@ ImgIdx AlphaTree<Pixel>::merge_subtrees(Pixel *dimg, _int64 blksz_x, _int64 blks
                 y = (1 + 2 * (blk / (int)npartition_x)) * blksz_y;
                 x = (blk % (int)npartition_x) * blksz_x;
 
-                p0 = (y - 1) * width + x;
-                pn = (((blk % (int)npartition_x) == npartition_x - 1) ? y * width : p0 + blksz_x);
+                p0 = (y - 1) * _width + x;
+                pn = (((blk % (int)npartition_x) == npartition_x - 1) ? y * _width : p0 + blksz_x);
 
                 by = _min((p0 / blkrow), npartition_y0 - 1);
                 for (p = p0; p < pn; p++) {
-                    bx = _min(((p % width) / blksz_x0), npartition_x0 - 1);
+                    bx = _min(((p % _width) / blksz_x0), npartition_x0 - 1);
                     bidx = by * npartition_x0 + bx;
 
                     dimgidx = p << 1;
@@ -3711,17 +3702,17 @@ ImgIdx AlphaTree<Pixel>::merge_subtrees(Pixel *dimg, _int64 blksz_x, _int64 blks
                     nrbnode[bidx]++;
 
                     if (tse)
-                        connect(parentAry[p], parentAry[p + width], (ImgIdx)subtree_cur[bidx]++, (Pixel)r);
+                        connect(_parentAry[p], _parentAry[p + _width], (ImgIdx)subtree_cur[bidx]++, (Pixel)r);
                     else
-                        connect(p, p + width, (ImgIdx)subtree_cur[bidx]++, (Pixel)r);
+                        connect(p, p + _width, (ImgIdx)subtree_cur[bidx]++, (Pixel)r);
                 }
             }
             npartition_y = (npartition_y + 1) / 2;
             blksz_y <<= 1;
             if (npartition_y == 1)
-                blksz_y = height;
+                blksz_y = _height;
             else
-                blksz_y = _min(blksz_y, height);
+                blksz_y = _min(blksz_y, _height);
         }
 
         if ((npartition_y == 1 || blksz_x <= blksz_y) && npartition_x > 1) {
@@ -3734,11 +3725,11 @@ ImgIdx AlphaTree<Pixel>::merge_subtrees(Pixel *dimg, _int64 blksz_x, _int64 blks
                 x = (1 + 2 * (blk / npartition_y)) * blksz_x;
                 y = (blk % (int)npartition_y) * blksz_y;
 
-                p0 = y * width + x - 1;
-                pn = ((blk % (int)npartition_y) == npartition_y - 1) ? height * width : p0 + width * blksz_y;
+                p0 = y * _width + x - 1;
+                pn = ((blk % (int)npartition_y) == npartition_y - 1) ? _height * _width : p0 + _width * blksz_y;
 
-                bx = _min(((p0 % width) / blksz_x0), npartition_x0 - 1);
-                for (p = p0; p < pn; p += width) {
+                bx = _min(((p0 % _width) / blksz_x0), npartition_x0 - 1);
+                for (p = p0; p < pn; p += _width) {
                     by = _min((p / blkrow), npartition_y0 - 1);
                     bidx = by * npartition_x0 + bx;
 
@@ -3747,7 +3738,7 @@ ImgIdx AlphaTree<Pixel>::merge_subtrees(Pixel *dimg, _int64 blksz_x, _int64 blks
                     nrbnode[bidx]++;
 
                     if (tse)
-                        connect(parentAry[p], parentAry[p + 1], (ImgIdx)subtree_cur[bidx]++, (Pixel)r);
+                        connect(_parentAry[p], _parentAry[p + 1], (ImgIdx)subtree_cur[bidx]++, (Pixel)r);
                     else
                         connect(p, p + 1, (ImgIdx)subtree_cur[bidx]++, (Pixel)r);
                 }
@@ -3755,15 +3746,15 @@ ImgIdx AlphaTree<Pixel>::merge_subtrees(Pixel *dimg, _int64 blksz_x, _int64 blks
             npartition_x = (npartition_x + 1) / 2;
             blksz_x <<= 1;
             if (npartition_x == 1)
-                blksz_x = width;
+                blksz_x = _width;
             else
-                blksz_x = _min(blksz_x, width);
+                blksz_x = _min(blksz_x, _width);
         }
     }
 
     ImgIdx p;
     if (tse)
-        p = parentAry[0];
+        p = _parentAry[0];
     else
         p = 0;
     while (node[p].parentidx != ROOTIDX)
@@ -3781,7 +3772,7 @@ ImgIdx AlphaTree<Pixel>::merge_subtrees(_uint8 *dimg, _int64 blksz_x, _int64 blk
 
     ImgIdx npartition_x0 = npartition_x;
     ImgIdx npartition_y0 = npartition_y;
-    ImgIdx blkrow = width * blksz_y0;
+    ImgIdx blkrow = _width * blksz_y0;
     while (npartition_x > 1 || npartition_y > 1) {
         if ((npartition_x == 1 || blksz_x >= blksz_y) && npartition_y > 1) {
             numblk = npartition_x * (npartition_y / 2);
@@ -3792,29 +3783,29 @@ ImgIdx AlphaTree<Pixel>::merge_subtrees(_uint8 *dimg, _int64 blksz_x, _int64 blk
                 y = (1 + 2 * (blk / (int)npartition_x)) * blksz_y;
                 x = (blk % (int)npartition_x) * blksz_x;
 
-                p0 = (y - 1) * width + x;
-                pn = (((blk % (int)npartition_x) == npartition_x - 1) ? y * width : p0 + blksz_x);
+                p0 = (y - 1) * _width + x;
+                pn = (((blk % (int)npartition_x) == npartition_x - 1) ? y * _width : p0 + blksz_x);
 
                 by = _min((p0 / blkrow), npartition_y0 - 1);
                 for (p = p0; p < pn; p++) {
-                    bx = _min(((p % width) / blksz_x0), npartition_x0 - 1);
+                    bx = _min(((p % _width) / blksz_x0), npartition_x0 - 1);
                     bidx = by * npartition_x0 + bx;
 
                     dimgidx = p << 1;
                     r = dimg[dimgidx];
 
                     if (tse)
-                        connect(parentAry[p], parentAry[p + width], (ImgIdx)subtree_cur[bidx]++, (Pixel)r);
+                        connect(_parentAry[p], _parentAry[p + _width], (ImgIdx)subtree_cur[bidx]++, (Pixel)r);
                     else
-                        connect(p, p + width, (ImgIdx)subtree_cur[bidx]++, (Pixel)r);
+                        connect(p, p + _width, (ImgIdx)subtree_cur[bidx]++, (Pixel)r);
                 }
             }
             npartition_y = (npartition_y + 1) / 2;
             blksz_y <<= 1;
             if (npartition_y == 1)
-                blksz_y = height;
+                blksz_y = _height;
             else
-                blksz_y = _min(blksz_y, height);
+                blksz_y = _min(blksz_y, _height);
         }
 
         // merge vertical borders
@@ -3828,11 +3819,11 @@ ImgIdx AlphaTree<Pixel>::merge_subtrees(_uint8 *dimg, _int64 blksz_x, _int64 blk
                 x = (1 + 2 * (blk / npartition_y)) * blksz_x;
                 y = (blk % (int)npartition_y) * blksz_y;
 
-                p0 = y * width + x - 1;
-                pn = ((blk % (int)npartition_y) == npartition_y - 1) ? height * width : p0 + width * blksz_y;
+                p0 = y * _width + x - 1;
+                pn = ((blk % (int)npartition_y) == npartition_y - 1) ? _height * _width : p0 + _width * blksz_y;
 
-                bx = _min(((p0 % width) / blksz_x0), npartition_x0 - 1);
-                for (p = p0; p < pn; p += width) {
+                bx = _min(((p0 % _width) / blksz_x0), npartition_x0 - 1);
+                for (p = p0; p < pn; p += _width) {
                     by = _min((p / blkrow), npartition_y0 - 1);
                     bidx = by * npartition_x0 + bx;
 
@@ -3840,7 +3831,7 @@ ImgIdx AlphaTree<Pixel>::merge_subtrees(_uint8 *dimg, _int64 blksz_x, _int64 blk
                     r = dimg[dimgidx];
 
                     if (tse)
-                        connect(parentAry[p], parentAry[p + 1], (ImgIdx)subtree_cur[bidx]++, (Pixel)r);
+                        connect(_parentAry[p], _parentAry[p + 1], (ImgIdx)subtree_cur[bidx]++, (Pixel)r);
                     else
                         connect(p, p + 1, (ImgIdx)subtree_cur[bidx]++, (Pixel)r);
                 }
@@ -3848,15 +3839,15 @@ ImgIdx AlphaTree<Pixel>::merge_subtrees(_uint8 *dimg, _int64 blksz_x, _int64 blk
             npartition_x = (npartition_x + 1) / 2;
             blksz_x <<= 1;
             if (npartition_x == 1)
-                blksz_x = width;
+                blksz_x = _width;
             else
-                blksz_x = _min(blksz_x, width);
+                blksz_x = _min(blksz_x, _width);
         }
     }
 
     ImgIdx p;
     if (tse)
-        p = parentAry[0];
+        p = _parentAry[0];
     else
         p = 0;
     while (node[p].parentidx != ROOTIDX)
@@ -3874,7 +3865,7 @@ ImgIdx AlphaTree<Pixel>::merge_subtrees1(_uint8 *dimg, _int64 blksz_x, _int64 bl
 
     ImgIdx npartition_x0 = npartition_x;
     ImgIdx npartition_y0 = npartition_y;
-    ImgIdx blkrow = width * blksz_y0;
+    ImgIdx blkrow = _width * blksz_y0;
     while (npartition_x > 1 || npartition_y > 1) {
         if ((npartition_x == 1 || blksz_x >= blksz_y) && npartition_y > 1) {
             numblk = npartition_x * (npartition_y / 2);
@@ -3885,12 +3876,12 @@ ImgIdx AlphaTree<Pixel>::merge_subtrees1(_uint8 *dimg, _int64 blksz_x, _int64 bl
                 y = (1 + 2 * (blk / (int)npartition_x)) * blksz_y;
                 x = (blk % (int)npartition_x) * blksz_x;
 
-                p0 = (y - 1) * width + x;
-                pn = (((blk % (int)npartition_x) == npartition_x - 1) ? y * width : p0 + blksz_x);
+                p0 = (y - 1) * _width + x;
+                pn = (((blk % (int)npartition_x) == npartition_x - 1) ? y * _width : p0 + blksz_x);
 
                 by = _min((p0 / blkrow), npartition_y0 - 1);
                 for (p = p0; p < pn; p++) {
-                    bx = _min(((p % width) / blksz_x0), npartition_x0 - 1);
+                    bx = _min(((p % _width) / blksz_x0), npartition_x0 - 1);
                     bidx = by * npartition_x0 + bx;
 
                     dimgidx = p << 1;
@@ -3898,17 +3889,17 @@ ImgIdx AlphaTree<Pixel>::merge_subtrees1(_uint8 *dimg, _int64 blksz_x, _int64 bl
 
                     if (tse)
                         hypernode_level[dimgidx] =
-                            connect(parentAry[p], parentAry[p + width], (ImgIdx)subtree_cur[bidx]++, (Pixel)r);
+                            connect(_parentAry[p], _parentAry[p + _width], (ImgIdx)subtree_cur[bidx]++, (Pixel)r);
                     else
-                        hypernode_level[dimgidx] = connect(p, p + width, (ImgIdx)subtree_cur[bidx]++, (Pixel)r);
+                        hypernode_level[dimgidx] = connect(p, p + _width, (ImgIdx)subtree_cur[bidx]++, (Pixel)r);
                 }
             }
             npartition_y = (npartition_y + 1) / 2;
             blksz_y <<= 1;
             if (npartition_y == 1)
-                blksz_y = height;
+                blksz_y = _height;
             else
-                blksz_y = _min(blksz_y, height);
+                blksz_y = _min(blksz_y, _height);
         }
 
         if ((npartition_y == 1 || blksz_x <= blksz_y) && npartition_x > 1) {
@@ -3921,11 +3912,11 @@ ImgIdx AlphaTree<Pixel>::merge_subtrees1(_uint8 *dimg, _int64 blksz_x, _int64 bl
                 x = (1 + 2 * (blk / npartition_y)) * blksz_x;
                 y = (blk % (int)npartition_y) * blksz_y;
 
-                p0 = y * width + x - 1;
-                pn = ((blk % (int)npartition_y) == npartition_y - 1) ? height * width : p0 + width * blksz_y;
+                p0 = y * _width + x - 1;
+                pn = ((blk % (int)npartition_y) == npartition_y - 1) ? _height * _width : p0 + _width * blksz_y;
 
-                bx = _min(((p0 % width) / blksz_x0), npartition_x0 - 1);
-                for (p = p0; p < pn; p += width) {
+                bx = _min(((p0 % _width) / blksz_x0), npartition_x0 - 1);
+                for (p = p0; p < pn; p += _width) {
                     by = _min((p / blkrow), npartition_y0 - 1);
                     bidx = by * npartition_x0 + bx;
 
@@ -3934,7 +3925,7 @@ ImgIdx AlphaTree<Pixel>::merge_subtrees1(_uint8 *dimg, _int64 blksz_x, _int64 bl
 
                     if (tse)
                         hypernode_level[dimgidx] =
-                            connect(parentAry[p], parentAry[p + 1], (ImgIdx)subtree_cur[bidx]++, (Pixel)r);
+                            connect(_parentAry[p], _parentAry[p + 1], (ImgIdx)subtree_cur[bidx]++, (Pixel)r);
                     else
                         hypernode_level[dimgidx] = connect(p, p + 1, (ImgIdx)subtree_cur[bidx]++, (Pixel)r);
                 }
@@ -3942,15 +3933,15 @@ ImgIdx AlphaTree<Pixel>::merge_subtrees1(_uint8 *dimg, _int64 blksz_x, _int64 bl
             npartition_x = (npartition_x + 1) / 2;
             blksz_x <<= 1;
             if (npartition_x == 1)
-                blksz_x = width;
+                blksz_x = _width;
             else
-                blksz_x = _min(blksz_x, width);
+                blksz_x = _min(blksz_x, _width);
         }
     }
 
     ImgIdx p;
     if (tse)
-        p = parentAry[0];
+        p = _parentAry[0];
     else
         p = 0;
     while (node[p].parentidx != ROOTIDX)
@@ -4015,39 +4006,39 @@ ImgIdx AlphaTree<Pixel>::parflood_node_alloc(ImgIdx *subtree_size, ImgIdx *subtr
         ImgIdx blkmaxsize = 1 + 3 * blkws[blk] * blkhs[blk];
         subtree_start[blk + 1] = _min(blkmaxsize, (ImgIdx)((double)subtree_size[blk] * sizemult)) + subtree_start[blk];
     }
-    maxSize = subtree_start[numpartitions];
+    _maxSize = subtree_start[numpartitions];
     if (node)
         Free(node);
-    node = (AlphaNode<Pixel> *)Calloc((size_t)(maxSize) * sizeof(AlphaNode<Pixel>));
+    node = (AlphaNode<Pixel> *)Calloc((size_t)(_maxSize) * sizeof(AlphaNode<Pixel>));
 
-    return maxSize;
+    return _maxSize;
 }
 
 template <class Pixel>
 void AlphaTree<Pixel>::set_isAvailable_par(_uint8 *isAvailable, _int16 npartition_x, _int16 npartition_y) {
     _int32 i, j, k;
-    ImgIdx imgSize = width * height;
-    ImgIdx wstride = width / npartition_x;
-    ImgIdx hstride = height / npartition_y;
+    ImgIdx imgSize = _width * _height;
+    ImgIdx wstride = _width / npartition_x;
+    ImgIdx hstride = _height / npartition_y;
 
     set_isAvailable(isAvailable);
 
-    if (connectivity == 4) {
+    if (_connectivity == 4) {
         // hor partitions
-        j = (hstride - 1) * width;
+        j = (hstride - 1) * _width;
         for (i = 0; i < npartition_y - 1; i++) {
-            k = j + width;
+            k = j + _width;
             for (; j < k; j++) {
                 isAvailable[j] &= 0xe;
-                isAvailable[j + width] &= 0x7;
+                isAvailable[j + _width] &= 0x7;
             }
-            j += (hstride - 1) * width;
+            j += (hstride - 1) * _width;
         }
 
         // ver partitions
         for (i = 0; i < npartition_x - 1; i++) {
             j = (i + 1) * wstride - 1;
-            for (; j < imgSize; j += width) {
+            for (; j < imgSize; j += _width) {
                 isAvailable[j] &= 0xd;
                 isAvailable[j + 1] &= 0xb;
             }
@@ -4070,32 +4061,32 @@ void AlphaTree<Pixel>::set_isAvailable_par(_uint8 *isAvailable, _int16 npartitio
 
         // four corners
         isAvailable[0] = 0x0e;
-        isAvailable[width - 1] = 0x83;
-        isAvailable[width * (height - 1)] = 0x38;
-        isAvailable[width * height - 1] = 0xe0;
+        isAvailable[_width - 1] = 0x83;
+        isAvailable[_width * (_height - 1)] = 0x38;
+        isAvailable[_width * _height - 1] = 0xe0;
 
         // top and bottom row
-        j = width * (height - 1) + 1;
-        for (i = 1; i < width - 1; i++) {
+        j = _width * (_height - 1) + 1;
+        for (i = 1; i < _width - 1; i++) {
             isAvailable[i] = 0x8f;
             isAvailable[j] = 0xf8;
             j++;
         }
 
         // leftest and rightest column
-        j = width;
-        k = (width << 1) - 1;
-        for (i = 1; i < height - 1; i++) {
+        j = _width;
+        k = (_width << 1) - 1;
+        for (i = 1; i < _height - 1; i++) {
             isAvailable[j] = 0x3e;
             isAvailable[k] = 0xe3;
-            j += width;
-            k += width;
+            j += _width;
+            k += _width;
         }
     }
 }
 
 template <class Pixel> void AlphaTree<Pixel>::Flood_Hierarqueue_par(Pixel *img, int numthreads) {
-    if (sizeof(Pixel) > 2 || channel > 1) {
+    if (sizeof(Pixel) > 2 || _channel > 1) {
         printf("Error: Hierarchical queues do not work on >16 bits images or multispectral images\n");
         printf("Try Unionfind (algorithm code %d), flooding using Heapqueue (%d), trie queue (%d) or cached trie queue "
                "(%d) \n",
@@ -4103,16 +4094,16 @@ template <class Pixel> void AlphaTree<Pixel>::Flood_Hierarqueue_par(Pixel *img, 
         return;
     }
 
-    ImgIdx imgSize, dimgsize;
+    ImgIdx imgSize, dimgSize;
     _int64 numlevels;
     Pixel *dimg;
     _uint8 *isVisited, *isAvailable;
     ImgIdx p, q;
-    imgSize = width * height;
-    dimgsize = (connectivity >> 1) * width * height;
+    imgSize = _width * _height;
+    dimgSize = (_connectivity >> 1) * _width * _height;
     numlevels = (sizeof(Pixel) == 1) ? 256 : 65536;
 
-    dimg = (Pixel *)Calloc((size_t)dimgsize * sizeof(Pixel));
+    dimg = (Pixel *)Calloc((size_t)dimgSize * sizeof(Pixel));
 
     _int16 npartition_x, npartition_y;
     {
@@ -4122,9 +4113,9 @@ template <class Pixel> void AlphaTree<Pixel>::Flood_Hierarqueue_par(Pixel *img, 
             if (numthreads % px == 0) {
                 int py = numthreads / px;
 
-                if (((double)px * (double)height + (double)py * (double)width) < optborderlength) {
+                if (((double)px * (double)_height + (double)py * (double)_width) < optborderlength) {
                     optpart = px;
-                    optborderlength = ((double)px * (double)height + (double)py * (double)width);
+                    optborderlength = ((double)px * (double)_height + (double)py * (double)_width);
                 }
             }
         }
@@ -4136,10 +4127,10 @@ template <class Pixel> void AlphaTree<Pixel>::Flood_Hierarqueue_par(Pixel *img, 
     isAvailable = (_uint8 *)Malloc((size_t)(imgSize));
     set_isAvailable_par(isAvailable, npartition_x, npartition_y);
 
-    _int64 blksz_x = width / npartition_x;
-    _int64 blksz_y = height / npartition_y;
-    _int64 blksz_xn = blksz_x + (width % npartition_x);
-    _int64 blksz_yn = blksz_y + (height % npartition_y);
+    _int64 blksz_x = _width / npartition_x;
+    _int64 blksz_y = _height / npartition_y;
+    _int64 blksz_xn = blksz_x + (_width % npartition_x);
+    _int64 blksz_yn = blksz_y + (_height % npartition_y);
     _int64 numpartitions = (_int64)npartition_x * (_int64)npartition_y;
 
     p = q = 0;
@@ -4152,7 +4143,7 @@ template <class Pixel> void AlphaTree<Pixel>::Flood_Hierarqueue_par(Pixel *img, 
     ImgIdx *dhist = (ImgIdx *)Calloc((size_t)numlevels * (size_t)numpartitions * sizeof(ImgIdx));
 
     for (_int16 y = 0; y < npartition_y; y++) {
-        q = y * width * (ImgIdx)blksz_y;
+        q = y * _width * (ImgIdx)blksz_y;
         bool lastrow = (y == npartition_y - 1);
         ImgIdx blkh = lastrow ? blksz_yn : blksz_y;
         for (_int16 x = 0; x < npartition_x; x++) {
@@ -4179,7 +4170,7 @@ template <class Pixel> void AlphaTree<Pixel>::Flood_Hierarqueue_par(Pixel *img, 
         queues[blk] = new HierarQueue((_uint64)blocksize[blk] + 1);
 
     // singletons + inners + dummies
-    node = (AlphaNode<Pixel> *)Calloc((size_t)(imgSize + dimgsize + numpartitions) * sizeof(AlphaNode<Pixel>));
+    node = (AlphaNode<Pixel> *)Calloc((size_t)(imgSize + dimgSize + numpartitions) * sizeof(AlphaNode<Pixel>));
     node_in = node + imgSize;
 
 #pragma omp parallel for private(p, q) schedule(dynamic, 1)
@@ -4196,15 +4187,15 @@ template <class Pixel> void AlphaTree<Pixel>::Flood_Hierarqueue_par(Pixel *img, 
 
         for (ImgIdx i = 0; i < bheight; i++) {
             Pixel diff;
-            p = spidx + i * width;
+            p = spidx + i * _width;
             bool notlastrow = i < bheight - 1;
             for (ImgIdx j = 0; j < bwidth - 1; j++) {
                 q = p << 1;
                 node[p].set(1, 0, (double)img[p], img[p], img[p]);
-                node[p].parentidx = node[p].rootidx = ROOTIDX;
+                node[p].parentidx = node[p]._rootIdx = ROOTIDX;
 
                 if (notlastrow) {
-                    diff = abs_diff(img[p], img[p + width]);
+                    diff = abs_diff(img[p], img[p + _width]);
                     dimg[q] = diff;
                     bhist[diff]++;
                     maxdiff = _max(maxdiff, diff);
@@ -4217,9 +4208,9 @@ template <class Pixel> void AlphaTree<Pixel>::Flood_Hierarqueue_par(Pixel *img, 
             }
             q = p << 1;
             node[p].set(1, 0, (double)img[p], img[p], img[p]);
-            node[p].parentidx = node[p].rootidx = ROOTIDX;
+            node[p].parentidx = node[p]._rootIdx = ROOTIDX;
             if (notlastrow) {
-                diff = abs_diff(img[p], img[p + width]);
+                diff = abs_diff(img[p], img[p + _width]);
                 dimg[q] = diff;
                 bhist[diff]++;
                 maxdiff = _max(maxdiff, diff);
@@ -4229,7 +4220,7 @@ template <class Pixel> void AlphaTree<Pixel>::Flood_Hierarqueue_par(Pixel *img, 
 
         queue->set_queue(bhist, maxdiff);
 
-        ImgIdx stackTop = imgSize + dimgsize + blk;
+        ImgIdx stackTop = imgSize + dimgSize + blk;
         ImgIdx prevTop = stackTop;
         AlphaNode<Pixel> *pNode = node + stackTop;
         pNode->set(0, maxdiff, (double)0.0, maxdiff, (Pixel)0);
@@ -4249,22 +4240,23 @@ template <class Pixel> void AlphaTree<Pixel>::Flood_Hierarqueue_par(Pixel *img, 
                 isVisited[p] = 1;
                 _uint8 isAv = isAvailable[p];
 
-                if (connectivity == 4) {
+                if (_connectivity == 4) {
                     q = p << 1;
-                    (is_available(isAv, 0) && !isVisited[p + width]) ? (void)queue->push(p + width, dimg[q]) : (void)0;
+                    (is_available(isAv, 0) && !isVisited[p + _width]) ? (void)queue->push(p + _width, dimg[q])
+                                                                      : (void)0;
                     (is_available(isAv, 1) && !isVisited[p + 1]) ? (void)queue->push(p + 1, dimg[q + 1]) : (void)0;
                     (is_available(isAv, 2) && !isVisited[p - 1]) ? (void)queue->push(p - 1, dimg[q - 1]) : (void)0;
-                    (is_available(isAv, 3) && !isVisited[p - width])
-                        ? (void)queue->push(p - width, dimg[q - (width << 1)])
+                    (is_available(isAv, 3) && !isVisited[p - _width])
+                        ? (void)queue->push(p - _width, dimg[q - (_width << 1)])
                         : (void)0;
                 } else // To do later
                 {
                     // if (is_available(isAv, 0) && !isVisited[p + wstride1])	queue->push(p + wstride1, dimg[q]);
-                    // if (is_available(isAv, 1) && !isVisited[p + width])   	queue->push(p + width, dimg[q + 1]);
+                    // if (is_available(isAv, 1) && !isVisited[p + _width])   	queue->push(p + _width, dimg[q + 1]);
                     // if (is_available(isAv, 2) && !isVisited[p + wstride0])	queue->push(p + wstride0, dimg[q + 2]);
                     // if (is_available(isAv, 3) && !isVisited[p + 1])		  	queue->push(p + 1, dimg[q + 3]);
                     // if (is_available(isAv, 4) && !isVisited[p - wstride1])	queue->push(p - wstride1, dimg[q -
-                    // wstride_d + 4]); if (is_available(isAv, 5) && !isVisited[p - width])   	queue->push(p - width,
+                    // wstride_d + 4]); if (is_available(isAv, 5) && !isVisited[p - _width])   	queue->push(p - _width,
                     // dimg[q - wstride_d + 1]); if (is_available(isAv, 6) && !isVisited[p - wstride0]) queue->push(p -
                     // wstride0, dimg[q - wstride_d - 2]); if (is_available(isAv, 7) && !isVisited[p - 1])
                     // queue->push(p - 1, dimg[q - 1]);
@@ -4278,7 +4270,7 @@ template <class Pixel> void AlphaTree<Pixel>::Flood_Hierarqueue_par(Pixel *img, 
                     iNode = nidx++;
                     node[iNode].set(1, currentLevel, (double)pix_val, pix_val, pix_val);
                     node[iNode].parentidx = stackTop;
-                    node[iNode].rootidx = ROOTIDX;
+                    node[iNode]._rootIdx = ROOTIDX;
                     node[p].parentidx = iNode;
                     stackTop = iNode;
                 } else {
@@ -4298,7 +4290,7 @@ template <class Pixel> void AlphaTree<Pixel>::Flood_Hierarqueue_par(Pixel *img, 
                 node[iNode].alpha = queue->min_level;
                 node[iNode].copy(node + stackTop);
                 node[iNode].parentidx = node[stackTop].parentidx;
-                node[iNode].rootidx = ROOTIDX;
+                node[iNode]._rootIdx = ROOTIDX;
                 node[stackTop].parentidx = iNode;
             } else // go to existing node
             {
@@ -4345,12 +4337,12 @@ template <class Pixel> ImgIdx AlphaTree<Pixel>::find_root(ImgIdx p) {
 
     ImgIdx r, q;
 
-    for (r = p; node[r].rootidx != ROOTIDX; r = node[r].rootidx)
+    for (r = p; node[r]._rootIdx != ROOTIDX; r = node[r]._rootIdx)
         ;
 
     while (p != r) {
-        q = node[p].rootidx;
-        node[p].rootidx = r;
+        q = node[p]._rootIdx;
+        node[p]._rootIdx = r;
         p = q;
     }
 
@@ -4363,12 +4355,12 @@ template <class Pixel> ImgIdx AlphaTree<Pixel>::find_root_in(ImgIdx p) {
 
     ImgIdx r, q;
 
-    for (r = p; node_in[r].rootidx != ROOTIDX; r = node_in[r].rootidx)
+    for (r = p; node_in[r]._rootIdx != ROOTIDX; r = node_in[r]._rootIdx)
         ;
 
     while (p != r) {
-        q = node_in[p].rootidx;
-        node_in[p].rootidx = r;
+        q = node_in[p]._rootIdx;
+        node_in[p]._rootIdx = r;
         p = q;
         // int2++;
     }
@@ -4380,30 +4372,30 @@ template <class Pixel> void AlphaTree<Pixel>::Unionfind(Pixel *img) {
     ImgIdx imgSize, nredges;
     RankItem<double> *rankitem, *pRank;
 
-    imgSize = width * height;
-    nredges =
-        width * (height - 1) + (width - 1) * height + ((connectivity == 8) ? ((width - 1) * (height - 1) * 2) : 0);
-    curSize = maxSize = imgSize + nredges; // to be compatible with flooding algorithms
+    imgSize = _width * _height;
+    nredges = _width * (_height - 1) + (_width - 1) * _height +
+              ((_connectivity == 8) ? ((_width - 1) * (_height - 1) * 2) : 0);
+    _curSize = _maxSize = imgSize + nredges; // to be compatible with flooding algorithms
 
     omp_set_num_threads(1);
     rankitem = (RankItem<double> *)Malloc(nredges * sizeof(RankItem<double>));
     compute_difference_and_sort(rankitem, img, nredges);
 
     // initialize_node(img, rankitem, maxpixval);
-    maxSize = imgSize + nredges;
-    node = (AlphaNode<Pixel> *)Malloc((size_t)maxSize * sizeof(AlphaNode<Pixel>));
+    _maxSize = imgSize + nredges;
+    node = (AlphaNode<Pixel> *)Malloc((size_t)_maxSize * sizeof(AlphaNode<Pixel>));
     for (ImgIdx p = 0; p < imgSize; p++) {
         node[p].set(1, 0, (double)img[p], img[p], img[p]);
-        node[p].rootidx = node[p].parentidx = ROOTIDX;
+        node[p]._rootIdx = node[p].parentidx = ROOTIDX;
     }
 
     bool unionbyrank = 0; //(sizeof(Pixel) <= 2);
     ImgIdx *treedepth = 0;
 
     if (unionbyrank)
-        treedepth = (ImgIdx *)Calloc(maxSize * sizeof(ImgIdx));
+        treedepth = (ImgIdx *)Calloc(_maxSize * sizeof(ImgIdx));
 
-    ImgIdx curSize = 0;
+    ImgIdx _curSize = 0;
     for (ImgIdx r = 0; r < nredges; r++) {
         pRank = rankitem + r;
 
@@ -4411,10 +4403,10 @@ template <class Pixel> void AlphaTree<Pixel>::Unionfind(Pixel *img) {
         ImgIdx y, y0;
         ImgIdx z;
 
-        ImgIdx nodeaddr = curSize + imgSize;
+        ImgIdx nodeaddr = _curSize + imgSize;
 
-        x0 = pRank->get_pidx0(connectivity);
-        y0 = pRank->get_pidx1(width, connectivity);
+        x0 = pRank->get_pidx0(_connectivity);
+        y0 = pRank->get_pidx1(_width, _connectivity);
         x = find_root(x0);
         y = find_root(y0);
 
@@ -4428,20 +4420,20 @@ template <class Pixel> void AlphaTree<Pixel>::Unionfind(Pixel *img) {
         }
 
         if (!unionbyrank || node[x].alpha != pRank->alpha) {
-            curSize++;
+            _curSize++;
             // node_in[r].set(0, pRank->alpha, 0.0, maxpixval, 0);
             node[nodeaddr].copy(node + x);
             node[nodeaddr].alpha = pRank->alpha;
-            node[nodeaddr].parentidx = node[nodeaddr].rootidx = ROOTIDX;
+            node[nodeaddr].parentidx = node[nodeaddr]._rootIdx = ROOTIDX;
             //			node_in[r].parentidx = node[x].parentidx;
-            node[x].parentidx = node[x].rootidx = nodeaddr;
+            node[x].parentidx = node[x]._rootIdx = nodeaddr;
             node[nodeaddr].add(node + y);
-            node[y].parentidx = node[y].rootidx = nodeaddr;
+            node[y].parentidx = node[y]._rootIdx = nodeaddr;
             if (unionbyrank)
                 treedepth[nodeaddr] = _max(treedepth[x], treedepth[y]) + 1;
 
             if (node[nodeaddr].area == imgSize) {
-                rootidx = nodeaddr;
+                _rootIdx = nodeaddr;
                 break;
             }
         } else {
@@ -4451,11 +4443,11 @@ template <class Pixel> void AlphaTree<Pixel>::Unionfind(Pixel *img) {
                 y = z;
             }
             node[x].add(node + y);
-            node[y].parentidx = node[y].rootidx = x;
+            node[y].parentidx = node[y]._rootIdx = x;
             treedepth[x] = _max(treedepth[x], treedepth[y] + 1);
 
             if (node[x].area == imgSize) {
-                rootidx = x;
+                _rootIdx = x;
                 break;
             }
         }
@@ -4525,7 +4517,7 @@ void AlphaTree<Pixel>::quantize_ranks_compute_histogram(_uint8 *qrank, ImgIdx *r
         for (ImgIdx i = 0; i < bheight; i++) {
             ImgIdx r;
             _uint8 qr;
-            p = spidx + i * width;
+            p = spidx + i * _width;
             bool blklastrow = (i == bheight - 1);
             for (ImgIdx j = 0; j < bwidth - 1; j++) {
                 q = p << 1;
@@ -4571,15 +4563,15 @@ template <class Pixel> _uint8 AlphaTree<Pixel>::pow_quantization(ImgIdx rank, _u
 }
 
 template <class Pixel>
-void AlphaTree<Pixel>::pow_quantize_ranks(_uint8 *qrank, ImgIdx *rank, _int64 dimgsize, _int64 qint) {
+void AlphaTree<Pixel>::pow_quantize_ranks(_uint8 *qrank, ImgIdx *rank, _int64 dimgSize, _int64 qint) {
 #pragma omp parallel for
-    for (ImgIdx i = 0; i < (ImgIdx)dimgsize; i++)
+    for (ImgIdx i = 0; i < (ImgIdx)dimgSize; i++)
         qrank[i] = pow_quantization(rank[i], qint);
 }
 
 template <class Pixel>
 ImgIdx AlphaTree<Pixel>::find_root(AlphaNode<Pixel> *pilottree, ImgIdx p, Pixel below_this_qlevel) {
-    ImgIdx q = parentAry[p], r;
+    ImgIdx q = _parentAry[p], r;
 
     // int cnt = 0;
 
@@ -4609,7 +4601,7 @@ void AlphaTree<Pixel>::unionfind_refine_qlevel(_int64 qlevel, _int64 binsize, Im
     RankItem<double> *pRank;
     ImgIdx rank_start = (ImgIdx)qlevel * (ImgIdx)binsize;
     ImgIdx rank_end = std::min(nredges - 1, ((ImgIdx)qlevel + 1) * (ImgIdx)binsize - 1);
-    ImgIdx imgSize = width * height;
+    ImgIdx imgSize = _width * _height;
 
     if (qlevel) {
         for (ImgIdx r = rank_start; r <= rank_end; r++) {
@@ -4627,26 +4619,26 @@ void AlphaTree<Pixel>::unionfind_refine_qlevel(_int64 qlevel, _int64 binsize, Im
 
             if (redundant_edge[rankitem[ridx].dimgidx]) {
                 // printf("[skip]qlevel %d / rank %d(%d) - refining %d-%d\n", (int)qlevel, (int)r, (int)pRank->alpha,
-                // (int)pRank->get_pidx0(connectivity), (int)pRank->get_pidx1(width,connectivity));
+                // (int)pRank->get_pidx0(_connectivity), (int)pRank->get_pidx1(_width,_connectivity));
                 continue;
             }
 
             // printf("qlevel %d / rank %d(%d) - refining %d-%d\n", (int)qlevel, (int)r, (int)pRank->alpha,
-            // (int)pRank->get_pidx0(connectivity), (int)pRank->get_pidx1(width,connectivity));
+            // (int)pRank->get_pidx0(_connectivity), (int)pRank->get_pidx1(_width,_connectivity));
 
             // non-zero level
             // if (qlevel)
             {
-                x0 = find_root(pilottree, pRank->get_pidx0(connectivity), qlevel);
-                y0 = find_root(pilottree, pRank->get_pidx1(width, connectivity), qlevel);
+                x0 = find_root(pilottree, pRank->get_pidx0(_connectivity), qlevel);
+                y0 = find_root(pilottree, pRank->get_pidx1(_width, _connectivity), qlevel);
 
                 if (x0 == y0) // already connected, nothing to do
                 {
                     continue;
                 }
 
-                x = find_root(pilottree[x0].rootidx);
-                y = find_root(pilottree[y0].rootidx);
+                x = find_root(pilottree[x0]._rootIdx);
+                y = find_root(pilottree[y0]._rootIdx);
             }
 
             if ((x != ROOTIDX) && (x == y)) // already connected, nothing to do
@@ -4660,12 +4652,12 @@ void AlphaTree<Pixel>::unionfind_refine_qlevel(_int64 qlevel, _int64 binsize, Im
                     {
                         node_in[r].copy(pilottree + x0);
                         node_in[r].parentidx = pilottree[x0].parentidx;
-                        pilottree[x0].rootidx = nodeaddr;
+                        pilottree[x0]._rootIdx = nodeaddr;
                     }
                 } else {
                     node_in[r].copy(node + x);
                     node_in[r].parentidx = node[x].parentidx;
-                    node[x].parentidx = node[x].rootidx = nodeaddr;
+                    node[x].parentidx = node[x]._rootIdx = nodeaddr;
                 }
 
                 // attach to y
@@ -4673,11 +4665,11 @@ void AlphaTree<Pixel>::unionfind_refine_qlevel(_int64 qlevel, _int64 binsize, Im
                     // if (qlevel)
                     {
                         node_in[r].add(pilottree + y0);
-                        pilottree[y0].rootidx = nodeaddr;
+                        pilottree[y0]._rootIdx = nodeaddr;
                     }
                 } else {
                     node_in[r].add(node + y);
-                    node[y].parentidx = node[y].rootidx = nodeaddr;
+                    node[y].parentidx = node[y]._rootIdx = nodeaddr;
                 }
             }
         }
@@ -4697,11 +4689,11 @@ void AlphaTree<Pixel>::unionfind_refine_qlevel(_int64 qlevel, _int64 binsize, Im
             // else
             {
                 // find subtree roots from two edge incidents
-                x0 = pRank->get_pidx0(connectivity);
-                y0 = pRank->get_pidx1(width, connectivity);
+                x0 = pRank->get_pidx0(_connectivity);
+                y0 = pRank->get_pidx1(_width, _connectivity);
 
-                x = find_root(node[x0].rootidx);
-                y = find_root(node[y0].rootidx);
+                x = find_root(node[x0]._rootIdx);
+                y = find_root(node[y0]._rootIdx);
             }
 
             if ((x != ROOTIDX) && (x == y)) // already connected, nothing to do
@@ -4713,13 +4705,13 @@ void AlphaTree<Pixel>::unionfind_refine_qlevel(_int64 qlevel, _int64 binsize, Im
                     // else
                     {
                         node_in[r].copy(node + x0);
-                        node_in[r].parentidx = parentAry[x0];
-                        node[x0].parentidx = node[x0].rootidx = nodeaddr;
+                        node_in[r].parentidx = _parentAry[x0];
+                        node[x0].parentidx = node[x0]._rootIdx = nodeaddr;
                     }
                 } else {
                     node_in[r].copy(node + x);
                     node_in[r].parentidx = node[x].parentidx;
-                    node[x].parentidx = node[x].rootidx = nodeaddr;
+                    node[x].parentidx = node[x]._rootIdx = nodeaddr;
                 }
 
                 // attach to y
@@ -4727,11 +4719,11 @@ void AlphaTree<Pixel>::unionfind_refine_qlevel(_int64 qlevel, _int64 binsize, Im
                     // else
                     {
                         node_in[r].add(node + y0);
-                        node[y0].parentidx = node[y0].rootidx = nodeaddr;
+                        node[y0].parentidx = node[y0]._rootIdx = nodeaddr;
                     }
                 } else {
                     node_in[r].add(node + y);
-                    node[y].parentidx = node[y].rootidx = nodeaddr;
+                    node[y].parentidx = node[y]._rootIdx = nodeaddr;
                 }
             }
         }
@@ -4744,7 +4736,7 @@ template <class Pixel>
 void AlphaTree<Pixel>::compute_dhist_par(_uint8 *qrank, ImgIdx *dhist, ImgIdx *startpidx, _int32 numbins,
                                          _int8 npartition_x, _int8 npartition_y, _int64 blksz_x, _int64 blksz_y,
                                          _int64 blksz_xn, _int64 blksz_yn) {
-    if (connectivity == 4) {
+    if (_connectivity == 4) {
         // gdhist = edge histogram for edges on the subblock borders
         ImgIdx *gdhist = dhist + (int)npartition_x * (int)npartition_y * numbins;
 // ImgIdx blk = 0;
@@ -4765,7 +4757,7 @@ void AlphaTree<Pixel>::compute_dhist_par(_uint8 *qrank, ImgIdx *dhist, ImgIdx *s
             // ImgIdx maxpidx;
 
             for (ImgIdx i = 0; i < yn - 1; i++) {
-                p = p0 + width * (i << 1);
+                p = p0 + _width * (i << 1);
                 for (ImgIdx j = 0; j < xn - 1; j++) {
                     pdhist[qrank[p++]]++;
                     pdhist[qrank[p++]]++;
@@ -4777,7 +4769,7 @@ void AlphaTree<Pixel>::compute_dhist_par(_uint8 *qrank, ImgIdx *dhist, ImgIdx *s
 
             // the last row of the subblock is...
             if (lastrow) { // the last row of the image
-                p = p0 + width * ((yn - 1) << 1) + 1;
+                p = p0 + _width * ((yn - 1) << 1) + 1;
                 for (ImgIdx j = 0; j < xn - 1; j++) {
                     pdhist[qrank[p]]++;
                     p += 2;
@@ -4785,7 +4777,7 @@ void AlphaTree<Pixel>::compute_dhist_par(_uint8 *qrank, ImgIdx *dhist, ImgIdx *s
                 if (!lastcol)
                     gdhist[qrank[p++]]++;
             } else {
-                p = p0 + width * ((yn - 1) << 1);
+                p = p0 + _width * ((yn - 1) << 1);
                 for (ImgIdx j = 0; j < xn - 1; j++) {
                     gdhist[qrank[p++]]++;
                     pdhist[qrank[p++]]++;
@@ -4806,7 +4798,7 @@ void AlphaTree<Pixel>::compute_dhist_par_hypergraph(_uint8 *qrank, ImgIdx *dhist
                                                     _int8 npartition_x, _int8 npartition_y, _int64 blksz_x,
                                                     _int64 blksz_y, _int64 blksz_xn, _int64 blksz_yn,
                                                     ImgIdx *blkmaxpidx) {
-    if (connectivity == 4) {
+    if (_connectivity == 4) {
 #pragma omp parallel for
         for (ImgIdx blk = 0; blk < (int)npartition_x * (int)npartition_y; blk++) {
             ImgIdx x = blk % npartition_x;
@@ -4823,7 +4815,7 @@ void AlphaTree<Pixel>::compute_dhist_par_hypergraph(_uint8 *qrank, ImgIdx *dhist
 
             for (ImgIdx i = 0; i < yn - 1; i++) // for subimage rows (except for the last)
             {
-                p = p0 + width * (i << 1);
+                p = p0 + _width * (i << 1);
                 for (ImgIdx j = 0; j < xn - 1; j++) // for subimage cols (except for the last)
                 {
                     if (maxval < qrank[p]) {
@@ -4853,7 +4845,7 @@ void AlphaTree<Pixel>::compute_dhist_par_hypergraph(_uint8 *qrank, ImgIdx *dhist
 
             // the last row of the subblock is...
             if (lastrow) { // the last row of the image
-                p = p0 + width * ((yn - 1) << 1) + 1;
+                p = p0 + _width * ((yn - 1) << 1) + 1;
                 for (ImgIdx j = 0; j < xn - 1; j++) {
                     if (maxval < qrank[p]) {
                         maxval = qrank[p];
@@ -4870,7 +4862,7 @@ void AlphaTree<Pixel>::compute_dhist_par_hypergraph(_uint8 *qrank, ImgIdx *dhist
                     pdhist[qrank[p++]]++;
                 }
             } else {
-                p = p0 + width * ((yn - 1) << 1);
+                p = p0 + _width * ((yn - 1) << 1);
                 for (ImgIdx j = 0; j < xn - 1; j++) {
                     if (maxval < qrank[p]) {
                         maxval = qrank[p];
@@ -4914,15 +4906,15 @@ void AlphaTree<Pixel>::fix_subtreeidx(ImgIdx *subtreestart, ImgIdx *startpidx, I
     for (int b = 0; b < numpartitions; b++) {
         ImgIdx poffset = subtreestart[b];
 
-        // fix parentAry
+        // fix _parentAry
         ImgIdx bx = ((b % npartition_x) == npartition_x - 1) ? blksz_xn : blksz_x;
         ImgIdx by = ((b / npartition_x) == npartition_y - 1) ? blksz_yn : blksz_y;
         ImgIdx pidx = startpidx[b];
         for (ImgIdx p = 0; p < by; p++) {
             for (ImgIdx q = 0; q < bx; q++) {
-                parentAry[pidx++] += poffset;
+                _parentAry[pidx++] += poffset;
             }
-            pidx += width - bx;
+            pidx += _width - bx;
         }
 
         // fix node parentidxs
@@ -4939,105 +4931,105 @@ void AlphaTree<Pixel>::merge_subtrees(_uint8 *qrank, ImgIdx *qindex, _int64 blks
                                       ImgIdx neighbor_offset, ImgIdx shamt, ImgIdx npartition_x, ImgIdx npartition_y,
                                       _int32 numbins) {
     ImgIdx x, y, r, p, q, dimgidx;
-    ImgIdx imgSize = height * width;
+    ImgIdx imgSize = _height * _width;
 
     // merging border(hor)
     for (y = blksz_y; y <= blksz_y * (npartition_y - 1); y += blksz_y) {
-        q = y * width;
-        for (p = q - width; p < q; p++) {
+        q = y * _width;
+        for (p = q - _width; p < q; p++) {
             dimgidx = (p << shamt) + neighbor_offset;
             r = qrank[dimgidx];
 
-            connect(parentAry[p], parentAry[p + width], (Pixel)r, (ImgIdx)qindex[r]++);
+            connect(_parentAry[p], _parentAry[p + _width], (Pixel)r, (ImgIdx)qindex[r]++);
         }
     }
-    neighbor_offset = (connectivity == 4) ? 1 : 3;
+    neighbor_offset = (_connectivity == 4) ? 1 : 3;
 
     // merging border(ver)
     for (x = blksz_x - 1; x <= blksz_x * (npartition_x - 1); x += blksz_x) {
         q = x + imgSize;
-        for (p = x; p < q; p += width) {
+        for (p = x; p < q; p += _width) {
             dimgidx = (p << shamt) + neighbor_offset;
             r = qrank[dimgidx];
 
-            connect(parentAry[p], parentAry[p + 1], (Pixel)r, (ImgIdx)qindex[r]++);
+            connect(_parentAry[p], _parentAry[p + 1], (Pixel)r, (ImgIdx)qindex[r]++);
         }
     }
 
     // reset rootidxs
-    for (p = 0; p < maxSize; p++)
+    for (p = 0; p < _maxSize; p++)
         if (node[p].area)
-            node[p].rootidx = ROOTIDX;
+            node[p]._rootIdx = ROOTIDX;
 
     // Look for the root
-    for (p = parentAry[0]; node[p].area != imgSize; p = node[p].parentidx)
+    for (p = _parentAry[0]; node[p].area != imgSize; p = node[p].parentidx)
         ;
-    node[p].rootidx = node[p].parentidx = ROOTIDX;
-    rootidx = p;
+    node[p]._rootIdx = node[p].parentidx = ROOTIDX;
+    _rootIdx = p;
 }
 
 template <class Pixel>
 void AlphaTree<Pixel>::merge_subtrees(_uint8 *qrank, _int64 blksz_x, _int64 blksz_y, ImgIdx neighbor_offset,
                                       ImgIdx shamt, ImgIdx npartition_x, ImgIdx npartition_y, _int32 numbins) {
     ImgIdx x, y, r, p, q, dimgidx;
-    ImgIdx imgSize = height * width;
+    ImgIdx imgSize = _height * _width;
 
     // merging border(hor)
     for (y = blksz_y; y <= blksz_y * (npartition_y - 1); y += blksz_y) {
-        q = y * width;
-        for (p = q - width; p < q; p++) {
+        q = y * _width;
+        for (p = q - _width; p < q; p++) {
             dimgidx = (p << shamt) + neighbor_offset;
             r = qrank[dimgidx];
 
-            connect(parentAry[p], parentAry[p + width], (ImgIdx)curSize++, (Pixel)r);
+            connect(_parentAry[p], _parentAry[p + _width], (ImgIdx)_curSize++, (Pixel)r);
         }
     }
-    neighbor_offset = (connectivity == 4) ? 1 : 3;
+    neighbor_offset = (_connectivity == 4) ? 1 : 3;
 
     // merging border(ver)
     for (x = blksz_x - 1; x <= blksz_x * (npartition_x - 1); x += blksz_x) {
         q = x + imgSize;
-        for (p = x; p < q; p += width) {
+        for (p = x; p < q; p += _width) {
             dimgidx = (p << shamt) + neighbor_offset;
             r = qrank[dimgidx];
 
-            connect(parentAry[p], parentAry[p + 1], (ImgIdx)curSize++, (Pixel)r);
+            connect(_parentAry[p], _parentAry[p + 1], (ImgIdx)_curSize++, (Pixel)r);
         }
     }
 
     // reset rootidxs
-    for (p = 0; p < curSize; p++)
-        node[p].rootidx = ROOTIDX;
+    for (p = 0; p < _curSize; p++)
+        node[p]._rootIdx = ROOTIDX;
 
     // Make sure that the root has the highest
-    for (p = parentAry[0]; node[p].parentidx != ROOTIDX; p = node[p].parentidx)
+    for (p = _parentAry[0]; node[p].parentidx != ROOTIDX; p = node[p].parentidx)
         ;
     if (node[p].alpha != (Pixel)(numbins - 1)) {
-        q = curSize++;
+        q = _curSize++;
         node[q].copy(node + p);
         node[q].alpha = numbins - 1;
         node[p].parentidx = q;
-        node[q].parentidx = node[q].rootidx = ROOTIDX;
+        node[q].parentidx = node[q]._rootIdx = ROOTIDX;
     }
 }
 
 template <class Pixel>
 void AlphaTree<Pixel>::connect_pilotnode(AlphaNode<Pixel> *pilottree, ImgIdx nredges, ImgIdx imgSize) {
-    // curSize = maxSize;
+    // _curSize = _maxSize;
     ImgIdx *rootindexcand = (ImgIdx *)Calloc(omp_get_max_threads() * sizeof(ImgIdx));
     for (int i = 0; i < omp_get_max_threads(); i++)
         rootindexcand[i] = ROOTIDX;
 
 #pragma omp parallel for schedule(guided, 1)
-    for (ImgIdx p = 0; p < maxSize; p++) {
+    for (ImgIdx p = 0; p < _maxSize; p++) {
         ImgIdx q, r, s;
         // printf("p: %d\n",(int)p);
         if (p < imgSize) {
-            q = parentAry[p];
+            q = _parentAry[p];
             if (node[p].parentidx == ROOTIDX && pilottree[q].area == 1)
-                node[p].parentidx = pilottree[q].rootidx;
+                node[p].parentidx = pilottree[q]._rootIdx;
         } else {
-            if (node[p].rootidx == ROOTIDX && node[p].area) {
+            if (node[p]._rootIdx == ROOTIDX && node[p].area) {
                 if (node[p].area == imgSize) {
                     if (rootindexcand[omp_get_thread_num()] == ROOTIDX) {
                         rootindexcand[omp_get_thread_num()] = p;
@@ -5045,12 +5037,12 @@ void AlphaTree<Pixel>::connect_pilotnode(AlphaNode<Pixel> *pilottree, ImgIdx nre
                     continue;
                 }
                 q = node[p].parentidx;
-                for (r = q; pilottree[r].rootidx == ROOTIDX; r = pilottree[r].parentidx)
+                for (r = q; pilottree[r]._rootIdx == ROOTIDX; r = pilottree[r].parentidx)
                     ;
 
-                s = pilottree[r].rootidx;
+                s = pilottree[r]._rootIdx;
                 while (q != r) {
-                    pilottree[q].rootidx = s;
+                    pilottree[q]._rootIdx = s;
                     q = pilottree[q].parentidx;
                 }
                 node[p].parentidx = s;
@@ -5058,12 +5050,12 @@ void AlphaTree<Pixel>::connect_pilotnode(AlphaNode<Pixel> *pilottree, ImgIdx nre
         }
     }
 
-    rootidx = ROOTIDX;
+    _rootIdx = ROOTIDX;
     for (int i = 0; i < omp_get_max_threads(); i++) {
-        if (rootidx == ROOTIDX)
-            rootidx = rootindexcand[i];
+        if (_rootIdx == ROOTIDX)
+            _rootIdx = rootindexcand[i];
         else if (rootindexcand[i] != ROOTIDX)
-            rootidx = _min(rootidx, rootindexcand[i]);
+            _rootIdx = _min(_rootIdx, rootindexcand[i]);
     }
 
     Free(rootindexcand);
@@ -5108,7 +5100,7 @@ void AlphaTree<Pixel>::set_qindex(ImgIdx *qindex, ImgIdx *dhist, _int64 numparti
 
 template <class Pixel>
 void AlphaTree<Pixel>::set_qindex(ImgIdx *qindex, ImgIdx *dhist, _int64 numpartitions, _int32 numbins) {
-    ImgIdx imgSize = width * height;
+    ImgIdx imgSize = _width * _height;
     for (int p = 0; p < numpartitions; p++) {
         ImgIdx *pdhist = dhist + p * numbins;
         for (int q = 0; q < numbins; q++) {
@@ -5128,82 +5120,82 @@ void AlphaTree<Pixel>::set_qindex(ImgIdx *qindex, ImgIdx *dhist, _int64 numparti
 template <class Pixel>
 void AlphaTree<Pixel>::set_subtree_root(ImgIdx **subtreerootary, ImgIdx *strary, ImgIdx nonzero_nodeidx_start,
                                         ImgIdx rootlevel_nodeidx_start) {
-    ImgIdx imgSize = width * height;
-    if (node[rootidx].alpha < 2) {
+    ImgIdx imgSize = _width * _height;
+    if (node[_rootIdx].alpha < 2) {
         std::cout << "Pilottree root node level lower than 2" << std::endl;
         return;
     }
 
     {
 
-        for (ImgIdx p = 1; p < (int)node[rootidx].alpha; p++)
+        for (ImgIdx p = 1; p < (int)node[_rootIdx].alpha; p++)
             subtreerootary[p] = strary + (p - 1) * imgSize;
 
-        for (ImgIdx p = 0; p <= rootidx; p++)
-            node[p].rootidx = ROOTIDX;
+        for (ImgIdx p = 0; p <= _rootIdx; p++)
+            node[p]._rootIdx = ROOTIDX;
 
         for (ImgIdx p = 0; p < imgSize; p++) {
-            ImgIdx q = parentAry[p];
-            node[node[q].parentidx].rootidx = 1;
+            ImgIdx q = _parentAry[p];
+            node[node[q].parentidx]._rootIdx = 1;
         }
 
         _int64 areasum = 0;
         for (ImgIdx p = nonzero_nodeidx_start; p < rootlevel_nodeidx_start; p++) {
-            if (node[p].rootidx != ROOTIDX) {
-                node[node[p].parentidx].rootidx = 0;
+            if (node[p]._rootIdx != ROOTIDX) {
+                node[node[p].parentidx]._rootIdx = 0;
                 areasum += node[p].area;
-                node[p].rootidx = areasum;
+                node[p]._rootIdx = areasum;
             }
         }
 
         ImgIdx *pixelindex = (ImgIdx *)Malloc(areasum * sizeof(ImgIdx));
         for (ImgIdx p = 0; p < imgSize; p++) // 1-CCs
         {
-            ImgIdx q = node[parentAry[p]].parentidx;
+            ImgIdx q = node[_parentAry[p]].parentidx;
             if (q < rootlevel_nodeidx_start)
-                pixelindex[--node[q].rootidx] = p;
+                pixelindex[--node[q]._rootIdx] = p;
         }
 
         for (ImgIdx p = nonzero_nodeidx_start; p < rootlevel_nodeidx_start; p++) {
-            if (node[p].rootidx == ROOTIDX)
+            if (node[p]._rootIdx == ROOTIDX)
                 continue;
             {
 
                 ImgIdx q = node[p].parentidx;
                 if (q >= rootlevel_nodeidx_start)
                     continue;
-                ImgIdx r = node[p].rootidx;
+                ImgIdx r = node[p]._rootIdx;
                 ImgIdx s = r + node[p].area;
-                ImgIdx t = node[q].rootidx;
+                ImgIdx t = node[q]._rootIdx;
 
-                // node[p].rootidx = ROOTIDX;
+                // node[p]._rootIdx = ROOTIDX;
                 while (r < s) {
                     pixelindex[--t] = pixelindex[r++];
                 }
 
-                node[q].rootidx = t;
+                node[q]._rootIdx = t;
             }
         }
 
-        for (ImgIdx p = 0; p < (int)((node[rootidx].alpha - 1) * imgSize); p++)
+        for (ImgIdx p = 0; p < (int)((node[_rootIdx].alpha - 1) * imgSize); p++)
             strary[p] = -1;
 
         for (ImgIdx p = 0; p < imgSize; p++)
-            strary[p] = parentAry[p];
+            strary[p] = _parentAry[p];
         for (ImgIdx p = nonzero_nodeidx_start; p < rootlevel_nodeidx_start; p++) {
             if (!node[p].area)
                 continue;
 
-            ImgIdx r = node[p].rootidx;
-            ImgIdx s = node[p].rootidx + node[p].area;
-            node[p].rootidx = ROOTIDX;
+            ImgIdx r = node[p]._rootIdx;
+            ImgIdx s = node[p]._rootIdx + node[p].area;
+            node[p]._rootIdx = ROOTIDX;
             ImgIdx level = node[p].alpha;
             while (r < s) {
                 subtreerootary[level][pixelindex[r++]] = p;
             }
         }
 
-        for (ImgIdx level = 2; level < (int)node[rootidx].alpha; level++) {
+        for (ImgIdx level = 2; level < (int)node[_rootIdx].alpha; level++) {
             ImgIdx *pstrary_prev = &subtreerootary[level - 1][0];
             ImgIdx *pstrary = &subtreerootary[level][0];
             for (ImgIdx p = 0; p < imgSize; p++) {
@@ -5218,18 +5210,18 @@ void AlphaTree<Pixel>::set_subtree_root(ImgIdx **subtreerootary, ImgIdx *strary,
 
 // void init_hypergraph_nodes(_uint8* is_redundant, ImgIdx *rank, RankItem<Pixel>* rankitem)
 template <class Pixel> void AlphaTree<Pixel>::find_redundant_nodes(_uint8 *is_redundant, ImgIdx *rank) {
-    if (connectivity == 4) {
-        ImgIdx imgSize = height * width;
-        ImgIdx width2 = width << 1;
+    if (_connectivity == 4) {
+        ImgIdx imgSize = _height * _width;
+        ImgIdx width2 = _width << 1;
         for (ImgIdx p = 0; p < imgSize; p++) {
             ImgIdx q = p << 1;
-            ImgIdx y = p / width;
-            ImgIdx x = p % width;
+            ImgIdx y = p / _width;
+            ImgIdx x = p % _width;
             //_int8 isAv = isAvailable[p];
             ImgIdx maxRank = -1;
 
-            ((y < height - 1) && (rank[q] > maxRank)) ? (maxRank = rank[q]) : (ImgIdx)0;
-            ((x < width - 1) && (rank[q + 1] > maxRank)) ? (maxRank = rank[q + 1]) : (ImgIdx)0;
+            ((y < _height - 1) && (rank[q] > maxRank)) ? (maxRank = rank[q]) : (ImgIdx)0;
+            ((x < _width - 1) && (rank[q + 1] > maxRank)) ? (maxRank = rank[q + 1]) : (ImgIdx)0;
             ((x > 0) && (rank[q - 1] > maxRank)) ? (maxRank = rank[q - 1]) : (ImgIdx)0;
             ((y > 0) && (rank[q - width2] > maxRank)) ? (maxRank = rank[q - width2]) : (ImgIdx)0;
 
@@ -5248,7 +5240,7 @@ void AlphaTree<Pixel>::set_subblock_properties(ImgIdx *startpidx, ImgIdx *blkws,
                                                _int64 blksz_xn, _int64 blksz_yn) {
     ImgIdx p = 0, q;
     for (_int8 y = 0; y < npartition_y; y++) {
-        q = y * width * (ImgIdx)blksz_y;
+        q = y * _width * (ImgIdx)blksz_y;
         bool lastrow = (y == npartition_y - 1);
         ImgIdx blkh = lastrow ? blksz_yn : blksz_y;
         for (_int8 x = 0; x < npartition_x; x++) {
@@ -5278,7 +5270,7 @@ void AlphaTree<Pixel>::memalloc_queues(HierarQueue ***queues, _int64 numpartitio
 template <class Pixel>
 void AlphaTree<Pixel>::compute_dimg_and_rank2index(RankItem<double> *&rankitem, Pixel *img, ImgIdx nredges,
                                                    _int32 *rank2rankitem) {
-    if (channel == 1) {
+    if (_channel == 1) {
         SortValue<Pixel> *vals; // = new pmt::SortValue<Value>[N];
         vals = (SortValue<Pixel> *)Malloc(nredges * sizeof(SortValue<Pixel>));
         compute_dimg_par4(rankitem, img, vals);
@@ -5337,18 +5329,18 @@ void AlphaTree<Pixel>::compute_difference_and_sort(ImgIdx *rank, RankItem<double
 }
 
 template <class Pixel> void AlphaTree<Pixel>::HybridParallel(Pixel *img, int numthreads) {
-    ImgIdx imgSize, dimgsize, nredges;
+    ImgIdx imgSize, dimgSize, nredges;
     RankItem<double> *rankitem;
     ImgIdx p, q;
-    imgSize = width * height;
-    nredges =
-        width * (height - 1) + (width - 1) * height + ((connectivity == 8) ? ((width - 1) * (height - 1) * 2) : 0);
-    dimgsize = (connectivity >> 1) * width * height;
+    imgSize = _width * _height;
+    nredges = _width * (_height - 1) + (_width - 1) * _height +
+              ((_connectivity == 8) ? ((_width - 1) * (_height - 1) * 2) : 0);
+    dimgSize = (_connectivity >> 1) * _width * _height;
     rankitem = (RankItem<double> *)Malloc(nredges * sizeof(RankItem<double>));
 
-    ImgIdx *rank = (ImgIdx *)Calloc((size_t)dimgsize * sizeof(ImgIdx));
-    _uint8 *qrank = (_uint8 *)Malloc((size_t)dimgsize);
-    parentAry = (ImgIdx *)Calloc((size_t)imgSize * sizeof(ImgIdx));
+    ImgIdx *rank = (ImgIdx *)Calloc((size_t)dimgSize * sizeof(ImgIdx));
+    _uint8 *qrank = (_uint8 *)Malloc((size_t)dimgSize);
+    _parentAry = (ImgIdx *)Calloc((size_t)imgSize * sizeof(ImgIdx));
 
     _int64 numpartitions;
     if (numthreads > 2)
@@ -5364,9 +5356,9 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(Pixel *img, int num
             if (numpartitions % px == 0) {
                 int py = numpartitions / px;
 
-                if (((double)px * (double)height + (double)py * (double)width) < optborderlength) {
+                if (((double)px * (double)_height + (double)py * (double)_width) < optborderlength) {
                     optpart = px;
-                    optborderlength = ((double)px * (double)height + (double)py * (double)width);
+                    optborderlength = ((double)px * (double)_height + (double)py * (double)_width);
                 }
             }
         }
@@ -5384,10 +5376,10 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(Pixel *img, int num
     ImgIdx binsize = nredges / (_int64)numbins;
     numbins = (nredges + binsize - 1) / binsize;
     _int64 numlevels = numbins; // for compatibility
-    _int64 blksz_x = width / npartition_x;
-    _int64 blksz_y = height / npartition_y;
-    _int64 blksz_xn = blksz_x + (width % npartition_x);
-    _int64 blksz_yn = blksz_y + (height % npartition_y);
+    _int64 blksz_x = _width / npartition_x;
+    _int64 blksz_y = _height / npartition_y;
+    _int64 blksz_xn = blksz_x + (_width % npartition_x);
+    _int64 blksz_yn = blksz_y + (_height % npartition_y);
     numpartitions = (_int64)npartition_x * (_int64)npartition_y;
 
     ImgIdx *startpidx = (ImgIdx *)Malloc(numpartitions * sizeof(ImgIdx));
@@ -5425,9 +5417,9 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(Pixel *img, int num
     HierarQueue **queues;
     memalloc_queues(&queues, numpartitions, blocksize, subtree_max);
 
-    ImgIdx *hypernode_level = (ImgIdx *)Malloc(dimgsize * sizeof(ImgIdx));
+    ImgIdx *hypernode_level = (ImgIdx *)Malloc(dimgSize * sizeof(ImgIdx));
     _int8 *levelroots = (_int8 *)Calloc(numbins * numpartitions * sizeof(_int8));
-    _int8 *redundant_edge = (_int8 *)Calloc(dimgsize * sizeof(_int8));
+    _int8 *redundant_edge = (_int8 *)Calloc(dimgSize * sizeof(_int8));
 
     double treesizemult_intv = 0.05;
     double treesizemult = 1.0 - treesizemult_intv;
@@ -5438,8 +5430,8 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(Pixel *img, int num
         int outofmemory = 0;
         int numblkproc = 0;
 
-        ImgIdx shamt = connectivity >> 2;
-        ImgIdx wstride_d = width << shamt;
+        ImgIdx shamt = _connectivity >> 2;
+        ImgIdx wstride_d = _width << shamt;
 
         // reset queue, isvisited array, hypernode levels
         for (int blk = 0; blk < numpartitions; blk++)
@@ -5450,7 +5442,7 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(Pixel *img, int num
             isVisited[i] = 0;
 
 #pragma omp parallel for private(p, q)
-        for (ImgIdx i = 0; i < dimgsize; i++) {
+        for (ImgIdx i = 0; i < dimgSize; i++) {
             hypernode_level[i] = ROOTIDX;
             redundant_edge[i] = 0;
         }
@@ -5459,7 +5451,7 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(Pixel *img, int num
         treesizemult = treesizemult + treesizemult_intv;
 
         //(re)allocate node array (expand size when reallocate)
-        maxSize = parflood_node_alloc(subtree_size, subtree_start, blkws, blkhs, numpartitions, treesizemult);
+        _maxSize = parflood_node_alloc(subtree_size, subtree_start, blkws, blkhs, numpartitions, treesizemult);
 
         for (p = 0; p < numpartitions; p++)
             omp_unset_lock(locks + p);
@@ -5505,13 +5497,13 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(Pixel *img, int num
             queue->set_queue(bhist);
             // queue->set_queue(bhist, maxdiff);
 
-            ImgIdx stackTop = nidx++; // imgSize + dimgsize + blk;
+            ImgIdx stackTop = nidx++; // imgSize + dimgSize + blk;
             // printf("blk%d - Dummy %d\n", (int)blk, (int)(stackTop));
             ImgIdx prevTop = stackTop;
             AlphaNode<Pixel> *pNode = node + stackTop;
             pNode->set(0, maxdiff, (double)0.0, (Pixel)-1, (Pixel)0);
             pNode->parentidx = stackTop;
-            pNode->rootidx = ROOTIDX;
+            pNode->_rootIdx = ROOTIDX;
             Pixel currentLevel = maxdiff;
 
             ImgIdx x0 = startpidx[blk]; /*starting point*/
@@ -5539,7 +5531,7 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(Pixel *img, int num
                     } else {
                         if ((qitem & 1)) // pixel at another end of the edge?
                         {
-                            if (connectivity == 4) {
+                            if (_connectivity == 4) {
                                 if (didx & 1) // horizontal edge
                                 {
                                     p++;
@@ -5548,7 +5540,7 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(Pixel *img, int num
                                                   // queue
                                 } else            // vertical edge
                                 {
-                                    p += width;
+                                    p += _width;
                                     isAv = isAvailable[p];
                                     isAv &= ~0x8;
                                 }
@@ -5576,12 +5568,12 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(Pixel *img, int num
 
                     isVisited[p] = 1;
                     connected_neighbor = 0;
-                    if (connectivity == 4) {
+                    if (_connectivity == 4) {
                         q = p << shamt;
                         ImgIdx q1;
                         if (is_available(isAv, 0)) {
-                            if (isVisited[p + width]) // neighbor alread visited - which means this edge might be on
-                                                      // lower level than the alpha value of the edge corresponds to
+                            if (isVisited[p + _width]) // neighbor alread visited - which means this edge might be on
+                                                       // lower level than the alpha value of the edge corresponds to
                             {
                                 // if (!plr[qrank[q]]) redundant_edge[q] = 1;
                                 // else
@@ -5610,7 +5602,7 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(Pixel *img, int num
 
                         if (is_available(isAv, 3)) {
                             q1 = q - wstride_d;
-                            if (isVisited[p - width]) {
+                            if (isVisited[p - _width]) {
                                 // if (!plr[qrank[q1]]) redundant_edge[q1] = 1;
                                 // else
                                 connected_neighbor |= 0x8;
@@ -5636,7 +5628,7 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(Pixel *img, int num
                         }
                         node[iNode].set(1, currentLevel, (double)pix_val, pix_val, pix_val);
                         node[iNode].parentidx = stackTop;
-                        node[iNode].rootidx = ROOTIDX;
+                        node[iNode]._rootIdx = ROOTIDX;
                         stackTop = iNode;
 
                         if (currentLevel) {
@@ -5652,10 +5644,10 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(Pixel *img, int num
                             node[iNode].copy(node + stackTop);
                             node[iNode].alpha = 0;
                             node[iNode].parentidx = stackTop;
-                            node[iNode].rootidx = ROOTIDX;
+                            node[iNode]._rootIdx = ROOTIDX;
                             prevTop = iNode;
                         }
-                        parentAry[p] = iNode;
+                        _parentAry[p] = iNode;
                     } else {
                         queue->find_minlev();
 
@@ -5673,10 +5665,10 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(Pixel *img, int num
                             node[iNode].set(1, 0, (double)pix_val, pix_val, pix_val);
                             node[stackTop].add(node + iNode);
                             node[iNode].parentidx = stackTop;
-                            node[iNode].rootidx = ROOTIDX;
-                            parentAry[p] = iNode;
+                            node[iNode]._rootIdx = ROOTIDX;
+                            _parentAry[p] = iNode;
                         } else {
-                            parentAry[p] = stackTop;
+                            _parentAry[p] = stackTop;
                             node[stackTop].add(img[p]);
                         }
                     }
@@ -5684,31 +5676,31 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(Pixel *img, int num
 
                     if (connected_neighbor) {
                         // mark from the leaf to the stackTop node to help finding hypernode levelroots
-                        ImgIdx squirrel, leaf1 = parentAry[p], leaf2;
+                        ImgIdx squirrel, leaf1 = _parentAry[p], leaf2;
                         for (squirrel = leaf1; node[squirrel].parentidx != squirrel;
                              squirrel = node[squirrel].parentidx)
-                            node[squirrel].rootidx = p;
-                        node[squirrel].rootidx = p;
+                            node[squirrel]._rootIdx = p;
+                        node[squirrel]._rootIdx = p;
 
                         q = p << shamt;
                         if (connected_neighbor & 0x1) {
-                            leaf2 = parentAry[p + width];
+                            leaf2 = _parentAry[p + _width];
                             if (qrank[q] > get_nearest_common_ancestor_level(p, leaf2))
                                 redundant_edge[q] = 1;
                         }
                         if (connected_neighbor & 0x2) {
-                            leaf2 = parentAry[p + 1];
+                            leaf2 = _parentAry[p + 1];
                             // printf("q = %d\n", (int)q);
                             if (qrank[q + 1] > get_nearest_common_ancestor_level(p, leaf2))
                                 redundant_edge[q + 1] = 1;
                         }
                         if (connected_neighbor & 0x4) {
-                            leaf2 = parentAry[p - 1];
+                            leaf2 = _parentAry[p - 1];
                             if (qrank[q - 1] > get_nearest_common_ancestor_level(p, leaf2))
                                 redundant_edge[q - 1] = 1;
                         }
                         if (connected_neighbor & 0x8) {
-                            leaf2 = parentAry[p - width];
+                            leaf2 = _parentAry[p - _width];
                             if (qrank[q - wstride_d] > get_nearest_common_ancestor_level(p, leaf2))
                                 redundant_edge[q - wstride_d] = 1;
                         }
@@ -5716,8 +5708,8 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(Pixel *img, int num
                         // cleanup pawprints
                         for (squirrel = leaf1; node[squirrel].parentidx != squirrel;
                              squirrel = node[squirrel].parentidx)
-                            node[squirrel].rootidx = ROOTIDX;
-                        node[squirrel].rootidx = ROOTIDX;
+                            node[squirrel]._rootIdx = ROOTIDX;
+                        node[squirrel]._rootIdx = ROOTIDX;
                     }
                 }
 
@@ -5729,7 +5721,7 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(Pixel *img, int num
                     // plr[(int)(node[prevTop].alpha)] = 0;
                     node[prevTop].parentidx = node[stackTop].parentidx;
                     stackTop = prevTop;
-                    // curSize--;
+                    // _curSize--;
                 }
 
                 if (node[stackTop].area == bareasum) // root node found...done
@@ -5751,7 +5743,7 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(Pixel *img, int num
                     node[iNode].alpha = queue->min_level;
                     node[iNode].copy(node + stackTop);
                     node[iNode].parentidx = node[stackTop].parentidx;
-                    node[iNode].rootidx = ROOTIDX;
+                    node[iNode]._rootIdx = ROOTIDX;
                     node[stackTop].parentidx = iNode;
                 } else // go to existing node
                 {
@@ -5803,11 +5795,12 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(Pixel *img, int num
     }
 
     if (numpartitions > 1)
-        rootidx = merge_subtrees1(qrank, blksz_x, blksz_y, npartition_x, npartition_y, subtree_cur, 1, hypernode_level);
+        _rootIdx =
+            merge_subtrees1(qrank, blksz_x, blksz_y, npartition_x, npartition_y, subtree_cur, 1, hypernode_level);
     else {
-        rootidx = parentAry[0];
-        while (node[rootidx].parentidx != ROOTIDX)
-            rootidx = node[rootidx].parentidx;
+        _rootIdx = _parentAry[0];
+        while (node[_rootIdx].parentidx != ROOTIDX)
+            _rootIdx = node[_rootIdx].parentidx;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -5815,12 +5808,12 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(Pixel *img, int num
     ////////////////////////////////////////////////////////////////////////
 
 #pragma omp parallel for
-    for (p = 0; p < maxSize; p++)
-        node[p].rootidx = ROOTIDX;
+    for (p = 0; p < _maxSize; p++)
+        node[p]._rootIdx = ROOTIDX;
 
-    maxSize = imgSize + nredges;
+    _maxSize = imgSize + nredges;
     AlphaNode<Pixel> *pilottree = node;
-    node = (AlphaNode<Pixel> *)Malloc((size_t)(maxSize + 1) * sizeof(AlphaNode<Pixel>));
+    node = (AlphaNode<Pixel> *)Malloc((size_t)(_maxSize + 1) * sizeof(AlphaNode<Pixel>));
     node_in = node + imgSize;
 
     Pixel maxpixval = std::numeric_limits<Pixel>::max();
@@ -5832,7 +5825,7 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(Pixel *img, int num
 #pragma omp parallel for schedule(dynamic, 1)
     for (_int64 qlevel = 0; qlevel < numbins; qlevel++) // this part is to be parallelised
     {
-        if (qlevel > (_int64)pilottree[rootidx].alpha) {
+        if (qlevel > (_int64)pilottree[_rootIdx].alpha) {
             continue;
         }
         unionfind_refine_qlevel(qlevel, binsize, nredges, pilottree, rankitem, redundant_edge, rank2rankitem);
@@ -5841,9 +5834,9 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(Pixel *img, int num
     }
 
     connect_pilotnode(pilottree, nredges, imgSize);
-    Free(parentAry);
-    parentAry = 0;
-    node[rootidx].parentidx = ROOTIDX;
+    Free(_parentAry);
+    _parentAry = 0;
+    node[_rootIdx].parentidx = ROOTIDX;
 
     Free(levelperthread);
     Free(timeperthread);
@@ -5933,12 +5926,12 @@ ImgIdx AlphaTree<Pixel>::find_root1(ImgIdx p, ImgIdx qlevel) //, int &cnt)
     //		else
     {
         r = p;
-        while ((q = node[p].rootidx) != ROOTIDX)
+        while ((q = node[p]._rootIdx) != ROOTIDX)
             p = q;
 
         while (r != p) {
-            q = node[r].rootidx;
-            node[r].rootidx = p;
+            q = node[r]._rootIdx;
+            node[r]._rootIdx = p;
             // checkcoherence(node + r, qlevel);
             // cnt++;
             r = q;
@@ -5949,7 +5942,7 @@ ImgIdx AlphaTree<Pixel>::find_root1(ImgIdx p, ImgIdx qlevel) //, int &cnt)
 }
 
 template <class Pixel> void AlphaTree<Pixel>::FloodTrie(Pixel *img) {
-    ImgIdx imgSize, dimgsize, nredges;
+    ImgIdx imgSize, dimgSize, nredges;
     ImgIdx current_rank = 0, next_rank = 0;
     RankItem<double> *rankitem, *pRank;
     // AlphaNode<Pixel> *pNode;
@@ -5960,19 +5953,19 @@ template <class Pixel> void AlphaTree<Pixel>::FloodTrie(Pixel *img) {
     ImgIdx prevTop = 0;
     _uint8 *isVisited, /**isVisited_edges,*/ *isAvailable, isAv;
     ImgIdx p, q;
-    imgSize = width * height;
-    nredges =
-        width * (height - 1) + (width - 1) * height + ((connectivity == 8) ? ((width - 1) * (height - 1) * 2) : 0);
-    dimgsize = (connectivity >> 1) * width * height;
-    maxSize = imgSize + nredges;
-    num_node = maxSize;
+    imgSize = _width * _height;
+    nredges = _width * (_height - 1) + (_width - 1) * _height +
+              ((_connectivity == 8) ? ((_width - 1) * (_height - 1) * 2) : 0);
+    dimgSize = (_connectivity >> 1) * _width * _height;
+    _maxSize = imgSize + nredges;
+    num_node = _maxSize;
     num_node_in = nredges;
     nbits = ((sizeof(Pixel) << 3) - 1);
     maxpixval = ~(1 << nbits);
     rankitem = (RankItem<double> *)Malloc(nredges * sizeof(RankItem<double>));
-    parentAry = 0;
-    rank = (ImgIdx *)Malloc((size_t)dimgsize * sizeof(ImgIdx));
-    node = (AlphaNode<Pixel> *)Malloc((size_t)maxSize * sizeof(AlphaNode<Pixel>));
+    _parentAry = 0;
+    rank = (ImgIdx *)Malloc((size_t)dimgSize * sizeof(ImgIdx));
+    node = (AlphaNode<Pixel> *)Malloc((size_t)_maxSize * sizeof(AlphaNode<Pixel>));
     node_in = node + imgSize;
     isVisited = (_uint8 *)Calloc((size_t)((imgSize)));
     isAvailable = (_uint8 *)Malloc((size_t)(imgSize));
@@ -5989,10 +5982,10 @@ template <class Pixel> void AlphaTree<Pixel>::FloodTrie(Pixel *img) {
 
     // manually visit the first pixel
     isVisited[0] = 1;
-    if (connectivity == 4) {
+    if (_connectivity == 4) {
         queue->push(rank[0]);
         queue->push(rank[1]);
-    } else if (connectivity == 8) {
+    } else if (_connectivity == 8) {
         queue->push(rank[0]);
         queue->push(rank[1]);
         queue->push(rank[2]);
@@ -6006,43 +5999,43 @@ template <class Pixel> void AlphaTree<Pixel>::FloodTrie(Pixel *img) {
         while (1) {
             top_rank = queue->top();
             pRank = rankitem + rank2rankitem[top_rank];
-            if (isVisited[pRank->get_pidx0(connectivity)]) {
-                if (isVisited[pRank->get_pidx1(width, connectivity)])
+            if (isVisited[pRank->get_pidx0(_connectivity)]) {
+                if (isVisited[pRank->get_pidx1(_width, _connectivity)])
                     break;
-                p = pRank->get_pidx1(width, connectivity);
+                p = pRank->get_pidx1(_width, _connectivity);
             } else
-                p = pRank->get_pidx0(connectivity);
+                p = pRank->get_pidx0(_connectivity);
 
             isVisited[p] = 1;
             isAv = isAvailable[p];
-            if (connectivity == 4) {
+            if (_connectivity == 4) {
                 q = p << 1;
-                if (is_available(isAv, 0) && !isVisited[p + width])
+                if (is_available(isAv, 0) && !isVisited[p + _width])
                     queue->push(rank[q]);
                 if (is_available(isAv, 1) && !isVisited[p + 1])
                     queue->push(rank[q + 1]);
                 if (is_available(isAv, 2) && !isVisited[p - 1])
                     queue->push(rank[q - 1]);
-                if (is_available(isAv, 3) && !isVisited[p - width])
-                    queue->push(rank[q - (width << 1)]);
-            } else if (connectivity == 8) {
-                ImgIdx width4 = width << 2;
+                if (is_available(isAv, 3) && !isVisited[p - _width])
+                    queue->push(rank[q - (_width << 1)]);
+            } else if (_connectivity == 8) {
+                ImgIdx width4 = _width << 2;
                 q = p << 2;
-                if (is_available(isAv, 0) && !isVisited[p + width])
+                if (is_available(isAv, 0) && !isVisited[p + _width])
                     queue->push(rank[q]); // printf("0:pushing %d \n",(int)rank[q]);}
-                if (is_available(isAv, 1) && !isVisited[p + width + 1])
+                if (is_available(isAv, 1) && !isVisited[p + _width + 1])
                     queue->push(rank[q + 1]); // printf("1:pushing %d \n",(int)rank[q+1]);}
                 if (is_available(isAv, 2) && !isVisited[p + 1])
                     queue->push(rank[q + 2]); // printf("2:pushing %d \n",(int)rank[q+2]);}
-                if (is_available(isAv, 3) && !isVisited[p - width + 1])
+                if (is_available(isAv, 3) && !isVisited[p - _width + 1])
                     queue->push(rank[q + 3]); // printf("3:pushing %d \n",(int)rank[q+3]);}
-                if (is_available(isAv, 4) && !isVisited[p - width])
+                if (is_available(isAv, 4) && !isVisited[p - _width])
                     queue->push(rank[q - width4]); // printf("4:pushing %d \n",(int)rank[q-width4]);}
-                if (is_available(isAv, 5) && !isVisited[p - width - 1])
+                if (is_available(isAv, 5) && !isVisited[p - _width - 1])
                     queue->push(rank[q - width4 - 3]); // printf("5:pushing %d \n",(int)rank[q-width4-3]);}
                 if (is_available(isAv, 6) && !isVisited[p - 1])
                     queue->push(rank[q - 2]); //  printf("6:pushing %d \n",(int)rank[q-2]);}
-                if (is_available(isAv, 7) && !isVisited[p + width - 1])
+                if (is_available(isAv, 7) && !isVisited[p + _width - 1])
                     queue->push(rank[q + width4 - 1]); // printf("7:pushing %d \n",(int)rank[q+width4-1]);}
             } else {
                 //?
@@ -6071,8 +6064,8 @@ template <class Pixel> void AlphaTree<Pixel>::FloodTrie(Pixel *img) {
         current_rank = next_rank;
     }
 
-    rootidx = (node_in[current_rank].area == imgSize) ? current_rank + imgSize : next_rank + imgSize;
-    node[rootidx].parentidx = ROOTIDX;
+    _rootIdx = (node_in[current_rank].area == imgSize) ? current_rank + imgSize : next_rank + imgSize;
+    node[_rootIdx].parentidx = ROOTIDX;
 
     delete queue;
     Free(rank2rankitem);
@@ -6083,7 +6076,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodTrie(Pixel *img) {
 }
 
 template <class Pixel> void AlphaTree<Pixel>::FloodTrieNoCache(Pixel *img) {
-    ImgIdx imgSize, dimgsize, nredges;
+    ImgIdx imgSize, dimgSize, nredges;
     ImgIdx current_rank = 0, next_rank = 0;
     RankItem<double> *rankitem, *pRank;
     // AlphaNode<Pixel> *pNode;
@@ -6094,19 +6087,19 @@ template <class Pixel> void AlphaTree<Pixel>::FloodTrieNoCache(Pixel *img) {
     ImgIdx prevTop = 0;
     _uint8 *isVisited, /**isVisited_edges,*/ *isAvailable, isAv;
     ImgIdx p, q;
-    imgSize = width * height;
-    nredges =
-        width * (height - 1) + (width - 1) * height + ((connectivity == 8) ? ((width - 1) * (height - 1) * 2) : 0);
-    dimgsize = (connectivity >> 1) * width * height;
-    maxSize = imgSize + nredges;
-    num_node = maxSize;
+    imgSize = _width * _height;
+    nredges = _width * (_height - 1) + (_width - 1) * _height +
+              ((_connectivity == 8) ? ((_width - 1) * (_height - 1) * 2) : 0);
+    dimgSize = (_connectivity >> 1) * _width * _height;
+    _maxSize = imgSize + nredges;
+    num_node = _maxSize;
     num_node_in = nredges;
     nbits = ((sizeof(Pixel) << 3) - 1);
     maxpixval = ~(1 << nbits);
     rankitem = (RankItem<double> *)Malloc(nredges * sizeof(RankItem<double>));
-    parentAry = 0;
-    rank = (ImgIdx *)Malloc((size_t)dimgsize * sizeof(ImgIdx));
-    node = (AlphaNode<Pixel> *)Malloc((size_t)maxSize * sizeof(AlphaNode<Pixel>));
+    _parentAry = 0;
+    rank = (ImgIdx *)Malloc((size_t)dimgSize * sizeof(ImgIdx));
+    node = (AlphaNode<Pixel> *)Malloc((size_t)_maxSize * sizeof(AlphaNode<Pixel>));
     node_in = node + imgSize;
     isVisited = (_uint8 *)Calloc((size_t)((imgSize)));
     isAvailable = (_uint8 *)Malloc((size_t)(imgSize));
@@ -6123,10 +6116,10 @@ template <class Pixel> void AlphaTree<Pixel>::FloodTrieNoCache(Pixel *img) {
 
     // manually visit the first pixel
     isVisited[0] = 1;
-    if (connectivity == 4) {
+    if (_connectivity == 4) {
         queue->push(rank[0]);
         queue->push(rank[1]);
-    } else if (connectivity == 8) {
+    } else if (_connectivity == 8) {
         queue->push(rank[0]);
         queue->push(rank[1]);
         queue->push(rank[2]);
@@ -6140,43 +6133,43 @@ template <class Pixel> void AlphaTree<Pixel>::FloodTrieNoCache(Pixel *img) {
         while (1) {
             top_rank = queue->top();
             pRank = rankitem + rank2rankitem[top_rank];
-            if (isVisited[pRank->get_pidx0(connectivity)]) {
-                if (isVisited[pRank->get_pidx1(width, connectivity)])
+            if (isVisited[pRank->get_pidx0(_connectivity)]) {
+                if (isVisited[pRank->get_pidx1(_width, _connectivity)])
                     break;
-                p = pRank->get_pidx1(width, connectivity);
+                p = pRank->get_pidx1(_width, _connectivity);
             } else
-                p = pRank->get_pidx0(connectivity);
+                p = pRank->get_pidx0(_connectivity);
 
             isVisited[p] = 1;
             isAv = isAvailable[p];
-            if (connectivity == 4) {
+            if (_connectivity == 4) {
                 q = p << 1;
-                if (is_available(isAv, 0) && !isVisited[p + width])
+                if (is_available(isAv, 0) && !isVisited[p + _width])
                     queue->push(rank[q]);
                 if (is_available(isAv, 1) && !isVisited[p + 1])
                     queue->push(rank[q + 1]);
                 if (is_available(isAv, 2) && !isVisited[p - 1])
                     queue->push(rank[q - 1]);
-                if (is_available(isAv, 3) && !isVisited[p - width])
-                    queue->push(rank[q - (width << 1)]);
-            } else if (connectivity == 8) {
-                ImgIdx width4 = width << 2;
+                if (is_available(isAv, 3) && !isVisited[p - _width])
+                    queue->push(rank[q - (_width << 1)]);
+            } else if (_connectivity == 8) {
+                ImgIdx width4 = _width << 2;
                 q = p << 2;
-                if (is_available(isAv, 0) && !isVisited[p + width])
+                if (is_available(isAv, 0) && !isVisited[p + _width])
                     queue->push(rank[q]); // printf("0:pushing %d \n",(int)rank[q]);}
-                if (is_available(isAv, 1) && !isVisited[p + width + 1])
+                if (is_available(isAv, 1) && !isVisited[p + _width + 1])
                     queue->push(rank[q + 1]); // printf("1:pushing %d \n",(int)rank[q+1]);}
                 if (is_available(isAv, 2) && !isVisited[p + 1])
                     queue->push(rank[q + 2]); // printf("2:pushing %d \n",(int)rank[q+2]);}
-                if (is_available(isAv, 3) && !isVisited[p - width + 1])
+                if (is_available(isAv, 3) && !isVisited[p - _width + 1])
                     queue->push(rank[q + 3]); // printf("3:pushing %d \n",(int)rank[q+3]);}
-                if (is_available(isAv, 4) && !isVisited[p - width])
+                if (is_available(isAv, 4) && !isVisited[p - _width])
                     queue->push(rank[q - width4]); // printf("4:pushing %d \n",(int)rank[q-width4]);}
-                if (is_available(isAv, 5) && !isVisited[p - width - 1])
+                if (is_available(isAv, 5) && !isVisited[p - _width - 1])
                     queue->push(rank[q - width4 - 3]); // printf("5:pushing %d \n",(int)rank[q-width4-3]);}
                 if (is_available(isAv, 6) && !isVisited[p - 1])
                     queue->push(rank[q - 2]); //  printf("6:pushing %d \n",(int)rank[q-2]);}
-                if (is_available(isAv, 7) && !isVisited[p + width - 1])
+                if (is_available(isAv, 7) && !isVisited[p + _width - 1])
                     queue->push(rank[q + width4 - 1]); // printf("7:pushing %d \n",(int)rank[q+width4-1]);}
             } else {
                 //?
@@ -6205,8 +6198,8 @@ template <class Pixel> void AlphaTree<Pixel>::FloodTrieNoCache(Pixel *img) {
         current_rank = next_rank;
     }
 
-    rootidx = (node_in[current_rank].area == imgSize) ? current_rank + imgSize : next_rank + imgSize;
-    node[rootidx].parentidx = ROOTIDX;
+    _rootIdx = (node_in[current_rank].area == imgSize) ? current_rank + imgSize : next_rank + imgSize;
+    node[_rootIdx].parentidx = ROOTIDX;
 
     delete queue;
     Free(rank2rankitem);
@@ -6263,17 +6256,17 @@ template <class Pixel> void AlphaTree<Pixel>::swap(AlphaNode<Pixel> **x, AlphaNo
 template <class Pixel> ImgIdx AlphaTree<Pixel>::get_nearest_common_ancestor(ImgIdx x, ImgIdx y) {
     ImgIdx p;
     for (p = y; p != ROOTIDX; p = node[p].parentidx)
-        node[p].rootidx = ROOTIDX;
+        node[p]._rootIdx = ROOTIDX;
     for (p = x; p != ROOTIDX; p = node[p].parentidx)
-        node[p].rootidx = x;
-    for (p = y; p != ROOTIDX && node[p].rootidx != x; p = node[p].parentidx)
+        node[p]._rootIdx = x;
+    for (p = y; p != ROOTIDX && node[p]._rootIdx != x; p = node[p].parentidx)
         ;
     return p;
 }
 
 template <class Pixel> Pixel AlphaTree<Pixel>::get_nearest_common_ancestor_level(ImgIdx x, ImgIdx y) {
     ImgIdx p;
-    for (p = y; node[p].rootidx != x; p = node[p].parentidx)
+    for (p = y; node[p]._rootIdx != x; p = node[p].parentidx)
         ;
     return node[p].alpha;
 }
@@ -6281,7 +6274,7 @@ template <class Pixel> Pixel AlphaTree<Pixel>::get_nearest_common_ancestor_level
 template <class Pixel> Pixel AlphaTree<Pixel>::connect(ImgIdx x, ImgIdx y, ImgIdx newidx, Pixel alpha) {
     ImgIdx x0, y0, z;
     //		bool compxy;
-    ImgIdx imgSize = height * width;
+    ImgIdx imgSize = _height * _width;
     //		ImgIdx x1 = x, y1 = x;
     AlphaNode<Pixel> n0, n1, *p, *q;
     p = &n0;
@@ -6397,7 +6390,7 @@ template <class Pixel> Pixel AlphaTree<Pixel>::connect(ImgIdx x, ImgIdx y, ImgId
 template <class Pixel> Pixel AlphaTree<Pixel>::connect(ImgIdx x, ImgIdx y, Pixel alpha, ImgIdx newidx) {
     ImgIdx x0, y0, z;
     //		bool compxy;
-    ImgIdx imgSize = height * width;
+    ImgIdx imgSize = _height * _width;
     //		ImgIdx x1 = x, y1 = x;
     AlphaNode<Pixel> n0, n1, *p, *q;
     p = &n0;
@@ -6433,7 +6426,7 @@ template <class Pixel> Pixel AlphaTree<Pixel>::connect(ImgIdx x, ImgIdx y, Pixel
         return node[x].alpha;
     }
 
-    // compxy = parentAry ? node[x].alpha > node[y].alpha : x > y;
+    // compxy = _parentAry ? node[x].alpha > node[y].alpha : x > y;
     if (x == ROOTIDX || (y != ROOTIDX && (x > y))) {
         q->copy(node + x0);
         swap(x, y);
@@ -6510,10 +6503,10 @@ template <class Pixel> Pixel AlphaTree<Pixel>::connect(ImgIdx x, ImgIdx y, Pixel
 template <class Pixel> void AlphaTree<Pixel>::canonicalize() {
     ImgIdx p;
     ImgIdx numcan = 0;
-    ImgIdx imgSize = height * width;
+    ImgIdx imgSize = _height * _width;
 
     for (p = 0; p < imgSize; p++) {
-        ImgIdx q = parentAry[p];
+        ImgIdx q = _parentAry[p];
         ImgIdx r = q;
 
         // Canonicalize leaf nodes
@@ -6522,12 +6515,12 @@ template <class Pixel> void AlphaTree<Pixel>::canonicalize() {
                 node[r].area = 0;
                 r = node[r].parentidx;
             }
-            parentAry[p] = r;
+            _parentAry[p] = r;
             numcan++;
         }
     }
 
-    for (p = maxSize - 1; p >= 0; p--) {
+    for (p = _maxSize - 1; p >= 0; p--) {
         if (node[p].area && node[p].parentidx != ROOTIDX && node[node[p].parentidx].parentidx != ROOTIDX &&
             node[node[p].parentidx].alpha == node[node[node[p].parentidx].parentidx].alpha) {
             ImgIdx q = node[p].parentidx;
@@ -6537,13 +6530,13 @@ template <class Pixel> void AlphaTree<Pixel>::canonicalize() {
         }
     }
 
-    for (p = maxSize; p < maxSize; p++) {
+    for (p = _maxSize; p < _maxSize; p++) {
         ImgIdx q = p;
         if (p < imgSize)
-            q = parentAry[p];
+            q = _parentAry[p];
 
-        if (node[q].area == 0 && (node[p].parentidx != ROOTIDX || node[p].rootidx != ROOTIDX)) {
-            node[q].parentidx = node[q].rootidx = ROOTIDX;
+        if (node[q].area == 0 && (node[p].parentidx != ROOTIDX || node[p]._rootIdx != ROOTIDX)) {
+            node[q].parentidx = node[q]._rootIdx = ROOTIDX;
         }
     }
 }
@@ -6551,7 +6544,7 @@ template <class Pixel> void AlphaTree<Pixel>::canonicalize() {
 template <class Pixel>
 void AlphaTree<Pixel>::merge_subtrees(ImgIdx *rank, RankItem<Pixel> *rankitem, _int64 blksz_x, _int64 blksz_y,
                                       ImgIdx neighbor_offset, ImgIdx shamt, ImgIdx npartition_x, ImgIdx npartition_y) {
-    ImgIdx imgSize = height * width, numblk;
+    ImgIdx imgSize = _height * _width, numblk;
     while (npartition_x > 1 || npartition_y > 1) {
         if ((npartition_x == 1 || blksz_x >= blksz_y) && npartition_y > 1) {
             numblk = npartition_x * (npartition_y / 2);
@@ -6561,22 +6554,22 @@ void AlphaTree<Pixel>::merge_subtrees(ImgIdx *rank, RankItem<Pixel> *rankitem, _
                 y = (1 + 2 * (blk / (int)npartition_x)) * blksz_y;
                 x = (blk % (int)npartition_x) * blksz_x;
 
-                p0 = (y - 1) * width + x;
-                pn = (((blk % (int)npartition_x) == npartition_x - 1) ? y * width : p0 + blksz_x);
+                p0 = (y - 1) * _width + x;
+                pn = (((blk % (int)npartition_x) == npartition_x - 1) ? y * _width : p0 + blksz_x);
                 for (p = p0; p < pn; p++) {
                     dimgidx = p << 1;
                     r = rank[dimgidx];
                     canonicalize(p);
-                    canonicalize(p + width);
-                    connect(p, p + width, (Pixel)rankitem[r].alpha, (ImgIdx)(r + imgSize));
+                    canonicalize(p + _width);
+                    connect(p, p + _width, (Pixel)rankitem[r].alpha, (ImgIdx)(r + imgSize));
                 }
             }
             npartition_y = (npartition_y + 1) / 2;
             blksz_y <<= 1;
             if (npartition_y == 1)
-                blksz_y = height;
+                blksz_y = _height;
             else
-                blksz_y = _min(blksz_y, height);
+                blksz_y = _min(blksz_y, _height);
         }
 
         if ((npartition_y == 1 || blksz_x <= blksz_y) && npartition_x > 1) {
@@ -6588,10 +6581,10 @@ void AlphaTree<Pixel>::merge_subtrees(ImgIdx *rank, RankItem<Pixel> *rankitem, _
                 x = (1 + 2 * (blk / npartition_y)) * blksz_x;
                 y = (blk % (int)npartition_y) * blksz_y;
 
-                p0 = y * width + x - 1;
-                pn = ((blk % (int)npartition_y) == npartition_y - 1) ? height * width : p0 + width * blksz_y;
+                p0 = y * _width + x - 1;
+                pn = ((blk % (int)npartition_y) == npartition_y - 1) ? _height * _width : p0 + _width * blksz_y;
 
-                for (p = p0; p < pn; p += width) {
+                for (p = p0; p < pn; p += _width) {
                     dimgidx = (p << 1) + 1;
                     r = rank[dimgidx];
                     canonicalize(p);
@@ -6602,9 +6595,9 @@ void AlphaTree<Pixel>::merge_subtrees(ImgIdx *rank, RankItem<Pixel> *rankitem, _
             npartition_x = (npartition_x + 1) / 2;
             blksz_x <<= 1;
             if (npartition_x == 1)
-                blksz_x = width;
+                blksz_x = _width;
             else
-                blksz_x = _min(blksz_x, width);
+                blksz_x = _min(blksz_x, _width);
         }
     }
 }
