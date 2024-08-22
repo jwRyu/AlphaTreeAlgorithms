@@ -2,6 +2,8 @@
 #include "defines.h"
 #include <cfloat>
 #define PROFILE 0
+#define HEAPQUEUE_DEBUG 1
+
 #if PROFILE
 #include <vector>
 #endif
@@ -12,6 +14,11 @@ template <class Pixel> class HQentry {
     ~HQentry() {}
     ImgIdx pidx;
     Pixel alpha;
+
+#if HEAPQUEUE_DEBUG
+    ImgIdx edge = 0;
+#endif
+
     inline void operator=(const HQentry &item) {
         this->pidx = item.pidx;
         this->alpha = item.alpha;

@@ -1,8 +1,8 @@
 ImageFileName=image03.png
 LogFileName=test
 UseRandomlyGeneratedImages=1
-RandomlyGeneratedImageWidth=3000
-RandomlyGeneratedImageHeight=3000
+RandomlyGeneratedImageWidth=8
+RandomlyGeneratedImageHeight=8
 NumberOfChannels=1
 NumberOfThreads=1
 
