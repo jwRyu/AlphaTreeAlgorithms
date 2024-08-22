@@ -1,11 +1,11 @@
 
-#include "LadderQueue.hpp"
-#include "assert.h"
 #include <cmath>
+#include "assert.h"
+#include "LadderQueue.hpp"
 
 bool verbose = false;
 
-void LinkedEdgeList::add(LQNode *n) {
+void LinkedEdgeList::add(LQNode* n) {
     nodeCount++;
     if (!head) {
         head = n;
@@ -19,23 +19,24 @@ void LinkedEdgeList::add(LQNode *n) {
     assert(n->info);
 }
 
-void LinkedEdgeList::add(Event *evt) {
-    LQNode *n = new LQNode();
+void LinkedEdgeList::add(Event* evt) {
+    LQNode* n = new LQNode();
     n->info = evt;
     add(n);
 }
 
-void LinkedEdgeList::addInOrder(Event *evt) {
-    LQNode *n = new LQNode();
+
+void LinkedEdgeList::addInOrder(Event* evt) {
+    LQNode* n = new LQNode();
     n->info = evt;
     addInOrder(n);
 }
 
-void LinkedEdgeList::addInOrder(LQNode *n) {
-    LQNode *cur = tail;
+void LinkedEdgeList::addInOrder(LQNode* n) {
+    LQNode* cur = tail;
     while (cur != nullptr) {
         if (cur->info->alpha <= n->info->alpha) {
-
+            
             n->next = cur->next;
             if (n->next != nullptr) {
                 n->next->prev = n;
@@ -45,7 +46,7 @@ void LinkedEdgeList::addInOrder(LQNode *n) {
             n->prev = cur;
             cur->next = n;
             nodeCount++;
-
+        
             return;
         } else {
             cur = cur->prev;
@@ -63,7 +64,8 @@ void LinkedEdgeList::addInOrder(LQNode *n) {
     assert(tail->next != tail);
 }
 
-void LinkedEdgeList::addFirst(Event *evt) {
+
+void LinkedEdgeList::addFirst(Event* evt) {
     nodeCount++;
 
     if (!head) {
@@ -71,7 +73,7 @@ void LinkedEdgeList::addFirst(Event *evt) {
         head->info = evt;
         tail = head;
     } else {
-        LQNode *n = head;
+        LQNode* n = head;
         head = new LQNode();
         head->info = evt;
         head->next = n;
@@ -80,11 +82,11 @@ void LinkedEdgeList::addFirst(Event *evt) {
     assert(tail->next != tail);
 }
 
-Event *LinkedEdgeList::removeDeleteNode() {
+Event* LinkedEdgeList::removeDeleteNode() {
     assert(nodeCount > 0);
-    Event *evt = head->info;
+    Event* evt = head->info;
 
-    LQNode *n = head;
+    LQNode* n = head;
     head = head->next;
     if (head != nullptr)
         head->prev = nullptr;
@@ -95,8 +97,8 @@ Event *LinkedEdgeList::removeDeleteNode() {
     return evt;
 }
 
-LQNode *LinkedEdgeList::removeNode() {
-    LQNode *n = head;
+LQNode* LinkedEdgeList::removeNode() {
+    LQNode* n = head;
     head = head->next;
     if (head != nullptr)
         head->prev = nullptr;
@@ -111,8 +113,8 @@ LQNode *LinkedEdgeList::removeNode() {
 void LinkedEdgeList::sort() {
     if (nodeCount <= 1)
         return;
-
-    std::vector<LQNode *> temp;
+    
+    std::vector<LQNode*> temp;
     // temp.resize(nodeCount);
     while (!isEmpty())
         temp.push_back(removeNode());
@@ -128,7 +130,7 @@ bool LinkedEdgeList::isAllSameAlpha() {
     bool flat = true;
     if (head) {
         double alpha = head->info->alpha;
-        for (auto walker = head->next; walker; walker = walker->next) {
+        for (auto walker = head->next;walker;walker = walker->next){
             if (walker->info->alpha != alpha) {
                 flat = false;
                 break;
@@ -144,7 +146,7 @@ void LinkedEdgeList::print() {
         printf("EMPTY");
         return;
     }
-
+        
     while (1) {
         printf("%d(%f)", walker->info->idx, walker->info->alpha);
         if (walker == tail)
@@ -160,12 +162,12 @@ Rung::Rung(double w, double bw) : bucketWidth(bw) {
     assert(w > 0 && bw > 0 && w > bw);
     bucketCount = (int)(std::ceil(w / bw));
     bucket.resize(bucketCount);
-    for (int bidx = 0; bidx < bucketCount; bidx++)
+    for (int bidx = 0;bidx < bucketCount;bidx++)
         bucket[bidx] = nullptr;
 }
 
 Rung::~Rung() {
-    for (int bidx = 0; bidx < bucketCount; bidx++) {
+    for (int bidx = 0;bidx < bucketCount;bidx++) {
         if (bucket[bidx])
             delete bucket[bidx];
     }
@@ -186,30 +188,28 @@ void Rung::checkRungExist(int bidx) {
     }
 }
 
-void Rung::addInOrder(Event *evt) {
+void Rung::addInOrder(Event* evt) {
     int bidx = getRungIdx(evt->alpha);
     checkRungExist(bidx);
     bucket[bidx]->addInOrder(evt);
 }
 
-void Rung::add(Event *evt) {
+void Rung::add(Event* evt) {
     int bidx = getRungIdx(evt->alpha);
     checkRungExist(bidx);
     bucket[bidx]->add(evt);
 }
 
-void Rung::add(LQNode *n) {
+void Rung::add(LQNode* n) {
     int bidx = getRungIdx(n->info->alpha);
     checkRungExist(bidx);
     bucket[bidx]->add(n);
 }
 
-bool Rung::print(LinkedEdgeList *bottom) {
+bool Rung::print(LinkedEdgeList* bottom) {
     bool ret = false;
-    printf(
-        "  Range = %f-%f, rStart = %f, rCur = %f, bucketWidth = %f, bucketCount = %d, minBucket = %d, maxBucket = %d\n",
-        rStart, rStart + (double)bucketCount * bucketWidth, rStart, rCur(), bucketWidth, bucketCount, minBucket(),
-        maxBucket());
+    printf("  Range = %f-%f, rStart = %f, rCur = %f, bucketWidth = %f, bucketCount = %d, minBucket = %d, maxBucket = %d\n",
+     rStart, rStart + (double)bucketCount * bucketWidth, rStart, rCur(), bucketWidth, bucketCount, minBucket(), maxBucket());
     int bidx = 0;
     for (auto b : bucket) {
         if (bottom && b == bottom) {
@@ -217,8 +217,7 @@ bool Rung::print(LinkedEdgeList *bottom) {
             ret = true;
         } else
             printf("    Bucket[%d]: ", bidx++);
-        if (b && b->getNodeCount())
-            b->print();
+        if (b && b->getNodeCount()) b->print();
         printf("\n");
     }
     return ret;
@@ -226,22 +225,21 @@ bool Rung::print(LinkedEdgeList *bottom) {
 
 int Rung::minBucket() {
     int mb;
-    for (mb = 0; mb < (int)bucket.size() && bucket[mb] == nullptr; mb++)
+    for (mb = 0;mb < (int)bucket.size() && bucket[mb] == nullptr;mb++)
         ;
     return mb;
 }
 
 int Rung::maxBucket() {
     int mb;
-    for (mb = (int)(bucketCount - 1); mb >= 0 && bucket[mb] == nullptr; mb--)
+    for (mb = (int)(bucketCount - 1);mb >= 0 && bucket[mb] == nullptr;mb--)
         ;
     return mb;
 }
 
-void LadderQueue::enqueue(ImgIdx idx, double alpha) {
+void LadderQueue::enqueue(Imgidx idx, double alpha) {
     // print();
-    if (verbose)
-        std::printf("+enqueue %d at %f\n", idx, alpha);
+    if(verbose) std::printf("+enqueue %d at %f\n", idx, alpha);
     // if (idx == 18 && alpha > 13.99 && alpha < 14.01) {
     //     std::getchar();
     //     print();
@@ -250,7 +248,7 @@ void LadderQueue::enqueue(ImgIdx idx, double alpha) {
     //     std::getchar();
     //     print();
     // }
-    Event *evt = new Event(idx, alpha);
+    Event* evt = new Event(idx, alpha);
     // print();
     ++size;
     const double ts = evt->alpha;
@@ -275,7 +273,7 @@ void LadderQueue::enqueue(ImgIdx idx, double alpha) {
     //     return;
     // }
 
-    for (auto &rung : rungs) {
+    for (auto& rung : rungs) {
         if (ts >= rung->rCur()) {
             // insert in a rung
             if (rung->bucket[rung->minBucket()] == bottom)
@@ -290,21 +288,23 @@ void LadderQueue::enqueue(ImgIdx idx, double alpha) {
     // Shouldn't reach here?
     // assert(false);
 
-    if (bottom == NULL || bottom->getNodeCount() == 0 || rungs.back()->bucket[rungs.back()->minBucket()] == bottom) {
+    if (bottom == NULL || bottom->getNodeCount() == 0 
+    || rungs.back()->bucket[rungs.back()->minBucket()] == bottom) {
         // printf("*** replacing bottom ***\n");
-        bottom = new LinkedEdgeList;
+        bottom = new LinkedEdgeList;    
     }
     bottomInsert++;
     bottom->addInOrder(evt);
-
-    if (bottom->getNodeCount() >= THRES && bottom->getFirst()->alpha != bottom->getLast()->alpha) {
+        
+    if (bottom->getNodeCount() >= THRES && 
+    bottom->getFirst()->alpha != bottom->getLast()->alpha) {
         // Spawn a Rung
         double w = rungs.size() ? rungs.back()->rCur() : bottom->getLast()->alpha;
         double bw = w / (double)THRES;
-        Rung *r = new Rung(w, bw);
+        Rung* r = new Rung(w, bw);
         r->rStart = 0;
 
-        while (!bottom->isEmpty())
+        while (!bottom->isEmpty()) 
             r->add(bottom->removeNode());
         // r->add(evt);
         rungs.push_back(r);
@@ -314,8 +314,7 @@ void LadderQueue::enqueue(ImgIdx idx, double alpha) {
         delete bottom;
         bottom = nullptr;
     }
-    if (verbose)
-        print();
+    if(verbose) print();
 
     // Rung* lastRung = rungs.back();
     // for (bottomIndex = 0;lastRung->bucket[bottomIndex] != bottom &&
@@ -334,16 +333,16 @@ void LadderQueue::enqueue(ImgIdx idx, double alpha) {
  * elements in the considered bucket and so on. If also the Ladder is empty,
  * elements in Top are moved in a rung (the first one) and process is
  * iterated.If the structure is empty an error comes out.
- *
+ * 
  * @return Event with the highest priority
- *
+ * 
  */
-ImgIdx LadderQueue::dequeue() {
+Imgidx LadderQueue::dequeue() {
     // print();
     --size;
     assert(inspectRung());
-    Event *evt = bottom->removeDeleteNode();
-    ImgIdx ret = evt->idx;
+    Event* evt = bottom->removeDeleteNode();
+    Imgidx ret = evt->idx;
     // if (evt->idx == 6 && evt->alpha > 160) {
     //     std::getchar();
     //     print();
@@ -352,15 +351,13 @@ ImgIdx LadderQueue::dequeue() {
     //     std::getchar();
     //     print();
     // }
-    if (verbose)
-        std::printf("-dequeue %d at %f\n", evt->idx, evt->alpha);
+    if(verbose) std::printf("-dequeue %d at %f\n", evt->idx, evt->alpha);
     // if (evt->idx == 22) {
     //     int aa = 10;
     //     aa = aa * 10;
     // }
     // print();
-    if (verbose)
-        print();
+    if(verbose) print();
     delete evt;
     return ret;
 }
@@ -376,28 +373,27 @@ void LadderQueue::print() {
     for (auto r : rungs) {
         printf("  Rung[%d]:\n", ridx++);
         bottomPrint |= r->print(bottom);
+
     }
     printf("\n");
     if (bottomPrint)
         return;
     printf(" Bottom: ");
-    if (bottom)
-        bottom->print();
-    else
-        printf(" NULL");
+    if (bottom) bottom->print();
+    else printf(" NULL");
     printf("\n");
 }
 
-/// @brief Inspect the bottom Rung, reorganize/repopulate as necessary and make the
-/// bottom Run ready and sorted for dequeue
-/// @return True if non-empty bottom rung is ready. False otherwise
+/// @brief Inspect the bottom Rung, reorganize/repopulate as necessary and make the 
+/// bottom Run ready and sorted for dequeue 
+/// @return True if non-empty bottom rung is ready. False otherwise 
 bool LadderQueue::inspectRung() {
     // printf("InspectRung() start\n");
     // print();
     if (bottom) {
         if (bottom->isEmpty()) {
             if (rungs.size()) {
-                Rung *lastRung = rungs.back();
+                Rung* lastRung = rungs.back();
 
                 if (bottom == lastRung->bucket[lastRung->minBucket()])
                     lastRung->bucket[lastRung->minBucket()] = nullptr;
@@ -412,7 +408,7 @@ bool LadderQueue::inspectRung() {
     if (rungs.size() == 0) {
         if (top->getNodeCount() == 0) // Empty Queue
             return false;
-        Rung *r = createNewRungFromTop();
+        Rung* r = createNewRungFromTop();
         assert(r != nullptr);
         // print();
         while (!top->isEmpty())
@@ -420,10 +416,11 @@ bool LadderQueue::inspectRung() {
         // r->updateRCur();
         rungs.push_back(r);
     }
-
-    Rung *lastRung = rungs.back();
+    
+    Rung* lastRung = rungs.back();
     int k = lastRung->minBucket();
-    while (k <= lastRung->maxBucket() && (lastRung->bucket[k] == nullptr || lastRung->bucket[k]->getNodeCount() == 0)) {
+    while (k <= lastRung->maxBucket() &&
+           (lastRung->bucket[k] == nullptr || lastRung->bucket[k]->getNodeCount() == 0)) {
         if (lastRung->bucket[k]) {
             if (bottom == lastRung->bucket[k])
                 bottom = nullptr;
@@ -440,7 +437,7 @@ bool LadderQueue::inspectRung() {
     }
     // lastRung->rCur = lastRung->rStart + (lastRung->bucketWidth * k);
     // assert(k <= lastRung->maxBucket);
-    LinkedEdgeList *bucket_k = lastRung->bucket[k];
+    LinkedEdgeList* bucket_k = lastRung->bucket[k];
     if (bucket_k->getNodeCount() > THRES && !bucket_k->isAllSameAlpha()) {
         // lastRung->minBucket = k;
         // lastRung->updateRCur();
@@ -450,7 +447,7 @@ bool LadderQueue::inspectRung() {
         // printf(")\n");
         // printf("BottomIdx = %d\n", bottomIndex);
 
-        Rung *r = createNewRungFromBottom(bucket_k);
+        Rung* r = createNewRungFromBottom(bucket_k);
         assert(r != nullptr);
         while (!bucket_k->isEmpty()) {
             // auto h = bucket_k->getHead()->info;
@@ -480,12 +477,12 @@ bool LadderQueue::inspectRung() {
         return inspectRung();
     } else {
         bottom = bucket_k;
-        bottom->sort();
+        bottom->sort();        
         return true;
     }
 }
 
-ImgIdx LadderQueue::getTopIdx() {
+Imgidx LadderQueue::getTopIdx() { 
     assert(inspectRung());
     return bottom->getHead()->info->idx;
 }
@@ -495,7 +492,9 @@ double LadderQueue::getTopAlpha() {
     return bottom->getHead()->info->alpha;
 }
 
-LadderQueue::LadderQueue(int thr) : bottom(nullptr), THRES(thr) { top = new LinkedEdgeList; }
+LadderQueue::LadderQueue(int thr) : bottom(nullptr), THRES(thr) {
+    top = new LinkedEdgeList;
+}
 
 LadderQueue::~LadderQueue() {
     delete top;
@@ -504,11 +503,15 @@ LadderQueue::~LadderQueue() {
     }
 }
 
-Rung *LadderQueue::createNewRungFromTop() { return createNewRung(top, true); }
+Rung* LadderQueue::createNewRungFromTop() {
+    return createNewRung(top, true);
+}
 
-Rung *LadderQueue::createNewRungFromBottom(LinkedEdgeList *elist) { return createNewRung(elist, false); }
+Rung* LadderQueue::createNewRungFromBottom(LinkedEdgeList* elist) {
+    return createNewRung(elist, false);
+}
 
-Rung *LadderQueue::createNewRung(LinkedEdgeList *elist, const bool fromTop) {
+Rung* LadderQueue::createNewRung(LinkedEdgeList* elist, const bool fromTop) {
     // assert(rungs.size() <= MAX_RUNGS);
     // assert(fromTop == (elist == top));
     // assert(!fromTop == (elist == bottom));
@@ -540,11 +543,11 @@ Rung *LadderQueue::createNewRung(LinkedEdgeList *elist, const bool fromTop) {
 
         // when creating a new rung here, check the max range
 
-        Rung *lastRung = rungs.back();
+        Rung* lastRung = rungs.back();
         // int bottomIndex;
         // for (bottomIndex = 0;bottom != lastRung->bucket[bottomIndex];bottomIndex++)
         //     ;
-        // rStart = bottom->getFirst()->alpha;
+        // rStart = bottom->getFirst()->alpha;        
         // w = lastRung->rCur - rStart; // TODO +1?
         w = lastRung->bucketWidth;
         assert(w > 0);
@@ -555,7 +558,7 @@ Rung *LadderQueue::createNewRung(LinkedEdgeList *elist, const bool fromTop) {
         // if (bw == 0)
         //     return nullptr; // it is not possible to create a new rung with bw=0
     } else {
-        Rung *lastRung = rungs.back();
+        Rung* lastRung = rungs.back();
         w = lastRung->bucketWidth;
         // bw = lastRung->bucketWidth / elist->getNodeCount();
         bw = w / (double)THRES;
@@ -566,7 +569,7 @@ Rung *LadderQueue::createNewRung(LinkedEdgeList *elist, const bool fromTop) {
         rStart = lastRung->rCur();
     }
 
-    Rung *r = new Rung(w, bw);
+    Rung* r = new Rung(w, bw);
     r->rStart = rStart;
     // r->rCur = r->rStart = rStart;
     // printf("Making a new Rung (%f - %f)\n", rStart, rStart + w);

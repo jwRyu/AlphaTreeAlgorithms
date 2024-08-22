@@ -26,7 +26,6 @@ AlphaTreeConfig::AlphaTreeConfig(const std::string &filename, const std::string 
     AlgorithmNameToCode["FloodHierHeapQueueHisteq"] = 14;
     AlgorithmNameToCode["FloodHierHeapQueueNoCache"] = 15;
     AlgorithmNameToCode["FloodHeapQueueNaiveNoCache"] = 16;
-    AlgorithmNameToCode["FloodHierHeapQueuePar"] = 17;
     for (const auto &pair : AlgorithmNameToCode)
         AlgorithmCodeToName[pair.second] = pair.first;
 }

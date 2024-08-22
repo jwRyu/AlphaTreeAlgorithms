@@ -1,9 +1,8 @@
-obj/*.o
+*.o
 *.obj
 *.txt
 *.swp
 *.cff
 *.out
-build/*
 makefile
 AlphaTree

@@ -2,7 +2,6 @@
 
 #include "AlphaTree.h"
 #include "AlphaTreeConfig.h"
-#include "BucketSort.hpp"
 #include "RandGenImage.hpp"
 #include "defines.h"
 #include "pgmio.h"
@@ -29,135 +28,6 @@ int main(int argc, char **argv) {
     // auto input_filename = "img03.png";
     // auto output_filename = "out.png";
     // auto [image, w, h, ch] = PNGCodec::imread("img03.png");
-
-    // {
-    //     std::vector<RankItem<float>> rankitems;
-
-    //     ImgIdx width = w;
-    //     ImgIdx height = h;
-    //     ImgIdx imgsize = width * height;
-    //     for (int i = 0; i < h; i++) {
-    //         for (int j = 0; j < w; j++) {
-    //             ImgIdx pixelIndex = i * width + j;
-
-    //             float r = (float)image[i * width + j];
-    //             float g = (float)image[imgsize + i * width + j];
-    //             float b = (float)image[2 * imgsize + i * width + j];
-
-    //             if (i < h - 1) {
-    //                 float rBottom = (float)image[(i + 1) * width + j];
-    //                 float gBottom = (float)image[imgsize + (i + 1) * width + j];
-    //                 float bBottom = (float)image[2 * imgsize + (i + 1) * width + j];
-
-    //                 float dr = r - rBottom;
-    //                 float dg = g - gBottom;
-    //                 float db = b - bBottom;
-    //                 float alpha = ((dr * dr + dg * dg + db * db) / 3.0f);
-
-    //                 rankitems.emplace_back(alpha, pixelIndex * 2);
-    //             }
-
-    //             if (j < w - 1) {
-    //                 float rRight = (float)image[i * width + j + 1];
-    //                 float gRight = (float)image[imgsize + i * width + j + 1];
-    //                 float bRight = (float)image[2 * imgsize + i * width + j + 1];
-
-    //                 float dr = r - rRight;
-    //                 float dg = g - gRight;
-    //                 float db = b - bRight;
-    //                 float alpha = ((dr * dr + dg * dg + db * db) / 3.0f);
-
-    //                 rankitems.emplace_back(alpha, pixelIndex * 2 + 1);
-    //             }
-    //         }
-    //     }
-    //     auto t0 = get_wall_time();
-
-    //     auto copyData = rankitems;
-
-    //     for (int i = 0; i < 10; i++)
-    //         printf("alpha = %f / index = %d \n", (double)copyData[i].alpha, (int)copyData[i].dimgidx);
-
-    //     std::sort(copyData.begin(), copyData.end(),
-    //               [](const RankItem<float> &a, const RankItem<float> &b) { return a.alpha < b.alpha; });
-
-    //     auto tSort = get_wall_time() - t0;
-    //     printf("std::sort(): %fs\n", tSort);
-
-    //     for (int i = 0; i < 10; i++)
-    //         printf("alpha = %f / index = %d \n", (double)copyData[i].alpha, (int)copyData[i].dimgidx);
-    // }
-
-    // {
-    //     BucketSort bucky;
-
-    //     ImgIdx width = w;
-    //     ImgIdx height = h;
-    //     ImgIdx imgsize = width * height;
-    //     for (int i = 0; i < h; i++) {
-    //         for (int j = 0; j < w; j++) {
-    //             ImgIdx pixelIndex = i * width + j;
-
-    //             float r = (float)image[i * width + j];
-    //             float g = (float)image[imgsize + i * width + j];
-    //             float b = (float)image[2 * imgsize + i * width + j];
-
-    //             if (i < h - 1) {
-    //                 float rBottom = (float)image[(i + 1) * width + j];
-    //                 float gBottom = (float)image[imgsize + (i + 1) * width + j];
-    //                 float bBottom = (float)image[2 * imgsize + (i + 1) * width + j];
-
-    //                 float dr = r - rBottom;
-    //                 float dg = g - gBottom;
-    //                 float db = b - bBottom;
-    //                 float alpha = ((dr * dr + dg * dg + db * db) / 3.0f);
-
-    //                 bucky.insert(alpha, pixelIndex * 2);
-    //             }
-
-    //             if (j < w - 1) {
-    //                 float rRight = (float)image[i * width + j + 1];
-    //                 float gRight = (float)image[imgsize + i * width + j + 1];
-    //                 float bRight = (float)image[2 * imgsize + i * width + j + 1];
-
-    //                 float dr = r - rRight;
-    //                 float dg = g - gRight;
-    //                 float db = b - bRight;
-    //                 float alpha = ((dr * dr + dg * dg + db * db) / 3.0f);
-
-    //                 bucky.insert(alpha, pixelIndex * 2 + 1);
-    //             }
-    //         }
-    //     }
-    //     auto t0 = get_wall_time();
-
-    //     // auto sortedRankitems = bucky.sort();
-    //     auto sortedRankitems = bucky.parallelSort(32);
-
-    //     auto tSort = get_wall_time() - t0;
-    //     printf("BucketSort::sort(): %fs\n", tSort);
-
-    //     for (int i = 0; i < 10; i++)
-    //         printf("alpha = %f / index = %d \n", (double)sortedRankitems[i].alpha, (int)sortedRankitems[i].dimgidx);
-    // }
-
-    // {
-    //     auto t0 = get_wall_time();
-
-    //     auto copyData = rankitems;
-
-    //     for (int i = 0; i < 10; i++)
-    //         printf("alpha = %f / index = %d \n", (double)copyData[i].alpha, (int)copyData[i].dimgidx);
-
-    //     BucketSort::sort(copyData);
-
-    //     auto tSort = get_wall_time() - t0;
-    //     printf("BucketSort::sort(): %fs\n", tSort);
-
-    //     for (int i = 0; i < 10; i++)
-    //         printf("alpha = %f / index = %d \n", (double)copyData[i].alpha, (int)copyData[i].dimgidx);
-    // }
-
     // PNGCodec::imwrite(image, w, h, ch, "out.png");
 
     const auto &width = params.randomGenImageWidth;
@@ -186,8 +56,6 @@ int main(int argc, char **argv) {
     printf("-----------------------------------------------------------------------------------\n");
     std::vector<double> runtimes;
 
-    // srand(time(NULL));
-    srand(0);
     for (int itr = 0; itr < nitr; itr++) {
         double tStart = 0, tEnd = INFINITY;
         if (params.UseRandomlyGeneratedImages == true) {
@@ -265,7 +133,7 @@ int main(int argc, char **argv) {
 
     //     // tree.BuildAlphaTree(img, height, width, 1, 4, FLOOD_HIERARHEAPQUEUE_CACHE, 1, 0, 0.0, 0.0, 0);
     //     tree.BuildAlphaTree(img, height, width, 1, 4, FLOOD_LADDERQUEUE, 1, 0, 0.0, 0.0, 32);
-    //     // tree.printTree();
+    //     // tree.print_tree();
 
     //     return 0;
     // }

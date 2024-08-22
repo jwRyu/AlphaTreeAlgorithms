@@ -1,8 +1,8 @@
 ImageFileName=image03.png
 LogFileName=test
 UseRandomlyGeneratedImages=1
-RandomlyGeneratedImageWidth=1000
-RandomlyGeneratedImageHeight=1000
+RandomlyGeneratedImageWidth=3000
+RandomlyGeneratedImageHeight=3000
 NumberOfChannels=1
 NumberOfThreads=1
 
@@ -34,7 +34,7 @@ NumberOfThreads=1
 # 16. FloodHierHeapQueueNoCache
 # 17. FloodHeapQueueNaiveNoCache
 # 18. FloodHierHeapQueuePar
-AlphaTreeAlgorithm=FloodHierHeapQueuePar
+AlphaTreeAlgorithm=FloodHierHeapQueue
 
 BitDepth=64
 UseTreeSizeEstimation=1
