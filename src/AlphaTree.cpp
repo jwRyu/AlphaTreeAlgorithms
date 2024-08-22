@@ -286,7 +286,7 @@ template <class Pixel> void AlphaTree<Pixel>::printParentAry() const {
 }
 
 template <class Pixel> void AlphaTree<Pixel>::printAll(_uint8 *isVisited, _uint8 *edge, Pixel *img) const {
-    printTree();
+    // printTree();
     printParentAry();
     printGraph(isVisited, edge, img);
     std::getchar();
@@ -2912,7 +2912,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
     ImgIdx startingPixel = 0; /*arbitrary starting point*/
 
     ImgIdx prevTop = stackTop;
-    queue->push_1stitem(startingPixel, (Pixel)currentLevel, -1);
+    queue->push_1stitem(startingPixel);
     while (true) // flooding
     {
         while ((double)queue->top_alpha() <= (double)currentLevel) // flood all levels below currentLevel
@@ -2926,7 +2926,9 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
                 if (edgeLabels[edgeIdx] == 1) {
                     edgeLabels[edgeIdx] = 3;
                 }
-                // queue->mark(1);
+
+                // printTree();
+                queue->print();
                 printAll(isVisited, edgeLabels, img);
 
                 continue;
@@ -2938,7 +2940,6 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
 
             queue->start_pushes();
             isVisited[p] = 1;
-            printAll(isVisited, edgeLabels, img);
 
             auto isAv = isAvailable[p];
             if (_connectivity == 4) {
@@ -3019,6 +3020,8 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
                 if (node[stackTop].area == imgSize)
                     goto FLOOD_END;
             }
+            // printTree();
+            queue->print();
             printAll(isVisited, edgeLabels, img);
         }
 
@@ -3050,6 +3053,10 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
     }
 FLOOD_END:
     node[_rootIdx].parentidx = ROOTIDX;
+
+    // printTree();
+    queue->print();
+    printAll(isVisited, edgeLabels, img);
 
     delete queue;
     Free(dimg);

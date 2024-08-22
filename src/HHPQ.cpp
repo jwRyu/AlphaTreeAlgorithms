@@ -46,6 +46,43 @@ void HHPQ<Pixel>::initHQ(ImgIdx *dhist, ImgIdx numlevels_in, ImgIdx size, double
     }
 }
 
+template <class Pixel> void QuadHeapQueue<Pixel>::print() {
+    for (int i = 0; i < cursize; i++)
+        arr[i + 1].print();
+    printf("\n");
+}
+
+template <class Pixel> void HHPQ<Pixel>::print() {
+    printf("---------- HHPQ<Pixel>::print START -------------\n");
+    printf("Cache[%d / %d]: ", curSize_list + 1, maxSize_list + 1);
+    size_t size = curSize_list;
+    for (int i = -1; i < curSize_list; i++)
+        list[i + 1].print();
+    printf("\n");
+
+    for (int level = 0; level < numlevels; level++) {
+        if (level < curthr) {
+            size += hqueue[level]->size();
+            if (hqueue[level]->empty())
+                continue;
+            printf("Q: level[%d][%d / %d]: ", level, hqueue[level]->size(), hqueue[level]->sizeMax());
+            hqueue[level]->print();
+        } else {
+            if (storage_cursize[level] == 0)
+                continue;
+            size += storage_cursize[level];
+            printf("S: level[%d][%d / %d]: ", level, storage_cursize[level], qsizes[level]);
+            for (int i = 0; i < storage_cursize[level]; i++)
+                storage[level][i].print();
+            printf("\n");
+        }
+    }
+
+    printf("size = %d\n", (int)size);
+    printf("---------- HHPQ<Pixel>::print END -------------\n");
+    // std::getchar();
+}
+
 template <class Pixel>
 HHPQ<Pixel>::HHPQ(ImgIdx *dhist, ImgIdx numlevels_in, ImgIdx size, double a_in, int listsize, ImgIdx connectivity,
                   double r) {
@@ -70,10 +107,10 @@ template <class Pixel> HHPQ<Pixel>::~HHPQ() {
     }
 }
 
-template <class Pixel> void HHPQ<Pixel>::push_1stitem(ImgIdx idx, Pixel alpha, ImgIdx edgeIdx) {
+template <class Pixel> void HHPQ<Pixel>::push_1stitem(ImgIdx idx) {
     list[0].index = idx;
-    list[0].alpha = alpha;
-    list[0].edge = edgeIdx;
+    list[0].alpha = std::numeric_limits<Pixel>::max();
+    list[0].edge = -1;
     curSize_list++;
 }
 
@@ -83,6 +120,8 @@ template <class Pixel> void HHPQ<Pixel>::end_pushes(_uint8 *isVisited) {
 }
 
 template <class Pixel> void HHPQ<Pixel>::push(ImgIdx idx, Pixel alpha, ImgIdx edgeIdx) {
+    printf("Pushing %d at %.2f\n", idx, (double)alpha);
+
     if (emptytop && alpha < list[0].alpha) {
         emptytop = 0;
         list[0].index = idx;
@@ -98,7 +137,7 @@ template <class Pixel> void HHPQ<Pixel>::push(ImgIdx idx, Pixel alpha, ImgIdx ed
         if (curSize_list < maxSize_list) // spare room in the list
         {
             int i;
-            for (i = curSize_list; alpha < list[i].alpha; i--) {
+            for (i = curSize_list; i >= 0 && alpha < list[i].alpha; i--) {
                 list[i + 1] = list[i];
             }
             list[i + 1].index = idx;
@@ -109,7 +148,7 @@ template <class Pixel> void HHPQ<Pixel>::push(ImgIdx idx, Pixel alpha, ImgIdx ed
         {
             push_queue(list[curSize_list].index, list[curSize_list].alpha, edgeIdx);
             int i;
-            for (i = curSize_list - 1; alpha < list[i].alpha; i--) {
+            for (i = curSize_list - 1; i >= 0 && alpha < list[i].alpha; i--) {
                 list[i + 1] = list[i];
             }
             list[i + 1].index = idx;

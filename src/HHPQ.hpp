@@ -1,6 +1,7 @@
 #pragma once
 
 #include <HeapQueue.h>
+#include <cstdio>
 #include <defines.h>
 #include <limits>
 
@@ -10,6 +11,8 @@ template <class Pixel> struct QItem {
     ImgIdx edge = -1;
 
     QItem(ImgIdx index_, Pixel alpha_, ImgIdx edge_) : index(index_), alpha(alpha_), edge(edge_) {}
+    bool operator<(const QItem &other) const { return alpha < other.alpha; }
+    void print() { printf("(%d, %.2f) ", (int)index, (double)alpha); }
 };
 
 template <class Pixel> class QuadHeapQueue {
@@ -19,10 +22,15 @@ template <class Pixel> class QuadHeapQueue {
     Pixel pop_level;
 
   public:
-    inline ImgIdx get_cursize() { return cursize; }
+    ImgIdx get_cursize() { return cursize; }
+    ImgIdx size() { return cursize; }
+    ImgIdx sizeMax() { return maxsize; }
+    bool empty() { return cursize == 0; }
 
     QuadHeapQueue(ImgIdx maxsize_in);
     ~QuadHeapQueue();
+
+    void print();
 
     ImgIdx pop();
     void push(QItem<Pixel> item);
@@ -53,6 +61,7 @@ template <class Pixel> class HHPQ {
   public:
     _uint8 *edgeLabels;
 
+    void print();
     void initHQ(ImgIdx *dhist, ImgIdx numlevels_in, ImgIdx size, double a_in, int listsize, int connectivity, double r);
     HHPQ(ImgIdx *dhist, ImgIdx numlevels_in, ImgIdx size, double a_in, int listsize, ImgIdx connectivity = 4,
          double r = 0.2);
@@ -62,7 +71,7 @@ template <class Pixel> class HHPQ {
     inline ImgIdx top() { return list[0].index; }
     inline Pixel top_alpha() { return list[0].alpha; }
     inline Pixel top_edge() { return list[0].edge; }
-    void push_1stitem(ImgIdx idx, Pixel alpha, ImgIdx edgeIdx);
+    void push_1stitem(ImgIdx idx);
     void end_pushes(_uint8 *isVisited);
     void push(ImgIdx idx, Pixel alpha, ImgIdx edgeIdx);
     void push_queue(ImgIdx idx, Pixel alpha, ImgIdx edgeIdx);
