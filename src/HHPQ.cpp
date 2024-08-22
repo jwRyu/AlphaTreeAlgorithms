@@ -98,7 +98,7 @@ template <class Pixel> void HHPQ<Pixel>::end_pushes() {
 }
 
 template <class Pixel> void HHPQ<Pixel>::push(ImgIdx index, double alpha, ImgIdx edgeIdx) {
-    printf("HHPQ::Pushing %d at %.2f \n", index, (double)alpha);
+    // printf("HHPQ::Pushing %d at %.2f \n", index, (double)alpha);
 #ifdef BOUNDARYCHECK
     assert(_sizeMax > 0 && _cacheMaxSize > 0);
     assert(_cacheCurSize <= _cacheMaxSize);
@@ -319,7 +319,7 @@ template <class Pixel> ImgIdx HHPQ<Pixel>::findNextNonemptyLevel(ImgIdx level) c
 }
 
 template <class Pixel> ImgIdx HHPQ<Pixel>::pop() {
-    printf("HHPQ::pop %d at %.2f \n", front().index, (double)front().alpha);
+    // printf("HHPQ::pop %d at %.2f \n", front().index, (double)front().alpha);
     if (_size == 0) {
         return -1;
     }
@@ -333,7 +333,7 @@ template <class Pixel> ImgIdx HHPQ<Pixel>::pop() {
         if (_cacheCurSize == 0) {
             do {
                 if (_size <= 0) {
-                    print();
+                    // print();
                     return -1;
                 }
                 _lowestNonemptyLevel = findNextNonemptyLevel(_lowestNonemptyLevel);

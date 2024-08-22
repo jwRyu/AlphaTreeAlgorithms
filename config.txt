@@ -1,8 +1,8 @@
 ImageFileName=image03.png
 LogFileName=test
 UseRandomlyGeneratedImages=1
-RandomlyGeneratedImageWidth=20
-RandomlyGeneratedImageHeight=20
+RandomlyGeneratedImageWidth=1000
+RandomlyGeneratedImageHeight=1000
 NumberOfChannels=1
 NumberOfThreads=1
 
@@ -43,6 +43,6 @@ NumberOfTestIterations=5
 ParameterInteger1=3
 ParameterInteger2=2
 ParameterInteger3=3
-ParameterFloat1=45.0
+ParameterFloat1=15.0
 ParameterFloat2=0.15
 ParameterFloat3=0.3

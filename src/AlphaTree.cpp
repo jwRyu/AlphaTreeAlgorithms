@@ -8,7 +8,7 @@ template <class Pixel>
 AlphaNode<Pixel>::AlphaNode(Pixel pixelVal, double alpha_, ImgIdx parentidx_)
     : area(1), alpha(alpha_), sumPix((double)pixelVal), minPix(pixelVal), maxPix(pixelVal), parentidx(parentidx_),
       rootidx(ROOTIDX) {
-    printf("AlphaNode<Pixel>::AlphaNode pixelVal = %d\n", (int)pixelVal);
+    // printf("AlphaNode<Pixel>::AlphaNode pixelVal = %d\n", (int)pixelVal);
 }
 
 template <class Pixel>
@@ -2806,8 +2806,6 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueue(Pixel *img, d
     rootidx = stackTop;
     node[rootidx].parentidx = ROOTIDX;
 
-    // printTree();
-
     delete queue;
     Free(dimg);
     Free(isVisited);
@@ -2911,8 +2909,8 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
             const ImgIdx p = hhpq.front().index;
 
             // printf("queue = (%d, %f), hhpq = (%d, %f)\n", p, queue->top_alpha(), ph, hhpq.front().alpha);
-            printf("*** Visiting %d at %.2f (edge = %d), (img[p] = %d, node[stackTop].area = %d)\n", p,
-                   hhpq.front().alpha, hhpq.front().edgeIdx, (int)img[p], (int)node[stackTop].area);
+            // printf("*** Visiting %d at %.2f (edge = %d), (img[p] = %d, node[stackTop].area = %d)\n", p,
+            //        hhpq.front().alpha, hhpq.front().edgeIdx, (int)img[p], (int)node[stackTop].area);
             // const ImgIdx eIdx = hhpq.front().edgeIdx; // TEMP
             // printf("edgeLabels[%d] = %d\n", eIdx, edgeLabels[eIdx]);
 
@@ -2922,8 +2920,8 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
                     edgeLabels[hhpq.front().edgeIdx] = 3;
                 }
                 hhpq.pop();
-                hhpq.print();
-                printAll(isVisited, edgeLabels, img);
+                // hhpq.print();
+                // printAll(isVisited, edgeLabels, img);
                 continue;
             }
 
@@ -3029,8 +3027,8 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
                 } else
                     connectPix2Node(p, img[p], stackTop);
             }
-            hhpq.print();
-            printAll(isVisited, edgeLabels, img);
+            // hhpq.print();
+            // printAll(isVisited, edgeLabels, img);
             // printAll(isVisited, edgeLabels, img);
         }
 
@@ -3064,7 +3062,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
     rootidx = stackTop;
     node[rootidx].parentidx = ROOTIDX;
 
-    printAll(isVisited, edgeLabels, img);
+    // printAll(isVisited, edgeLabels, img);
 
     // printf("isRedundant After\n");
     // printRedundantGraph(img, isRedundant, width, height, connectivity);
