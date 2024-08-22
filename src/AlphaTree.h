@@ -64,10 +64,10 @@ using namespace pmt;
 template <class Pixel> class AlphaNode {
   public:
     ImgIdx area = 0;
-    double alpha = -1;
-    double sumPix = 0;
-    Pixel minPix = 0;
-    Pixel maxPix = 0;
+    double alpha = std::numeric_limits<Pixel>::infinity();
+    double sumPix = 0.0;
+    Pixel minPix = std::numeric_limits<Pixel>::max();
+    Pixel maxPix = std::numeric_limits<Pixel>::min();
     ImgIdx parentidx = ROOTIDX;
     ImgIdx rootidx = ROOTIDX;
 
@@ -96,14 +96,19 @@ template <class Pixel> class RankItem {
 
 template <class Pixel> class AlphaTree {
   public:
-    ImgIdx maxSize;
-    ImgIdx curSize;
-    ImgIdx height, width, channel, connectivity;
-    AlphaNode<Pixel> *node, *node_in;
-    ImgIdx num_node, num_node_in;
-    ImgIdx rootidx;
-    ImgIdx *parentAry;
-    double nrmsd;
+    ImgIdx maxSize = 0;
+    ImgIdx curSize = 0;
+    ImgIdx height = 0;
+    ImgIdx width = 0;
+    ImgIdx channel = 0;
+    ImgIdx connectivity = 0;
+    AlphaNode<Pixel> *node = nullptr;
+    AlphaNode<Pixel> *node_in = nullptr;
+    ImgIdx *parentAry = nullptr;
+    ImgIdx num_node = 0;
+    ImgIdx num_node_in = 0;
+    ImgIdx rootidx = ROOTIDX;
+    double nrmsd = 0.0;
 
     AlphaTree() : maxSize(0), curSize(0), node(0), parentAry(0) {}
     ~AlphaTree();
@@ -159,9 +164,9 @@ template <class Pixel> class AlphaTree {
     ImgIdx NewAlphaNode(Pixel level);
     _uint8 is_visited(_uint8 *isVisited, ImgIdx p);
     void visit(_uint8 *isVisited, ImgIdx p);
-    ImgIdx TreeSizeEstimation(ImgIdx *dhist, _int64 numlevels, ImgIdx imgsize, ImgIdx nredges);
-    ImgIdx TreeSizeEstimation(ImgIdx *dhist, _int64 numlevels, ImgIdx imgsize, ImgIdx nredges, double m);
-    ImgIdx TreeSizeEstimation(ImgIdx *dhist, _int64 numlevels, ImgIdx imgsize, ImgIdx nredges, double m,
+    ImgIdx TreeSizeEstimation(ImgIdx *dhist, _int64 numlevels, ImgIdx imgSize, ImgIdx nredges);
+    ImgIdx TreeSizeEstimation(ImgIdx *dhist, _int64 numlevels, ImgIdx imgSize, ImgIdx nredges, double m);
+    ImgIdx TreeSizeEstimation(ImgIdx *dhist, _int64 numlevels, ImgIdx imgSize, ImgIdx nredges, double m,
                               ImgIdx reserve);
     void remove_redundant_node(ImgIdx &prev_top, ImgIdx &stack_top);
     int get_bitdepth(_uint64 num);
@@ -225,7 +230,7 @@ template <class Pixel> class AlphaTree {
                         ImgIdx shamt, ImgIdx npartition_x, ImgIdx npartition_y, _int32 numbins);
     void merge_subtrees(_uint8 *qrank, _int64 blksz_x, _int64 blksz_y, ImgIdx neighbor_offset, ImgIdx shamt,
                         ImgIdx npartition_x, ImgIdx npartition_y, _int32 numbins);
-    void connect_pilotnode(AlphaNode<Pixel> *pilottree, ImgIdx nredges, ImgIdx imgsize);
+    void connect_pilotnode(AlphaNode<Pixel> *pilottree, ImgIdx nredges, ImgIdx imgSize);
     void set_qindex(ImgIdx *qindex, ImgIdx *dhist, _int64 numpartitions, _int32 numbins, ImgIdx npartition_x,
                     ImgIdx npartition_y, _int64 blksz_x, _int64 blksz_y, _int64 blksz_xn, _int64 blksz_yn);
     void set_qindex(ImgIdx *qindex, ImgIdx *dhist, _int64 numpartitions, _int32 numbins);
