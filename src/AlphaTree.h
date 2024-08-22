@@ -22,10 +22,10 @@ using namespace pmt;
 // so important on small images).
 #define TSE_MINSIZE 10000
 
-#define A 1.3901
-#define SIGMA -2.1989
-#define B -0.1906
-#define M 0.05
+#define TSE_A 1.3901
+#define TSE_SIGMA -2.1989
+#define TSE_B -0.1906
+#define TSE_M 0.05
 
 #define IMGIDX_32BITS 0
 #define IMGIDX_64BITS 1
@@ -63,13 +63,17 @@ using namespace pmt;
 
 template <class Pixel> class AlphaNode {
   public:
-    ImgIdx area;
-    double alpha;
-    double sumPix;
-    Pixel minPix;
-    Pixel maxPix;
-    ImgIdx parentidx;
-    ImgIdx rootidx;
+    ImgIdx area = 0;
+    double alpha = -1;
+    double sumPix = 0;
+    Pixel minPix = 0;
+    Pixel maxPix = 0;
+    ImgIdx parentidx = ROOTIDX;
+    ImgIdx rootidx = ROOTIDX;
+
+    AlphaNode() = default;
+    AlphaNode(Pixel pixelVal, double alpha_, ImgIdx parentidx_ = ROOTIDX);
+    AlphaNode(double alpha_, ImgIdx parentidx_ = ROOTIDX);
 
     void set(ImgIdx area_in, double level, double sumPix_in, Pixel minPix_in, Pixel maxPix_in);
     void add(AlphaNode *q);
@@ -103,20 +107,12 @@ template <class Pixel> class AlphaTree {
 
     AlphaTree() : maxSize(0), curSize(0), node(0), parentAry(0) {}
     ~AlphaTree();
-
-    inline void clear() {
-        Free(node);
-        Free(parentAry);
-        node = NULL;
-        parentAry = NULL;
-        curSize = 0;
-    }
+    void clear();
 
     void BuildAlphaTree(Pixel *img, int height_in, int width_in, int channel_in, int connectivity_in, int algorithm,
                         int numthreads, int tse, double fparam1 = 0.0, double fparam2 = 0.0, int iparam1 = 0);
 
     void AlphaFilter(double *outimg, double alpha);
-
     void AreaFilter(double *outimg, double area);
 
     void printTree() const;

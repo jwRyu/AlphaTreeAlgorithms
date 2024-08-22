@@ -1,12 +1,31 @@
 #include "AlphaTree.h"
 
-template <class Pixel> AlphaTree<Pixel>::~AlphaTree() {
-    if (node) {
+template <class Pixel> AlphaTree<Pixel>::~AlphaTree() { clear(); }
+
+template <class Pixel>
+AlphaNode<Pixel>::AlphaNode(Pixel pixelVal, double alpha_, ImgIdx parentidx_)
+    : area(1), alpha(alpha_), sumPix((double)pixelVal), minPix(pixelVal), maxPix(pixelVal), parentidx(parentidx_),
+      rootidx(ROOTIDX) {
+    // printf("AlphaNode<Pixel>::AlphaNode pixelVal = %d\n", (int)pixelVal);
+}
+
+template <class Pixel>
+AlphaNode<Pixel>::AlphaNode(double alpha_, ImgIdx parentidx_)
+    : area(0), alpha(alpha_), sumPix(0.0), minPix(0.0), maxPix(0.0), parentidx(parentidx_), rootidx(ROOTIDX) {}
+
+template <class Pixel> void AlphaTree<Pixel>::clear() {
+    if (node)
         Free(node);
-        if (parentAry) {
-            Free(parentAry);
-        }
-    }
+    node = nullptr;
+    if (parentAry)
+        Free(parentAry);
+    parentAry = nullptr;
+    curSize = 0;
+    maxSize = 0;
+    height = 0;
+    width = 0;
+    channel = 0;
+    connectivity = 0;
 }
 
 template <class Pixel>
@@ -1474,7 +1493,7 @@ template <class Pixel> void AlphaTree<Pixel>::visit(_uint8 *isVisited, ImgIdx p)
 
 template <class Pixel>
 ImgIdx AlphaTree<Pixel>::TreeSizeEstimation(ImgIdx *dhist, _int64 numlevels, ImgIdx imgsize, ImgIdx nredges) {
-    return TreeSizeEstimation(dhist, numlevels, imgsize, nredges, M);
+    return TreeSizeEstimation(dhist, numlevels, imgsize, nredges, TSE_M);
 }
 
 template <class Pixel>
@@ -1486,18 +1505,19 @@ ImgIdx AlphaTree<Pixel>::TreeSizeEstimation(ImgIdx *dhist, _int64 numlevels, Img
         tse_nrmsd += ((double)dhist[p]) * ((double)dhist[p]);
     tse_nrmsd = sqrt((tse_nrmsd - (double)nredges) / ((double)nredges * ((double)nredges - 1.0)));
     nrmsd = tse_nrmsd;
-    ImgIdx ret = _min(2 * imgsize, (ImgIdx)(2 * imgsize * ((A * exp(SIGMA * tse_nrmsd) + B) + m)));
-    double dret = _min((double)(2 * imgsize), (double)(2 * imgsize * ((A * exp(SIGMA * tse_nrmsd) + B) + m)));
+    ImgIdx ret = _min(2 * imgsize, (ImgIdx)(2 * imgsize * ((TSE_A * exp(TSE_SIGMA * tse_nrmsd) + TSE_B) + m)));
+    double dret =
+        _min((double)(2 * imgsize), (double)(2 * imgsize * ((TSE_A * exp(TSE_SIGMA * tse_nrmsd) + TSE_B) + m)));
 
     if (ret < 0) {
         printf("Warning: TSE returned 0< value\n");
         printf("nrmsd = %lf\n", tse_nrmsd);
-        printf(" exp(SIGMA * nrmsd) = %lf\n", exp(SIGMA * tse_nrmsd));
-        printf("A * exp(SIGMA * nrmsd) + B = %lf\n", A * exp(SIGMA * tse_nrmsd) + B);
+        printf(" exp(SIGMA * nrmsd) = %lf\n", exp(TSE_SIGMA * tse_nrmsd));
+        printf("A * exp(SIGMA * nrmsd) + B = %lf\n", TSE_A * exp(TSE_SIGMA * tse_nrmsd) + TSE_B);
         printf("2 * imgsize * ((A * exp(SIGMA * nrmsd) + B) + m) = %lf\n",
-               2 * imgsize * ((A * exp(SIGMA * tse_nrmsd) + B) + m));
+               2 * imgsize * ((TSE_A * exp(TSE_SIGMA * tse_nrmsd) + TSE_B) + m));
         printf("(ImgIdx)(2 * imgsize * ((A * exp(SIGMA * nrmsd) + B) + m)) = %d\n",
-               (int)(ImgIdx)(2 * imgsize * ((A * exp(SIGMA * tse_nrmsd) + B) + m)));
+               (int)(ImgIdx)(2 * imgsize * ((TSE_A * exp(TSE_SIGMA * tse_nrmsd) + TSE_B) + m)));
         printf("nredges = %lf\n", (double)nredges);
         printf("imgsize = %lf\n", (double)imgsize);
         printf("1 + nredges + imgsize = %lf\n", (double)(1 + nredges + imgsize));
@@ -1515,7 +1535,8 @@ ImgIdx AlphaTree<Pixel>::TreeSizeEstimation(ImgIdx *dhist, _int64 numlevels, Img
     for (_int64 p = 0; p < numlevels; p++)
         nrmsd += ((double)dhist[p]) * ((double)dhist[p]);
     nrmsd = sqrt((nrmsd - (double)nredges) / ((double)nredges * ((double)nredges - 1.0)));
-    return _min(2.0 * imgsize, (ImgIdx)(2.0 * (double)imgsize * ((A * exp(SIGMA * nrmsd) + B) + m))) + reserve;
+    return _min(2.0 * imgsize, (ImgIdx)(2.0 * (double)imgsize * ((TSE_A * exp(TSE_SIGMA * nrmsd) + TSE_B) + m))) +
+           reserve;
 }
 
 template <class Pixel> void AlphaTree<Pixel>::remove_redundant_node(ImgIdx &prev_top, ImgIdx &stack_top) {
@@ -4481,7 +4502,7 @@ void AlphaTree<Pixel>::blockwise_tse(ImgIdx *subtree_size, ImgIdx *subtree_nbord
         for (int ii = 0; ii < (int)(maxdiff + 1); ii++)
             nrmsd_blk += ((double)dhist[ii]) * ((double)dhist[ii]);
         nrmsd_blk = sqrt((nrmsd_blk - (double)bhistsum) / ((double)bhistsum * ((double)bhistsum - 1.0)));
-        nrmsd_blk = ((A * exp(SIGMA * nrmsd_blk) + B) + M);
+        nrmsd_blk = ((TSE_A * exp(TSE_SIGMA * nrmsd_blk) + TSE_B) + TSE_M);
         nrmsds[blk] = nrmsd_blk;
 
         // ImgIdx nrboderedges = (lastcol ? 0 : bheight) + (lastrow ? 0 : bwidth);
