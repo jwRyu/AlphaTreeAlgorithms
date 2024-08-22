@@ -66,7 +66,7 @@ void RandGenImage::randomize64(_uint64 *img, int width, int height, int bit_dept
         pix |= ((_uint64)(rand() & 0xff) << 16);
         pix |= ((_uint64)(rand() & 0xff) << 8);
         pix |= ((_uint64)(rand() & 0xff));
-        pix = pix % 5; // TEMP
+        pix = pix % 100; // TEMP
         img[i] = (_uint64)(pix >> shamt);
     }
 }

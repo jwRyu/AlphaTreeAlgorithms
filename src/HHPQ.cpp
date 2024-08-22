@@ -97,8 +97,8 @@ template <class Pixel> void HHPQ<Pixel>::end_pushes() {
     _isEmptyFront = false;
 }
 
-template <class Pixel> void HHPQ<Pixel>::push(ImgIdx index, double alpha) {
-    printf("HHPQ::Pushing %d at %f \n", index, (double)alpha);
+template <class Pixel> void HHPQ<Pixel>::push(ImgIdx index, double alpha, ImgIdx edgeIdx) {
+    printf("HHPQ::Pushing %d at %.2f \n", index, (double)alpha);
 #ifdef BOUNDARYCHECK
     assert(_sizeMax > 0 && _cacheMaxSize > 0);
     assert(_cacheCurSize <= _cacheMaxSize);
@@ -107,13 +107,13 @@ template <class Pixel> void HHPQ<Pixel>::push(ImgIdx index, double alpha) {
     // First ever push
     if (_cacheCurSize == 0 && _size == 0) {
         _size = _cacheCurSize = 1;
-        _queue[0] = QItem(index, alpha);
+        _queue[0] = QItem(index, alpha, edgeIdx);
         return;
     }
 
     if (_isEmptyFront && alpha <= front().alpha) {
         _isEmptyFront = false;
-        _queue[0] = QItem(index, alpha);
+        _queue[0] = QItem(index, alpha, edgeIdx);
         return;
     }
 
@@ -136,11 +136,10 @@ template <class Pixel> void HHPQ<Pixel>::push(ImgIdx index, double alpha) {
 
         for (; i > 0 && alpha < _queue[i - 1].alpha; i--)
             _queue[i] = _queue[i - 1];
-        _queue[i] = QItem(index, alpha);
+        _queue[i] = QItem(index, alpha, edgeIdx);
     } else
-        pushToLevel(QItem(index, alpha));
+        pushToLevel(QItem(index, alpha, edgeIdx));
     _size++;
-    print();
 }
 
 template <class Pixel> void HHPQ<Pixel>::pushToLevel(QItem item) {
@@ -247,8 +246,12 @@ template <class Pixel> void HHPQ<Pixel>::sort(ImgIdx level) {
     clear(level);
     for (ImgIdx i = 0; i < levelSizeBefore; i++) {
         QItem &item = copy[i];
-        if (_isVisited[item.index]) // Skip redundant entry
+        if (_isVisited[item.index]) { // Skip redundant entry
+            if (edge != nullptr) {    // temp
+                edge[item.edgeIdx] = 4;
+            }
             continue;
+        }
         pushToQuadHeapQueue(item, level);
     }
 
@@ -316,9 +319,8 @@ template <class Pixel> ImgIdx HHPQ<Pixel>::findNextNonemptyLevel(ImgIdx level) c
 }
 
 template <class Pixel> ImgIdx HHPQ<Pixel>::pop() {
-    printf("HHPQ::pop %d at %f \n", front().index, (double)front().alpha);
+    printf("HHPQ::pop %d at %.2f \n", front().index, (double)front().alpha);
     if (_size == 0) {
-        print();
         return -1;
     }
 
@@ -344,10 +346,10 @@ template <class Pixel> ImgIdx HHPQ<Pixel>::pop() {
             _queue[0] = front(_lowestNonemptyLevel);
             _cacheCurSize++;
             popFromQuadHeapQueue(_lowestNonemptyLevel);
+            _lowestNonemptyLevel = findNextNonemptyLevel(_lowestNonemptyLevel);
         }
     }
 
-    print();
     return ret;
 }
 

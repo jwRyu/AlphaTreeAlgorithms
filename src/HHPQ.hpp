@@ -11,10 +11,12 @@ template <class Pixel> class HHPQ {
         ImgIdx index = -1;
         double alpha = 0.0;
 
+        ImgIdx edgeIdx = -1; // TEMP!!
+
         QItem() = default;
-        QItem(ImgIdx index_, double alpha_) : index(index_), alpha(alpha_) {}
+        QItem(ImgIdx index_, double alpha_, ImgIdx edgeIdx_) : index(index_), alpha(alpha_), edgeIdx(edgeIdx_) {}
         bool operator<(const QItem &other) const { return alpha < other.alpha; }
-        void print() { printf("(%d, %f) ", (int)index, (double)alpha); }
+        void print() { printf("(%d, %.2f) ", (int)index, (double)alpha); }
     };
     HHPQ(const ImgIdx *levelSizes, ImgIdx numLevels, ImgIdx sizeTotal, const _uint8 *isVisited_, double a_ = 32.0,
          int cacheSize = 12, int connectivity = 4);
@@ -24,13 +26,15 @@ template <class Pixel> class HHPQ {
     void end_pushes();
     // inline Pixel frontAlpha();
     inline QItem front() const { return _queue[0]; }
-    void push(ImgIdx idx, double alpha);
+    void push(ImgIdx idx, double alpha, ImgIdx edgeIdx);
     ImgIdx pop();
     inline bool empty() const { return _size == 0; }
 
     void print();
 
     static inline ImgIdx alphaToLevel(const double &a, const double &alpha);
+
+    _uint8 *edge = nullptr; // temp
 
   private:
     QItem *_queue = nullptr;
@@ -58,7 +62,7 @@ template <class Pixel> class HHPQ {
     static inline ImgIdx quadHeapParent(ImgIdx child);
 
     QItem front(ImgIdx level) const {
-        assert(_size > 0 && _cacheCurSize > 0);
+        assert(isLevelEmpty(level) == false);
         return _queue[_levelStart[level]];
     }
     QItem cacheBack() const { return _queue[_cacheCurSize - 1]; }

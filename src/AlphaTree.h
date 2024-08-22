@@ -63,16 +63,17 @@ using namespace pmt;
 
 template <class Pixel> class AlphaNode {
   public:
-    ImgIdx area;
-    double alpha;
-    double sumPix;
-    Pixel minPix;
-    Pixel maxPix;
-    ImgIdx parentidx;
-    ImgIdx rootidx;
+    ImgIdx area = 0;
+    double alpha = -1;
+    double sumPix = 0;
+    Pixel minPix = 0;
+    Pixel maxPix = 0;
+    ImgIdx parentidx = ROOTIDX;
+    ImgIdx rootidx = ROOTIDX;
 
     AlphaNode() = default;
     AlphaNode(Pixel pixelVal, double alpha_, ImgIdx parentidx_ = ROOTIDX);
+    AlphaNode(double alpha_, ImgIdx parentidx_ = ROOTIDX);
 
     void set(ImgIdx area_in, double alpha, double sumPix_in, Pixel minPix_in, Pixel maxPix_in);
     void add(AlphaNode *q);
@@ -123,9 +124,9 @@ template <class Pixel> class AlphaTree {
     void AreaFilter(double *outimg, double area);
 
     void printTree() const;
-    void printGraph(_uint8 *isVisited, _uint8 *edge) const;
-    void printImage(Pixel *img);
-    void printParentAry();
+    void printGraph(_uint8 *isVisited, _uint8 *edge, Pixel *img) const;
+    void printParentAry() const;
+    void printAll(_uint8 *isVisited, _uint8 *edge, Pixel *img) const;
 
   private:
     void FloodHierarQueueNoCache(Pixel *img, int tse);
