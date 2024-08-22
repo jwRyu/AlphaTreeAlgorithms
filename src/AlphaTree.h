@@ -119,7 +119,10 @@ template <class Pixel> class AlphaTree {
 
     void AreaFilter(double *outimg, double area);
 
-    void print_tree();
+    void printTree() const;
+    void printGraph(_uint8 *isVisited, _uint8 *edge, Pixel *img) const;
+    void printParentAry() const;
+    void printAll(_uint8 *isVisited, _uint8 *edge, Pixel *img) const;
 
   private:
     Pixel abs_diff(Pixel p, Pixel q);
@@ -236,7 +239,6 @@ template <class Pixel> class AlphaTree {
     void memalloc_queues(HierarQueue ***queues, _int64 numpartitions, ImgIdx *blocksize, ImgIdx *subtree_max);
     void compute_dimg_and_rank2index(RankItem<double> *&rankitem, Pixel *img, ImgIdx nredges, _int32 *rank2rankitem);
     void compute_difference_and_sort(RankItem<double> *&rankitem, Pixel *img, ImgIdx nredges);
-    void print_all_trees(AlphaNode<Pixel> *pilottree);
     void compute_difference_and_sort(ImgIdx *rank, RankItem<double> *&rankitem, Pixel *img, ImgIdx nredges,
                                      _int32 *&rank2rankitem);
     void HybridParallel(Pixel *img, int numthreads);

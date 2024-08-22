@@ -180,10 +180,103 @@ template <class Pixel> void AlphaTree<Pixel>::AreaFilter(double *outimg, double 
     }
 }
 
-template <class Pixel> void AlphaTree<Pixel>::print_tree() {
-    for (int i = 0; i < maxSize; i++)
-        if (node[i].area)
-            node[i].print(node);
+template <class Pixel> void AlphaTree<Pixel>::printTree() const {
+    for (int i = 0; i < curSize; i++)
+        node[i].print(node);
+}
+
+template <class Pixel> void AlphaTree<Pixel>::printGraph(_uint8 *isVisited, _uint8 *edge, Pixel *img) const {
+    printf("Index |   Graph (Left)   |   Image (Right)\n");
+    printf("------------------------------------------\n");
+    for (int i = 0; i < height - 1; i++) {
+        printf("%3d | ", i * width);
+        for (int j = 0; j < width - 1; j++) {
+            int imgIdx = i * width + j;
+            int dimgIdx = imgIdx * 2 + 1;
+            if (edge[dimgIdx] == 0)
+                printf("%d   ", (int)isVisited[imgIdx]);
+            else if (edge[dimgIdx] == 1)
+                printf("%d . ", (int)isVisited[imgIdx]);
+            else if (edge[dimgIdx] == 2)
+                printf("%d - ", (int)isVisited[imgIdx]);
+            else if (edge[dimgIdx] == 3)
+                printf("%d x ", (int)isVisited[imgIdx]);
+            else if (edge[dimgIdx] == 4)
+                printf("%d ^ ", (int)isVisited[imgIdx]);
+            else
+                printf("%d ? ", (int)isVisited[imgIdx]);
+        }
+        printf("%d   |   ", (int)isVisited[i * width + width - 1]);
+
+        for (int j = 0; j < width; j++) {
+            int imgIdx = i * width + j;
+            printf("%2d ", (int)img[imgIdx]);
+        }
+        printf("\n    | ");
+
+        for (int j = 0; j < width; j++) {
+            int imgIdx = i * width + j;
+            int dimgIdx = imgIdx * 2;
+            if (edge[dimgIdx] == 0)
+                printf("    ");
+            else if (edge[dimgIdx] == 1)
+                printf(".   ");
+            else if (edge[dimgIdx] == 2)
+                printf("-   ");
+            else if (edge[dimgIdx] == 3)
+                printf("x   ");
+            else if (edge[dimgIdx] == 4)
+                printf("^   ");
+            else
+                printf("?   ");
+        }
+        printf("|\n");
+    }
+    printf("%3d | ", (height - 1) * width);
+    for (int j = 0; j < width - 1; j++) {
+        int imgIdx = (height - 1) * width + j;
+        int dimgIdx = imgIdx * 2 + 1;
+        if (edge[dimgIdx] == 0)
+            printf("%d   ", (int)isVisited[imgIdx]);
+        else if (edge[dimgIdx] == 1)
+            printf("%d . ", (int)isVisited[imgIdx]);
+        else if (edge[dimgIdx] == 2)
+            printf("%d - ", (int)isVisited[imgIdx]);
+        else if (edge[dimgIdx] == 3)
+            printf("%d x ", (int)isVisited[imgIdx]);
+        else if (edge[dimgIdx] == 4)
+            printf("%d ^ ", (int)isVisited[imgIdx]);
+        else
+            printf("%d ? ", (int)isVisited[imgIdx]);
+    }
+    printf("%d   |   ", (int)isVisited[width * height - 1]);
+
+    for (int j = 0; j < width; j++) {
+        int imgIdx = (height - 1) * width + j;
+        printf("%2d ", (int)img[imgIdx]);
+    }
+    printf("\n");
+}
+
+template <class Pixel> void AlphaTree<Pixel>::printParentAry() const {
+    printf("Parent Array\n");
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            int imgIdx = i * width + j;
+            if (parentAry[imgIdx] >= 0)
+                printf("%3d ", parentAry[imgIdx]);
+            else
+                printf("  . ");
+        }
+        printf("\n");
+    }
+}
+
+template <class Pixel> void AlphaTree<Pixel>::printAll(_uint8 *isVisited, _uint8 *edge, Pixel *img) const {
+    printTree();
+    printParentAry();
+    printGraph(isVisited, edge, img);
+    std::getchar();
 }
 
 template <class Pixel> Pixel AlphaTree<Pixel>::abs_diff(Pixel p, Pixel q) {
@@ -5221,18 +5314,6 @@ void AlphaTree<Pixel>::compute_difference_and_sort(RankItem<double> *&rankitem, 
     rankitem = sorteditem;
     Free(tmp);
     Free(rank2rankitem);
-}
-
-template <class Pixel> void AlphaTree<Pixel>::print_all_trees(AlphaNode<Pixel> *pilottree) {
-    printf("Pilotree Start =======================\n");
-    AlphaNode<Pixel> *tmp = node;
-    node = pilottree;
-    print_tree();
-    node = tmp;
-    printf("Pilotree End =======================\n");
-    printf("Refined tree Start =======================\n");
-    print_tree();
-    printf("Refined tree End =======================\n");
 }
 
 template <class Pixel>
