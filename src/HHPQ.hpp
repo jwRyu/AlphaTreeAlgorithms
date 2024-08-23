@@ -35,7 +35,7 @@ template <class Pixel> class QuadHeapQueue {
     void push(QItem<Pixel> item);
 
     inline Pixel get_minlev() { return arr[1].alpha; }
-    inline ImgIdx top() { return arr[1].index; }
+    inline const QItem<Pixel> &top() const { return arr[1]; }
     inline Pixel top_alpha() { return arr[1].alpha; }
 };
 

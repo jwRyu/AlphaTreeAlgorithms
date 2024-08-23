@@ -466,7 +466,7 @@ template <class Pixel> void HierarHeapQueue_cache<Pixel>::push(ImgIdx idx, Pixel
         if (curSize_list < maxSize_list) // spare room in the list
         {
             int i;
-            for (i = curSize_list; alpha < list[i].alpha; i--) {
+            for (i = curSize_list; i >= 0 && alpha < list[i].alpha; i--) {
                 list[i + 1] = list[i];
 #if PROFILE
                 num_memmove_push_i++;
@@ -490,7 +490,7 @@ template <class Pixel> void HierarHeapQueue_cache<Pixel>::push(ImgIdx idx, Pixel
             tq = get_cpu_time() - t2;
 #endif
             int i;
-            for (i = curSize_list - 1; alpha < list[i].alpha; i--) {
+            for (i = curSize_list - 1; i >= 0 && alpha < list[i].alpha; i--) {
                 list[i + 1] = list[i];
 #if PROFILE
                 num_memmove_push_i++;
