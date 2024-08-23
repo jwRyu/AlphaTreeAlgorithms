@@ -2,6 +2,10 @@
 #include <allocator.h>
 #include <cmath>
 
+template <class Pixel> ImgIdx HHPQ<Pixel>::alphaToLevel(const double &alpha) const {
+    return (ImgIdx)(a * log2(1.0 + alpha));
+}
+
 template <class Pixel>
 void HHPQ<Pixel>::initHQ(ImgIdx *dhist, ImgIdx numlevels_in, ImgIdx size, double a_in, int listsize, int connectivity,
                          double r) {
@@ -118,57 +122,54 @@ template <class Pixel> void HHPQ<Pixel>::end_pushes(_uint8 *isVisited) {
         pop(isVisited);
 }
 
-template <class Pixel> void HHPQ<Pixel>::push(ImgIdx idx, Pixel alpha) {
+template <class Pixel> void HHPQ<Pixel>::push(const ImgIdx &idx, const Pixel &alpha) {
+    const QItem<Pixel> newItem(idx, alpha);
+
     // printf("Pushing %d at %.2f\n", idx, (double)alpha);
-    if (emptytop && alpha < list[0].alpha) {
+    if (emptytop && newItem < list[0]) {
         emptytop = 0;
-        list[0].index = idx;
-        list[0].alpha = alpha;
+        list[0] = newItem;
         return;
     }
 
-    bool push2list = (queue_minlev < curthr) ? alpha < hqueue[queue_minlev]->top_alpha()
-                                             : (int)(a * log2(1 + (double)alpha)) < queue_minlev;
+    bool pushToList =
+        (queue_minlev < curthr) ? newItem < hqueue[queue_minlev]->top() : alphaToLevel(newItem.alpha) < queue_minlev;
 
-    if (push2list) {
+    if (pushToList) {
         if (curSize_list < maxSize_list) // spare room in the list
         {
-            int i;
-            for (i = curSize_list; i >= 0 && alpha < list[i].alpha; i--) {
+            int i = curSize_list++;
+            for (; i >= 0 && alpha < list[i].alpha; i--)
                 list[i + 1] = list[i];
-            }
-            list[i + 1].index = idx;
-            list[i + 1].alpha = alpha;
-            curSize_list++;
+
+            list[i + 1] = newItem;
         } else if (alpha < list[curSize_list].alpha) // push to the full list
         {
-            push_queue(list[curSize_list].index, list[curSize_list].alpha);
+            push_queue(list[curSize_list]);
             int i;
-            for (i = curSize_list - 1; i >= 0 && alpha < list[i].alpha; i--) {
+            for (i = curSize_list - 1; i >= 0 && alpha < list[i].alpha; i--)
                 list[i + 1] = list[i];
-            }
-            list[i + 1].index = idx;
-            list[i + 1].alpha = alpha;
+
+            list[i + 1] = newItem;
         } else {
-            push_queue(idx, alpha); // push to the queue
+            push_queue(newItem); // push to the queue
         }
     } else {
-        push_queue(idx, alpha); // push to the queue
+        push_queue(newItem); // push to the queue
     }
 }
 
-template <class Pixel> void HHPQ<Pixel>::push_queue(ImgIdx idx, Pixel alpha) {
-    int level = (int)(a * log2(1 + (double)alpha));
+template <class Pixel> void HHPQ<Pixel>::push_queue(const QItem<Pixel> &item) {
+    auto level = alphaToLevel(item.alpha);
 
     if (level < queue_minlev)
         queue_minlev = level;
 
     if (level < curthr) {
-        hqueue[level]->push(QItem(idx, alpha));
+        hqueue[level]->push(item);
     } else {
         ImgIdx cur = storage_cursize[level]++;
-        storage[level][cur].index = idx;
-        storage[level][cur].alpha = alpha;
+        storage[level][cur] = item;
     }
 }
 
@@ -227,79 +228,3 @@ template class HHPQ<_uint8>;
 template class HHPQ<_uint16>;
 template class HHPQ<_uint32>;
 template class HHPQ<_uint64>;
-
-template <class Pixel> QuadHeapQueue<Pixel>::QuadHeapQueue(ImgIdx maxsize_in) : cursize(0), maxsize(maxsize_in) {
-    arr = (QItem<Pixel> *)Malloc(sizeof(QItem<Pixel>) * (maxsize + 2));
-    if ((Pixel)-1 > (Pixel)1)
-        arr[1].alpha = (Pixel)-1;
-    else if (sizeof(Pixel) == 8)
-        arr[1].alpha = DBL_MAX;
-    else
-        arr[1].alpha = FLT_MAX;
-}
-
-template <class Pixel> QuadHeapQueue<Pixel>::~QuadHeapQueue() { Free(arr); }
-
-template <class Pixel> ImgIdx QuadHeapQueue<Pixel>::pop() {
-    const ImgIdx outval = arr[1].index;
-    const QItem<Pixel> &lastItem = arr[cursize];
-    cursize--;
-    if (cursize == 0)
-        return 0;
-    ImgIdx current = 1;
-    while (true) {
-        const ImgIdx next0 = (current << 2) - 2;
-        ImgIdx next = next0;
-        if (next0 + 3 <= cursize) {
-            if (arr[next0 + 1] < arr[next])
-                next = next0 + 1;
-            if (arr[next0 + 2] < arr[next])
-                next = next0 + 2;
-            if (arr[next0 + 3] < arr[next])
-                next = next0 + 3;
-        } else {
-            if (next0 > cursize)
-                break;
-            if (next0 == cursize)
-                goto MIN_NEXT_FOUND;
-            if (arr[next0 + 1] < arr[next])
-                next = next0 + 1;
-            if (next0 + 1 == cursize)
-                goto MIN_NEXT_FOUND;
-            if (arr[next0 + 2] < arr[next])
-                next = next0 + 2;
-            if (next0 + 2 == cursize)
-                goto MIN_NEXT_FOUND;
-            if (arr[next0 + 3] < arr[next])
-                next = next0 + 3;
-        }
-
-    MIN_NEXT_FOUND:
-        if (lastItem < arr[next])
-            break;
-
-        arr[current] = arr[next];
-        current = next;
-    }
-    arr[current] = lastItem;
-    return outval;
-}
-
-template <class Pixel> void QuadHeapQueue<Pixel>::push(QItem<Pixel> item) {
-    cursize++;
-    ImgIdx current = cursize;
-    ImgIdx next = (current + 2) >> 2;
-    while (next && (arr[next].alpha > item.alpha)) {
-        arr[current] = arr[next];
-        current = next;
-        next = (next + 2) >> 2;
-    }
-    arr[current] = item;
-}
-
-template class QuadHeapQueue<_uint8>;
-template class QuadHeapQueue<_uint16>;
-template class QuadHeapQueue<_uint32>;
-template class QuadHeapQueue<_uint64>;
-template class QuadHeapQueue<float>;
-template class QuadHeapQueue<double>;
