@@ -102,8 +102,6 @@ template <class Pixel> class HierarHeapQueue_cache {
     ImgIdx maxSize;
 
   public:
-    _uint8 *edgeLabels;
-
 #if PROFILE
     double t0 = get_cpu_time();
     double tconv = 0;
@@ -137,11 +135,10 @@ template <class Pixel> class HierarHeapQueue_cache {
     inline Pixel get_minlev() { return list[0].alpha; }
     inline ImgIdx top() { return list[0].pidx; }
     inline Pixel top_alpha() { return list[0].alpha; }
-    inline Pixel top_edge() { return list[0].edge; }
-    void push_1stitem(ImgIdx idx, Pixel alpha, ImgIdx edgeIdx);
+    void push_1stitem(ImgIdx idx, Pixel alpha);
     void end_pushes(_uint8 *isVisited);
-    void push(ImgIdx idx, Pixel alpha, ImgIdx edgeIdx);
-    void push_queue(ImgIdx idx, Pixel alpha, ImgIdx edgeIdx);
+    void push(ImgIdx idx, Pixel alpha);
+    void push_queue(ImgIdx idx, Pixel alpha);
     ImgIdx pop(_uint8 *isVisited);
     int check_queue_level(_uint8 *isVisited);
     void pop_queue(_uint8 *isVisited);

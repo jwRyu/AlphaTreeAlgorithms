@@ -2702,8 +2702,6 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueue(Pixel *img, d
     HierarHeapQueue_cache<Pixel> *queue =
         new HierarHeapQueue_cache<Pixel>(dhist, numlevels, nredges, a, listsize, _connectivity,
                                          r); // +1 for the dummy node
-    _uint8 *edgeLabels = (_uint8 *)Calloc((size_t)dimgSize * sizeof(_uint8));
-    queue->edgeLabels = edgeLabels;
 
     _curSize = 0;
     _maxSize = 1 + imgSize +
@@ -2724,85 +2722,67 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueue(Pixel *img, d
     ImgIdx startingPixel = 0; /*arbitrary starting point*/
 
     ImgIdx prevTop = stackTop;
-    queue->push_1stitem(startingPixel, (Pixel)currentLevel, -1);
+    queue->push_1stitem(startingPixel, (Pixel)currentLevel);
     while (true) // flooding
     {
         while ((double)queue->top_alpha() <= (double)currentLevel) // flood all levels below currentLevel
         {
             const ImgIdx p = queue->top();
 
-            const ImgIdx edgeIdx = queue->top_edge();
-
             if (isVisited[p]) {
                 queue->pop(isVisited);
-                if (edgeLabels[edgeIdx] == 1) {
-                    edgeLabels[edgeIdx] = 3;
-                }
                 // queue->mark(1);
-                printAll(isVisited, edgeLabels, img);
+                // printAll(isVisited, edgeLabels, img);
 
                 continue;
             }
 
-            if (edgeLabels[edgeIdx] == 1) {
-                edgeLabels[edgeIdx] = 2;
-            }
-
             queue->start_pushes();
             isVisited[p] = 1;
-            printAll(isVisited, edgeLabels, img);
+            // printAll(isVisited, edgeLabels, img);
 
             auto isAv = isAvailable[p];
             if (_connectivity == 4) {
                 ImgIdx q = p << 1;
                 if (is_available(isAv, 0) && !isVisited[p + _width]) {
-                    queue->push(p + _width, dimg[q], q);
-                    if (edgeLabels[q] == 0)
-                        edgeLabels[q] = 1;
+                    queue->push(p + _width, dimg[q]);
                 }
                 if (is_available(isAv, 1) && !isVisited[p + 1]) {
-                    queue->push(p + 1, dimg[q + 1], q + 1);
-                    if (edgeLabels[q + 1] == 0)
-                        edgeLabels[q + 1] = 1;
+                    queue->push(p + 1, dimg[q + 1]);
                 }
                 if (is_available(isAv, 2) && !isVisited[p - 1]) {
-                    queue->push(p - 1, dimg[q - 1], q - 1);
-                    if (edgeLabels[q - 1] == 0)
-                        edgeLabels[q - 1] = 1;
+                    queue->push(p - 1, dimg[q - 1]);
                 }
                 if (is_available(isAv, 3) && !isVisited[p - _width]) {
-                    queue->push(p - _width, dimg[q - (_width << 1)], q - (_width << 1));
-                    if (edgeLabels[q - (_width << 1)] == 0)
-                        edgeLabels[q - (_width << 1)] = 1;
+                    queue->push(p - _width, dimg[q - (_width << 1)]);
                 }
             } else if (_connectivity == 8) {
-                // const ImgIdx width4 = _width << 2;
-                // ImgIdx q = p << 2;
-                // if (is_available(isAv, 0) && !isVisited[p + _width]) {
-                //     queue->push(p + _width, dimg[q]);
-                // }; // printf("0:pushing %d at %.3f \n",(int)(p + _width),log2((double)dimg[q] + 1));}
-                // if (is_available(isAv, 1) && !isVisited[p + _width + 1]) {
-                //     queue->push(p + _width + 1, dimg[q + 1]);
-                // }; // printf("1:pushing %d at %.3f \n",(int)(p + _width + 1),log2((double)dimg[q + 1] + 1));}
-                // if (is_available(isAv, 2) && !isVisited[p + 1]) {
-                //     queue->push(p + 1, dimg[q + 2]);
-                // }; // printf("2:pushing %d at %.3f \n",(int)(p + 1),log2((double)dimg[q + 2] + 1));}
-                // if (is_available(isAv, 3) && !isVisited[p - _width + 1]) {
-                //     queue->push(p - _width + 1, dimg[q + 3]);
-                // }; // printf("3:pushing %d at %.3f \n",(int)(p - _width + 1),log2((double)dimg[q + 3] + 1));}
-                // if (is_available(isAv, 4) && !isVisited[p - _width]) {
-                //     queue->push(p - _width, dimg[q - width4]);
-                // }; // printf("4:pushing %d at %.3f \n",(int)(p - _width),log2((double)dimg[q - width4] + 1));}
-                // if (is_available(isAv, 5) && !isVisited[p - _width - 1]) {
-                //     queue->push(p - _width - 1, dimg[q - width4 - 3]);
-                // }; // printf("5:pushing %d at %.3f \n",(int)(p - _width - 1),log2((double)dimg[q - width4 - 3] +
-                // 1));} if (is_available(isAv, 6) && !isVisited[p - 1]) {
-                //     queue->push(p - 1, dimg[q - 2]);
-                // }; // printf("6:pushing %d at %.3f \n",(int)(p - 1),log2((double)dimg[q - 2] + 1));}
-                // if (is_available(isAv, 7) && !isVisited[p + _width - 1]) {
-                //     queue->push(p + _width - 1, dimg[q + width4 - 1]);
-                // }; // printf("7:pushing %d at %.3f \n",(int)(p + _width - 1),log2((double)dimg[q + width4 - 1] +
-                // 1));}
+                const ImgIdx width4 = _width << 2;
+                ImgIdx q = p << 2;
+                if (is_available(isAv, 0) && !isVisited[p + _width]) {
+                    queue->push(p + _width, dimg[q]);
+                }
+                if (is_available(isAv, 1) && !isVisited[p + _width + 1]) {
+                    queue->push(p + _width + 1, dimg[q + 1]);
+                }
+                if (is_available(isAv, 2) && !isVisited[p + 1]) {
+                    queue->push(p + 1, dimg[q + 2]);
+                }
+                if (is_available(isAv, 3) && !isVisited[p - _width + 1]) {
+                    queue->push(p - _width + 1, dimg[q + 3]);
+                }
+                if (is_available(isAv, 4) && !isVisited[p - _width]) {
+                    queue->push(p - _width, dimg[q - width4]);
+                }
+                if (is_available(isAv, 5) && !isVisited[p - _width - 1]) {
+                    queue->push(p - _width - 1, dimg[q - width4 - 3]);
+                }
+                if (is_available(isAv, 6) && !isVisited[p - 1]) {
+                    queue->push(p - 1, dimg[q - 2]);
+                }
+                if (is_available(isAv, 7) && !isVisited[p + _width - 1]) {
+                    queue->push(p + _width - 1, dimg[q + width4 - 1]);
+                }
             } else {
                 //?
             }
@@ -2831,7 +2811,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueue(Pixel *img, d
                 if (node[stackTop].area == imgSize)
                     goto FLOOD_END;
             }
-            printAll(isVisited, edgeLabels, img);
+            // printAll(isVisited, edgeLabels, img);
         }
 
         if (node[prevTop].parentidx == stackTop && node[prevTop].area == node[stackTop].area) {
@@ -2867,7 +2847,6 @@ FLOOD_END:
     Free(dimg);
     Free(isVisited);
     Free(isAvailable);
-    Free(edgeLabels);
 }
 
 // hhpq
@@ -2888,8 +2867,6 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
     // create hierarchical queue from dhist
     HHPQ<Pixel> *queue = new HHPQ<Pixel>(dhist, numlevels, nredges, a, listsize, _connectivity,
                                          r); // +1 for the dummy node
-    _uint8 *edgeLabels = (_uint8 *)Calloc((size_t)dimgSize * sizeof(_uint8));
-    queue->edgeLabels = edgeLabels;
 
     _curSize = 0;
     _maxSize = 1 + imgSize +
@@ -2919,24 +2896,24 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
         {
             const ImgIdx p = queue->top();
 
-            const ImgIdx edgeIdx = queue->top_edge();
+            // const ImgIdx edgeIdx = queue->top_edge();
 
             if (isVisited[p]) {
                 queue->pop(isVisited);
-                if (edgeLabels[edgeIdx] == 1) {
-                    edgeLabels[edgeIdx] = 3;
-                }
+                // if (edgeLabels[edgeIdx] == 1) {
+                //     edgeLabels[edgeIdx] = 3;
+                // }
 
                 // printTree();
-                queue->print();
-                printAll(isVisited, edgeLabels, img);
+                // queue->print();
+                // printAll(isVisited, edgeLabels, img);
 
                 continue;
             }
 
-            if (edgeLabels[edgeIdx] == 1) {
-                edgeLabels[edgeIdx] = 2;
-            }
+            // if (edgeLabels[edgeIdx] == 1) {
+            //     edgeLabels[edgeIdx] = 2;
+            // }
 
             queue->start_pushes();
             isVisited[p] = 1;
@@ -2945,53 +2922,44 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
             if (_connectivity == 4) {
                 ImgIdx q = p << 1;
                 if (is_available(isAv, 0) && !isVisited[p + _width]) {
-                    queue->push(p + _width, dimg[q], q);
-                    if (edgeLabels[q] == 0)
-                        edgeLabels[q] = 1;
+                    queue->push(p + _width, dimg[q]);
                 }
                 if (is_available(isAv, 1) && !isVisited[p + 1]) {
-                    queue->push(p + 1, dimg[q + 1], q + 1);
-                    if (edgeLabels[q + 1] == 0)
-                        edgeLabels[q + 1] = 1;
+                    queue->push(p + 1, dimg[q + 1]);
                 }
                 if (is_available(isAv, 2) && !isVisited[p - 1]) {
-                    queue->push(p - 1, dimg[q - 1], q - 1);
-                    if (edgeLabels[q - 1] == 0)
-                        edgeLabels[q - 1] = 1;
+                    queue->push(p - 1, dimg[q - 1]);
                 }
                 if (is_available(isAv, 3) && !isVisited[p - _width]) {
-                    queue->push(p - _width, dimg[q - (_width << 1)], q - (_width << 1));
-                    if (edgeLabels[q - (_width << 1)] == 0)
-                        edgeLabels[q - (_width << 1)] = 1;
+                    queue->push(p - _width, dimg[q - (_width << 1)]);
                 }
             } else if (_connectivity == 8) {
-                // const ImgIdx width4 = _width << 2;
-                // ImgIdx q = p << 2;
-                // if (is_available(isAv, 0) && !isVisited[p + _width]) {
-                //     queue->push(p + _width, dimg[q]);
-                // }; // printf("0:pushing %d at %.3f \n",(int)(p + _width),log2((double)dimg[q] + 1));}
-                // if (is_available(isAv, 1) && !isVisited[p + _width + 1]) {
-                //     queue->push(p + _width + 1, dimg[q + 1]);
-                // }; // printf("1:pushing %d at %.3f \n",(int)(p + _width + 1),log2((double)dimg[q + 1] + 1));}
-                // if (is_available(isAv, 2) && !isVisited[p + 1]) {
-                //     queue->push(p + 1, dimg[q + 2]);
-                // }; // printf("2:pushing %d at %.3f \n",(int)(p + 1),log2((double)dimg[q + 2] + 1));}
-                // if (is_available(isAv, 3) && !isVisited[p - _width + 1]) {
-                //     queue->push(p - _width + 1, dimg[q + 3]);
-                // }; // printf("3:pushing %d at %.3f \n",(int)(p - _width + 1),log2((double)dimg[q + 3] + 1));}
-                // if (is_available(isAv, 4) && !isVisited[p - _width]) {
-                //     queue->push(p - _width, dimg[q - width4]);
-                // }; // printf("4:pushing %d at %.3f \n",(int)(p - _width),log2((double)dimg[q - width4] + 1));}
-                // if (is_available(isAv, 5) && !isVisited[p - _width - 1]) {
-                //     queue->push(p - _width - 1, dimg[q - width4 - 3]);
-                // }; // printf("5:pushing %d at %.3f \n",(int)(p - _width - 1),log2((double)dimg[q - width4 - 3] +
-                // 1));} if (is_available(isAv, 6) && !isVisited[p - 1]) {
-                //     queue->push(p - 1, dimg[q - 2]);
-                // }; // printf("6:pushing %d at %.3f \n",(int)(p - 1),log2((double)dimg[q - 2] + 1));}
-                // if (is_available(isAv, 7) && !isVisited[p + _width - 1]) {
-                //     queue->push(p + _width - 1, dimg[q + width4 - 1]);
-                // }; // printf("7:pushing %d at %.3f \n",(int)(p + _width - 1),log2((double)dimg[q + width4 - 1] +
-                // 1));}
+                const ImgIdx width4 = _width << 2;
+                ImgIdx q = p << 2;
+                if (is_available(isAv, 0) && !isVisited[p + _width]) {
+                    queue->push(p + _width, dimg[q]);
+                };
+                if (is_available(isAv, 1) && !isVisited[p + _width + 1]) {
+                    queue->push(p + _width + 1, dimg[q + 1]);
+                };
+                if (is_available(isAv, 2) && !isVisited[p + 1]) {
+                    queue->push(p + 1, dimg[q + 2]);
+                };
+                if (is_available(isAv, 3) && !isVisited[p - _width + 1]) {
+                    queue->push(p - _width + 1, dimg[q + 3]);
+                };
+                if (is_available(isAv, 4) && !isVisited[p - _width]) {
+                    queue->push(p - _width, dimg[q - width4]);
+                };
+                if (is_available(isAv, 5) && !isVisited[p - _width - 1]) {
+                    queue->push(p - _width - 1, dimg[q - width4 - 3]);
+                };
+                if (is_available(isAv, 6) && !isVisited[p - 1]) {
+                    queue->push(p - 1, dimg[q - 2]);
+                };
+                if (is_available(isAv, 7) && !isVisited[p + _width - 1]) {
+                    queue->push(p + _width - 1, dimg[q + width4 - 1]);
+                };
             } else {
                 //?
             }
@@ -3021,8 +2989,8 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
                     goto FLOOD_END;
             }
             // printTree();
-            queue->print();
-            printAll(isVisited, edgeLabels, img);
+            // queue->print();
+            // printAll(isVisited, edgeLabels, img);
         }
 
         if (node[prevTop].parentidx == stackTop && node[prevTop].area == node[stackTop].area) {
@@ -3055,14 +3023,13 @@ FLOOD_END:
     node[_rootIdx].parentidx = ROOTIDX;
 
     // printTree();
-    queue->print();
-    printAll(isVisited, edgeLabels, img);
+    // queue->print();
+    // printAll(isVisited, edgeLabels, img);
 
     delete queue;
     Free(dimg);
     Free(isVisited);
     Free(isAvailable);
-    Free(edgeLabels);
 }
 
 template <class Pixel> void AlphaTree<Pixel>::FloodHierHeapQueueHisteq(Pixel *img, int listsize, int a) {

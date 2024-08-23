@@ -110,7 +110,6 @@ template <class Pixel> HHPQ<Pixel>::~HHPQ() {
 template <class Pixel> void HHPQ<Pixel>::push_1stitem(ImgIdx idx) {
     list[0].index = idx;
     list[0].alpha = std::numeric_limits<Pixel>::max();
-    list[0].edge = -1;
     curSize_list++;
 }
 
@@ -119,14 +118,12 @@ template <class Pixel> void HHPQ<Pixel>::end_pushes(_uint8 *isVisited) {
         pop(isVisited);
 }
 
-template <class Pixel> void HHPQ<Pixel>::push(ImgIdx idx, Pixel alpha, ImgIdx edgeIdx) {
-    printf("Pushing %d at %.2f\n", idx, (double)alpha);
-
+template <class Pixel> void HHPQ<Pixel>::push(ImgIdx idx, Pixel alpha) {
+    // printf("Pushing %d at %.2f\n", idx, (double)alpha);
     if (emptytop && alpha < list[0].alpha) {
         emptytop = 0;
         list[0].index = idx;
         list[0].alpha = alpha;
-        list[0].edge = edgeIdx;
         return;
     }
 
@@ -142,39 +139,36 @@ template <class Pixel> void HHPQ<Pixel>::push(ImgIdx idx, Pixel alpha, ImgIdx ed
             }
             list[i + 1].index = idx;
             list[i + 1].alpha = alpha;
-            list[i + 1].edge = edgeIdx;
             curSize_list++;
         } else if (alpha < list[curSize_list].alpha) // push to the full list
         {
-            push_queue(list[curSize_list].index, list[curSize_list].alpha, edgeIdx);
+            push_queue(list[curSize_list].index, list[curSize_list].alpha);
             int i;
             for (i = curSize_list - 1; i >= 0 && alpha < list[i].alpha; i--) {
                 list[i + 1] = list[i];
             }
             list[i + 1].index = idx;
             list[i + 1].alpha = alpha;
-            list[i + 1].edge = edgeIdx;
         } else {
-            push_queue(idx, alpha, edgeIdx); // push to the queue
+            push_queue(idx, alpha); // push to the queue
         }
     } else {
-        push_queue(idx, alpha, edgeIdx); // push to the queue
+        push_queue(idx, alpha); // push to the queue
     }
 }
 
-template <class Pixel> void HHPQ<Pixel>::push_queue(ImgIdx idx, Pixel alpha, ImgIdx edgeIdx) {
+template <class Pixel> void HHPQ<Pixel>::push_queue(ImgIdx idx, Pixel alpha) {
     int level = (int)(a * log2(1 + (double)alpha));
 
     if (level < queue_minlev)
         queue_minlev = level;
 
     if (level < curthr) {
-        hqueue[level]->push(QItem(idx, alpha, edgeIdx));
+        hqueue[level]->push(QItem(idx, alpha));
     } else {
         ImgIdx cur = storage_cursize[level]++;
         storage[level][cur].index = idx;
         storage[level][cur].alpha = alpha;
-        storage[level][cur].edge = edgeIdx;
     }
 }
 
@@ -216,8 +210,6 @@ template <class Pixel> int HHPQ<Pixel>::check_queue_level(_uint8 *isVisited) {
         for (ImgIdx p = 0; p < cur; p++) {
             if (!isVisited[store[p].index])
                 pQ->push(store[p]);
-            else
-                edgeLabels[store[p].edge] = 4;
         }
         Free(storage[queue_minlev]);
         storage[queue_minlev] = 0;
@@ -257,7 +249,6 @@ template <class Pixel> ImgIdx QuadHeapQueue<Pixel>::pop() {
     Pixel curalpha;
     curidx = arr[cursize].index;
     curalpha = arr[cursize].alpha;
-    auto curEdgeIdx = arr[cursize].edge;
     cursize--;
     if (cursize == 0)
         return 0;
@@ -297,7 +288,6 @@ template <class Pixel> ImgIdx QuadHeapQueue<Pixel>::pop() {
     }
     arr[current].alpha = curalpha;
     arr[current].index = curidx;
-    arr[current].edge = curEdgeIdx;
     return outval;
 }
 

@@ -415,10 +415,9 @@ template <class Pixel> HierarHeapQueue_cache<Pixel>::~HierarHeapQueue_cache() {
 #endif
 }
 
-template <class Pixel> void HierarHeapQueue_cache<Pixel>::push_1stitem(ImgIdx idx, Pixel alpha, ImgIdx edgeIdx) {
+template <class Pixel> void HierarHeapQueue_cache<Pixel>::push_1stitem(ImgIdx idx, Pixel alpha) {
     list[0].pidx = idx;
     list[0].alpha = alpha;
-    list[0].edge = edgeIdx;
     curSize_list++;
 
 #if PROFILE
@@ -438,7 +437,7 @@ template <class Pixel> void HierarHeapQueue_cache<Pixel>::end_pushes(_uint8 *isV
 #endif
 }
 
-template <class Pixel> void HierarHeapQueue_cache<Pixel>::push(ImgIdx idx, Pixel alpha, ImgIdx edgeIdx) {
+template <class Pixel> void HierarHeapQueue_cache<Pixel>::push(ImgIdx idx, Pixel alpha) {
 #if PROFILE
     // printf("push %d, size %d\n", idx, curSize);
     curSize++;
@@ -453,7 +452,6 @@ template <class Pixel> void HierarHeapQueue_cache<Pixel>::push(ImgIdx idx, Pixel
         emptytop = 0;
         list[0].pidx = idx;
         list[0].alpha = alpha;
-        list[0].edge = edgeIdx;
         return;
     }
 
@@ -476,7 +474,6 @@ template <class Pixel> void HierarHeapQueue_cache<Pixel>::push(ImgIdx idx, Pixel
             }
             list[i + 1].pidx = idx;
             list[i + 1].alpha = alpha;
-            list[i + 1].edge = edgeIdx;
 #if PROFILE
             num_memmove_push_i++;
 #endif
@@ -487,7 +484,7 @@ template <class Pixel> void HierarHeapQueue_cache<Pixel>::push(ImgIdx idx, Pixel
             num_cache_ovfl++;
             t2 = get_cpu_time();
 #endif
-            push_queue(list[curSize_list].pidx, list[curSize_list].alpha, edgeIdx);
+            push_queue(list[curSize_list].pidx, list[curSize_list].alpha);
 
 #if PROFILE
             tq = get_cpu_time() - t2;
@@ -501,7 +498,6 @@ template <class Pixel> void HierarHeapQueue_cache<Pixel>::push(ImgIdx idx, Pixel
             }
             list[i + 1].pidx = idx;
             list[i + 1].alpha = alpha;
-            list[i + 1].edge = edgeIdx;
 #if PROFILE
             num_memmove_push_i++;
 #endif
@@ -510,7 +506,7 @@ template <class Pixel> void HierarHeapQueue_cache<Pixel>::push(ImgIdx idx, Pixel
             num_cache_ovfl++;
             t2 = get_cpu_time();
 #endif
-            push_queue(idx, alpha, edgeIdx); // push to the queue
+            push_queue(idx, alpha); // push to the queue
 #if PROFILE
             tq = get_cpu_time() - t2;
 #endif
@@ -524,7 +520,7 @@ template <class Pixel> void HierarHeapQueue_cache<Pixel>::push(ImgIdx idx, Pixel
 #if PROFILE
         double t1 = get_cpu_time();
 #endif
-        push_queue(idx, alpha, edgeIdx); // push to the queue
+        push_queue(idx, alpha); // push to the queue
 #if PROFILE
         tqueue += get_cpu_time() - t1;
 #endif
@@ -535,7 +531,7 @@ template <class Pixel> void HierarHeapQueue_cache<Pixel>::push(ImgIdx idx, Pixel
 #endif
 }
 
-template <class Pixel> void HierarHeapQueue_cache<Pixel>::push_queue(ImgIdx idx, Pixel alpha, ImgIdx edgeIdx) {
+template <class Pixel> void HierarHeapQueue_cache<Pixel>::push_queue(ImgIdx idx, Pixel alpha) {
     int level = (int)(a * log2(1 + (double)alpha));
 
     if (level < queue_minlev)
@@ -556,7 +552,6 @@ template <class Pixel> void HierarHeapQueue_cache<Pixel>::push_queue(ImgIdx idx,
         ImgIdx cur = storage_cursize[level]++;
         storage[level][cur].pidx = idx;
         storage[level][cur].alpha = alpha;
-        storage[level][cur].edge = edgeIdx;
     }
 }
 
@@ -796,7 +791,7 @@ template <class Pixel> void Cache_Quad_Heapqueue<Pixel>::push(ImgIdx idx, Pixel 
     if (alpha < hqueue->top_alpha()) {
         if (curSize_list < maxSize_list) // spare room in the list
         {
-            for (i = curSize_list; alpha < list[i].alpha; i--)
+            for (i = curSize_list; i >= 0 && alpha < list[i].alpha; i--)
                 list[i + 1] = list[i];
             list[i + 1].pidx = idx;
             list[i + 1].alpha = alpha;
@@ -805,7 +800,7 @@ template <class Pixel> void Cache_Quad_Heapqueue<Pixel>::push(ImgIdx idx, Pixel 
         {
             push_queue(list[curSize_list].pidx, list[curSize_list].alpha);
 
-            for (i = curSize_list - 1; alpha < list[i].alpha; i--)
+            for (i = curSize_list - 1; i >= 0 && alpha < list[i].alpha; i--)
                 list[i + 1] = list[i];
             list[i + 1].pidx = idx;
             list[i + 1].alpha = alpha;
