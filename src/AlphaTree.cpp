@@ -2851,12 +2851,13 @@ FLOOD_END:
 
 // hhpq
 template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img, double a, double r, int listsize) {
+    assert(_connectivity == 4 || _connectivity == 8);
     const ImgIdx imgSize = _width * _height;
     const ImgIdx nredges = _width * (_height - 1) + (_width - 1) * _height +
                            ((_connectivity == 8) ? ((_width - 1) * (_height - 1) * 2) : 0);
     const ImgIdx dimgSize = (1 + (_connectivity >> 1)) * _width * _height;
 
-    const _uint64 max_level = (sizeof(Pixel) == 8) ? 0xffffffffffffffff : (_int64)((Pixel)(-1));
+    const Pixel max_level = std::numeric_limits<Pixel>::max();
     const _uint64 numlevels = (_uint64)(a * log2(1 + (double)max_level)) + 1;
 
     ImgIdx *dhist = (ImgIdx *)Calloc((size_t)numlevels * sizeof(ImgIdx));
@@ -2864,8 +2865,9 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
 
     compute_dimg(dimg, dhist, img, a); // calculate pixel differences and make histogram
 
+    _uint8 *isVisited = (_uint8 *)Calloc((size_t)((imgSize)));
     // create hierarchical queue from dhist
-    HHPQ<Pixel> *queue = new HHPQ<Pixel>(dhist, numlevels, nredges, a, listsize, _connectivity,
+    HHPQ<Pixel> *queue = new HHPQ<Pixel>(dhist, numlevels, nredges, isVisited, a, listsize, _connectivity,
                                          r); // +1 for the dummy node
 
     _curSize = 0;
@@ -2873,7 +2875,6 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
                dimgSize; // Do not use TSE here, becasue dhist is a logged histogram (also this algorithm is for hdr)
 
     dhist = 0;
-    _uint8 *isVisited = (_uint8 *)Calloc((size_t)((imgSize)));
     _uint8 *isAvailable = (_uint8 *)Malloc((size_t)(imgSize));
     set_isAvailable(isAvailable);
     _parentAry = (ImgIdx *)Malloc((size_t)imgSize * sizeof(_int32));
@@ -2889,31 +2890,16 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
     ImgIdx startingPixel = 0; /*arbitrary starting point*/
 
     ImgIdx prevTop = stackTop;
-    queue->push_1stitem(startingPixel);
-    while (true) // flooding
+    queue->push(startingPixel);
+    while (node[stackTop].area < imgSize) // flooding
     {
         while ((double)queue->top_alpha() <= (double)currentLevel) // flood all levels below currentLevel
         {
             const ImgIdx p = queue->top();
-
-            // const ImgIdx edgeIdx = queue->top_edge();
-
             if (isVisited[p]) {
-                queue->pop(isVisited);
-                // if (edgeLabels[edgeIdx] == 1) {
-                //     edgeLabels[edgeIdx] = 3;
-                // }
-
-                // printTree();
-                // queue->print();
-                // printAll(isVisited, edgeLabels, img);
-
+                queue->pop();
                 continue;
             }
-
-            // if (edgeLabels[edgeIdx] == 1) {
-            //     edgeLabels[edgeIdx] = 2;
-            // }
 
             queue->start_pushes();
             isVisited[p] = 1;
@@ -2963,7 +2949,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
             } else {
                 //?
             }
-            queue->end_pushes(isVisited);
+            queue->end_pushes();
             if ((double)currentLevel > (double)queue->top_alpha()) // go to lower level
             {
                 currentLevel = (double)queue->top_alpha();
@@ -2986,45 +2972,34 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
                 } else
                     connectPix2Node(p, img[p], stackTop);
                 if (node[stackTop].area == imgSize)
-                    goto FLOOD_END;
+                    break;
             }
-            // printTree();
-            // queue->print();
-            // printAll(isVisited, edgeLabels, img);
         }
 
-        if (node[prevTop].parentidx == stackTop && node[prevTop].area == node[stackTop].area) {
-            // queue->redundant(node[stackTop].alpha);
+        if (node[stackTop].area < imgSize && node[prevTop].parentidx == stackTop &&
+            node[prevTop].area == node[stackTop].area) {
             node[prevTop].parentidx = node[stackTop].parentidx;
             stackTop = prevTop;
             _curSize--;
         }
 
-        if (node[stackTop].area == imgSize) // root node found...done
-            break;
-
         // go to higher level
-        ImgIdx newParentIdx = node[stackTop].parentidx;
-        if ((double)queue->top_alpha() < (double)node[newParentIdx].alpha) {
-            newParentIdx = NewAlphaNode1(queue->top_alpha(), node + stackTop);
-            node[newParentIdx].parentidx = node[stackTop].parentidx;
-            node[newParentIdx]._rootIdx = ROOTIDX;
-            node[stackTop].parentidx = newParentIdx;
-        } else // go to existing node
-            node[newParentIdx].add(node + stackTop);
+        if (node[stackTop].area < imgSize) {
+            ImgIdx newParentIdx = node[stackTop].parentidx;
+            if ((double)queue->top_alpha() < (double)node[newParentIdx].alpha) {
+                newParentIdx = NewAlphaNode1(queue->top_alpha(), node + stackTop);
+                node[newParentIdx].parentidx = node[stackTop].parentidx;
+                node[newParentIdx]._rootIdx = ROOTIDX;
+                node[stackTop].parentidx = newParentIdx;
+            } else // go to existing node
+                node[newParentIdx].add(node + stackTop);
 
-        prevTop = stackTop;
-        stackTop = newParentIdx;
-        currentLevel = node[stackTop].alpha;
-        if (node[stackTop].area == imgSize) // root node found...done
-            break;
+            prevTop = stackTop;
+            stackTop = newParentIdx;
+            currentLevel = node[stackTop].alpha;
+        }
     }
-FLOOD_END:
     node[_rootIdx].parentidx = ROOTIDX;
-
-    // printTree();
-    // queue->print();
-    // printAll(isVisited, edgeLabels, img);
 
     delete queue;
     Free(dimg);

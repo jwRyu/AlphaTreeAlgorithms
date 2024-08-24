@@ -22,15 +22,17 @@ template <class Pixel> class HHPQ {
 
     ImgIdx maxSize;
 
+    _uint8 *_isVisited;
+
   public:
     void print();
     void initHQ(ImgIdx *dhist, ImgIdx numlevels_in, ImgIdx size, double a_in, int cacheSize, int connectivity,
                 double r);
-    HHPQ(ImgIdx *dhist, ImgIdx numlevels_in, ImgIdx size, double a_in, int cacheSize, ImgIdx connectivity = 4,
-         double r = 0.2);
+    HHPQ(ImgIdx *dhist, ImgIdx numlevels_in, ImgIdx size, _uint8 *isVisited_, double a_in = 15.0, int cacheSize = 15,
+         ImgIdx connectivity = 4, double r = 0.2);
     ~HHPQ();
 
-    ImgIdx alphaToLevel(const double &alpha) const;
+    static ImgIdx alphaToLevel(const double &alpha, const double &a);
     void start_pushes() { emptytop = 1; }
     Pixel get_minlev() { return _cache[0].alpha; }
     ImgIdx top() { return _cache[0].index; }
@@ -38,10 +40,10 @@ template <class Pixel> class HHPQ {
 
     Pixel top_alpha() { return _cache[0].alpha; }
     void push_1stitem(ImgIdx idx);
-    void end_pushes(_uint8 *isVisited);
-    void push(const ImgIdx &idx, const Pixel &alpha);
+    void end_pushes();
+    void push(const ImgIdx &idx, const Pixel &alpha = std::numeric_limits<Pixel>::max());
     void push_queue(const QItem<Pixel> &item, const ImgIdx &level);
-    ImgIdx pop(_uint8 *isVisited);
-    int check_queue_level(_uint8 *isVisited);
-    void pop_queue(_uint8 *isVisited);
+    ImgIdx pop();
+    int check_queue_level();
+    void pop_queue();
 };
