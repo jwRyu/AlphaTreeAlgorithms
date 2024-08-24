@@ -11,5 +11,6 @@ template <class Pixel> struct QItem {
 
     QItem(ImgIdx index_, Pixel alpha_) : index(index_), alpha(alpha_) {}
     bool operator<(const QItem &other) const { return alpha < other.alpha; }
+    bool operator<=(const QItem &other) const { return alpha <= other.alpha; }
     void print() { printf("(%d, %.2f) ", (int)index, (double)alpha); }
 };
