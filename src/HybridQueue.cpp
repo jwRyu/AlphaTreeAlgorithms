@@ -87,10 +87,10 @@ template <class Pixel> void HierarHeapQueue_HEQ<Pixel>::push(ImgIdx idx, Pixel a
         return;
     }
 
-    bool push2list = (queue_minlev < curthr) ? alpha < hqueue[queue_minlev]->top_alpha()
-                                             : (ImgIdx)histeqmap[(int)(a * log2(1 + (double)alpha))] < queue_minlev;
+    bool pushToList = (queue_minlev < curthr) ? alpha < hqueue[queue_minlev]->top_alpha()
+                                              : (ImgIdx)histeqmap[(int)(a * log2(1 + (double)alpha))] < queue_minlev;
 
-    if (push2list) {
+    if (pushToList) {
         if (curSize_list < maxSize_list) // spare room in the list
         {
             int i;
@@ -455,10 +455,10 @@ template <class Pixel> void HierarHeapQueue_cache<Pixel>::push(ImgIdx idx, Pixel
         return;
     }
 
-    bool push2list = (queue_minlev < curthr) ? alpha < hqueue[queue_minlev]->top_alpha()
-                                             : (int)(a * log2(1 + (double)alpha)) < queue_minlev;
+    bool pushToList = (queue_minlev < curthr) ? alpha < hqueue[queue_minlev]->top_alpha()
+                                              : (int)(a * log2(1 + (double)alpha)) < queue_minlev;
 
-    if (push2list) {
+    if (pushToList) {
 #if PROFILE
         num_cache++;
         double t1 = get_cpu_time(), t2, tq = 0;
@@ -466,7 +466,7 @@ template <class Pixel> void HierarHeapQueue_cache<Pixel>::push(ImgIdx idx, Pixel
         if (curSize_list < maxSize_list) // spare room in the list
         {
             int i;
-            for (i = curSize_list; alpha < list[i].alpha; i--) {
+            for (i = curSize_list; i >= 0 && alpha < list[i].alpha; i--) {
                 list[i + 1] = list[i];
 #if PROFILE
                 num_memmove_push_i++;
@@ -490,7 +490,7 @@ template <class Pixel> void HierarHeapQueue_cache<Pixel>::push(ImgIdx idx, Pixel
             tq = get_cpu_time() - t2;
 #endif
             int i;
-            for (i = curSize_list - 1; alpha < list[i].alpha; i--) {
+            for (i = curSize_list - 1; i >= 0 && alpha < list[i].alpha; i--) {
                 list[i + 1] = list[i];
 #if PROFILE
                 num_memmove_push_i++;
