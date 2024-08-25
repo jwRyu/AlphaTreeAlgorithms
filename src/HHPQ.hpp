@@ -21,7 +21,7 @@ template <class Pixel> class HHPQ {
 
     _int16 _curSizeCache = -1;
     _int16 _maxSizeCache = -1;
-    int emptytop = 0;
+    int _emptyTop = 0;
 
     _uint8 *_isVisited = nullptr;
 
@@ -35,7 +35,7 @@ template <class Pixel> class HHPQ {
 
     static ImgIdx alphaToLevel(const double &alpha, const double &a);
 
-    void startPushes() { emptytop = 1; }
+    void startPushes() { _emptyTop = 1; }
     void endPushes();
 
     const QItem<Pixel> &front() { return _cache[0]; }

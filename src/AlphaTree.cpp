@@ -2890,8 +2890,10 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
 
     Free(dhist);
     dhist = nullptr;
+
     _uint8 *isAvailable = (_uint8 *)Malloc((size_t)(imgSize));
     set_isAvailable(isAvailable);
+    
     _parentAry = (ImgIdx *)Malloc((size_t)imgSize * sizeof(_int32));
     for (int i = 0; i < imgSize; i++)
         _parentAry[i] = -1;
@@ -2903,10 +2905,8 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
     ImgIdx startingPixel = 0; /*arbitrary starting point*/
     ImgIdx prevTop = stackTop;
     queue->push(startingPixel);
-    while (_node[stackTop].area < imgSize) // flooding
-    {
-        while (queue->front().alpha <= currentLevel) // flood all levels below currentLevel
-        {
+    while (_node[stackTop].area < imgSize) {           // Main flooding loop
+        while (queue->front().alpha <= currentLevel) { // Flood all levels below currentLevel
             const ImgIdx p = queue->front().index;
             if (isVisited[p]) {
                 queue->pop();

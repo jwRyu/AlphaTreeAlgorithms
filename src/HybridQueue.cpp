@@ -75,13 +75,13 @@ template <class Pixel> void HierarHeapQueue_HEQ<Pixel>::push_1stitem(ImgIdx idx,
 }
 
 template <class Pixel> void HierarHeapQueue_HEQ<Pixel>::endPushes(_uint8 *isVisited) {
-    if (emptytop)
+    if (_emptyTop)
         pop(isVisited);
 }
 
 template <class Pixel> void HierarHeapQueue_HEQ<Pixel>::push(ImgIdx idx, Pixel alpha) {
-    if (emptytop && alpha < list[0].alpha) {
-        emptytop = 0;
+    if (_emptyTop && alpha < list[0].alpha) {
+        _emptyTop = 0;
         list[0].pidx = idx;
         list[0].alpha = alpha;
         return;
@@ -429,7 +429,7 @@ template <class Pixel> void HierarHeapQueue_cache<Pixel>::push_1stitem(ImgIdx id
 }
 
 template <class Pixel> void HierarHeapQueue_cache<Pixel>::endPushes(_uint8 *isVisited) {
-    if (emptytop)
+    if (_emptyTop)
         pop(isVisited);
 #if PROFILE
     else
@@ -443,13 +443,13 @@ template <class Pixel> void HierarHeapQueue_cache<Pixel>::push(ImgIdx idx, Pixel
     curSize++;
     num_memmove_push_i = 0;
 #endif
-    if (emptytop && alpha < list[0].alpha) {
+    if (_emptyTop && alpha < list[0].alpha) {
 #if PROFILE
         num_cache++;
         num_memmove_push.push_back(1);
         num_items_push.push_back(curSize);
 #endif
-        emptytop = 0;
+        _emptyTop = 0;
         list[0].pidx = idx;
         list[0].alpha = alpha;
         return;
@@ -692,8 +692,8 @@ template <class Pixel> void Cache_Heapqueue<Pixel>::push_1stitem(ImgIdx idx, Pix
 
 template <class Pixel> void Cache_Heapqueue<Pixel>::push(ImgIdx idx, Pixel alpha) {
     _int16 i;
-    if (emptytop && alpha < list[0].alpha) {
-        emptytop = 0;
+    if (_emptyTop && alpha < list[0].alpha) {
+        _emptyTop = 0;
         list[0].pidx = idx;
         list[0].alpha = alpha;
         return;
@@ -782,8 +782,8 @@ template <class Pixel> void Cache_Quad_Heapqueue<Pixel>::push_1stitem(ImgIdx idx
 template <class Pixel> void Cache_Quad_Heapqueue<Pixel>::push(ImgIdx idx, Pixel alpha) {
     _int16 i;
 
-    if (emptytop && alpha < list[0].alpha) {
-        emptytop = 0;
+    if (_emptyTop && alpha < list[0].alpha) {
+        _emptyTop = 0;
         list[0].pidx = idx;
         list[0].alpha = alpha;
         return;
@@ -879,8 +879,8 @@ template <class Pixel> void CirCache_Hierqueue<Pixel>::push_1stitem(ImgIdx idx, 
 template <class Pixel> void CirCache_Hierqueue<Pixel>::push(ImgIdx idx, _int32 alpha) {
     _int16 i, j, k;
 
-    if (emptytop && alpha < list[liststart].alpha) {
-        emptytop = 0;
+    if (_emptyTop && alpha < list[liststart].alpha) {
+        _emptyTop = 0;
         list[liststart].pidx = idx;
         list[liststart].alpha = alpha;
         return;
@@ -973,8 +973,8 @@ template <class Pixel> void HierarQueueCache<Pixel>::push_1stitem(ImgIdx idx, _i
 template <class Pixel> void HierarQueueCache<Pixel>::push(ImgIdx idx, _int32 alpha) {
     _int16 i;
 
-    if (emptytop && alpha < list[0].alpha) {
-        emptytop = 0;
+    if (_emptyTop && alpha < list[0].alpha) {
+        _emptyTop = 0;
         list[0].pidx = idx;
         list[0].alpha = alpha;
         return;
@@ -1066,8 +1066,8 @@ template <class Pixel> void Cache_Hierqueue_l1<Pixel>::push_1stitem(ImgIdx idx, 
 template <class Pixel> void Cache_Hierqueue_l1<Pixel>::push(ImgIdx idx, _int32 alpha) {
     _int16 i;
 
-    if (emptytop && alpha < list[0].alpha) {
-        emptytop = 0;
+    if (_emptyTop && alpha < list[0].alpha) {
+        _emptyTop = 0;
         list[0].pidx = idx;
         list[0].alpha = alpha;
         return;
@@ -1160,8 +1160,8 @@ template <class Pixel> void Cache_Hierqueue_l2<Pixel>::push_1stitem(ImgIdx idx, 
 template <class Pixel> void Cache_Hierqueue_l2<Pixel>::push(ImgIdx idx, _int32 alpha) {
     _int16 i;
 
-    if (emptytop && alpha < list[0].alpha) {
-        emptytop = 0;
+    if (_emptyTop && alpha < list[0].alpha) {
+        _emptyTop = 0;
         list[0].pidx = idx;
         list[0].alpha = alpha;
         return;

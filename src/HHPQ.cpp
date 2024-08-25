@@ -100,7 +100,7 @@ template <class Pixel> void HHPQ<Pixel>::print() {
 }
 
 template <class Pixel> void HHPQ<Pixel>::endPushes() {
-    if (emptytop)
+    if (_emptyTop)
         pop();
 }
 
@@ -115,8 +115,8 @@ template <class Pixel> void HHPQ<Pixel>::push(const ImgIdx &idx, const Pixel &al
         return;
     }
 
-    if (emptytop && newItem < _cache[0]) {
-        emptytop = 0;
+    if (_emptyTop && newItem < _cache[0]) {
+        _emptyTop = 0;
         _cache[0] = newItem;
         return;
     }
@@ -142,7 +142,7 @@ template <class Pixel> void HHPQ<Pixel>::push(const ImgIdx &idx, const Pixel &al
 
         _cache[i + 1] = newItem;
     } else
-        push_queue(newItem, newItemLevel); // push to the queue
+        push_queue(newItem, newItemLevel); // Push to the queue
 }
 
 template <class Pixel> void HHPQ<Pixel>::push_queue(const QItem<Pixel> &item, const ImgIdx &level) {
