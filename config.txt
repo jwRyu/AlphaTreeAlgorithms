@@ -34,7 +34,7 @@ NumberOfThreads=1
 # 16. FloodHierHeapQueueNoCache
 # 17. FloodHeapQueueNaiveNoCache
 # 18. FloodHierHeapQueuePar
-AlphaTreeAlgorithm=FloodHierHeapQueuePar
+AlphaTreeAlgorithm=FloodHierHeapQueue
 
 BitDepth=64
 UseTreeSizeEstimation=1
