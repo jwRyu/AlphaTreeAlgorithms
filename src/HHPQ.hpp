@@ -23,8 +23,6 @@ template <class Pixel> class HHPQ {
     _int16 _maxSizeCache = -1;
     int emptytop = 0;
 
-    ImgIdx maxSize = -1;
-
     _uint8 *_isVisited = nullptr;
 
   public:
@@ -33,19 +31,18 @@ template <class Pixel> class HHPQ {
     HHPQ(ImgIdx *dhist, ImgIdx numLevels_, ImgIdx size, _uint8 *isVisited_, double a_ = 15.0, int cacheSize = 15,
          double r = 0.2);
     ~HHPQ();
+    void push_queue(const QItem<Pixel> &item, const ImgIdx &level);
 
     static ImgIdx alphaToLevel(const double &alpha, const double &a);
 
     void startPushes() { emptytop = 1; }
     void endPushes();
 
-    Pixel get_minlev() { return _cache[0].alpha; }
-    const QItem<Pixel> &top() { return _cache[0]; }
+    const QItem<Pixel> &front() { return _cache[0]; }
     const QItem<Pixel> &cacheBack() { return _cache[_curSizeCache]; }
 
     void push(const ImgIdx &idx, const Pixel &alpha = std::numeric_limits<Pixel>::max());
-    void push_queue(const QItem<Pixel> &item, const ImgIdx &level);
     void pop();
-    int check_queue_level();
+    bool isFrontLevelEmptyAfterSort();
     void pop_queue();
 };

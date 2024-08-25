@@ -2891,9 +2891,9 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
     queue->push(startingPixel);
     while (node[stackTop].area < imgSize) // flooding
     {
-        while (queue->top().alpha <= currentLevel) // flood all levels below currentLevel
+        while (queue->front().alpha <= currentLevel) // flood all levels below currentLevel
         {
-            const ImgIdx p = queue->top().index;
+            const ImgIdx p = queue->front().index;
             if (isVisited[p]) {
                 queue->pop();
                 continue;
@@ -2928,11 +2928,11 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
                 //?
             }
             queue->endPushes();
-            if (currentLevel > queue->top().alpha) // go to lower level
+            if (currentLevel > queue->front().alpha) // go to lower level
             {
-                currentLevel = queue->top().alpha;
+                currentLevel = queue->front().alpha;
                 const ImgIdx newNodeIdx = _curSize++;
-                node[newNodeIdx] = AlphaNode<Pixel>(img[p], queue->top().alpha, stackTop);
+                node[newNodeIdx] = AlphaNode<Pixel>(img[p], queue->front().alpha, stackTop);
                 prevTop = stackTop;
                 stackTop = newNodeIdx;
                 if (currentLevel > 0) {
@@ -2964,8 +2964,8 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
         // go to higher level
         if (node[stackTop].area < imgSize) {
             ImgIdx newParentIdx = node[stackTop].parentidx;
-            if ((double)queue->top().alpha < (double)node[newParentIdx].alpha) {
-                newParentIdx = NewAlphaNode1(queue->top().alpha, node + stackTop);
+            if ((double)queue->front().alpha < (double)node[newParentIdx].alpha) {
+                newParentIdx = NewAlphaNode1(queue->front().alpha, node + stackTop);
                 node[newParentIdx].parentidx = node[stackTop].parentidx;
                 node[newParentIdx]._rootIdx = ROOTIDX;
                 node[stackTop].parentidx = newParentIdx;
