@@ -1,6 +1,7 @@
 #include <HHPQ.hpp>
 #include <allocator.h>
 #include <cmath>
+#include <cstring>
 
 template <class Pixel> ImgIdx HHPQ<Pixel>::alphaToLevel(const double &alpha, const double &a) {
     return (ImgIdx)(a * log2(1.0 + alpha));
@@ -20,7 +21,8 @@ void HHPQ<Pixel>::initHQ(ImgIdx *dhist, ImgIdx numlevels_in, ImgIdx size, double
     this->_lowestNonemptyLevel = _numLevels;
 
     ImgIdx cumsum = 0;
-    _levelMaxSizes = dhist; // do not free dhist outside
+    _levelMaxSizes = (ImgIdx *)Calloc((size_t)_numLevels * sizeof(ImgIdx));
+    memcpy(_levelMaxSizes, dhist, (size_t)_numLevels * sizeof(ImgIdx));
     if (r >= 1) {
         thr_hqueue = _lowestUnsortedLevel = _numLevels;
         _sortedLevels = (QuadHeapQueue<Pixel> **)Calloc(_numLevels * sizeof(QuadHeapQueue<Pixel> *));
