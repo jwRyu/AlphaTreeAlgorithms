@@ -25,10 +25,10 @@ template <class Pixel> HHPQ<Pixel>::~HHPQ() {
 
     if (_unsortedLevels) {
         Free(_unsortedLevelSizes);
-        for (int level = thr_hqueue; level < _numLevels; level++)
+        for (int level = _lowestUnsortedLevelAllocated; level < _numLevels; level++)
             if (_unsortedLevels[level])
                 Free(_unsortedLevels[level]);
-        Free(_unsortedLevels + thr_hqueue);
+        Free(_unsortedLevels + _lowestUnsortedLevelAllocated);
     }
 }
 
@@ -37,14 +37,13 @@ template <class Pixel> void HHPQ<Pixel>::initHQ(ImgIdx *dhist, ImgIdx size, doub
 
     _cache = (QItem<Pixel> *)Malloc((_maxSizeCache + 1) * sizeof(QItem<Pixel>));
     _curSizeCache = -1;
-
     ImgIdx cumsum = 0;
     _levelMaxSizes = (ImgIdx *)Calloc((size_t)_numLevels * sizeof(ImgIdx));
     memcpy(_levelMaxSizes, dhist, (size_t)_numLevels * sizeof(ImgIdx));
     if (r >= 1) {
-        thr_hqueue = _lowestUnsortedLevel = _numLevels;
+        _lowestUnsortedLevelAllocated = _lowestUnsortedLevel = _numLevels;
         _sortedLevels = (QuadHeapQueue<Pixel> **)Calloc(_numLevels * sizeof(QuadHeapQueue<Pixel> *));
-        for (int level = 0; level < thr_hqueue; level++)
+        for (int level = 0; level < _lowestUnsortedLevelAllocated; level++)
             _sortedLevels[level] = new QuadHeapQueue<Pixel>(_levelMaxSizes[level]);
         _unsortedLevels = 0;
         _unsortedLevelSizes = 0;
@@ -54,18 +53,19 @@ template <class Pixel> void HHPQ<Pixel>::initHQ(ImgIdx *dhist, ImgIdx size, doub
         for (int level = 0; level < _numLevels; level++) {
             cumsum += _levelMaxSizes[level];
             if (cumsum > thr_nonredundantnodes) {
-                thr_hqueue = _lowestUnsortedLevel = level;
+                _lowestUnsortedLevelAllocated = _lowestUnsortedLevel = level;
                 break;
             }
         }
 
         _sortedLevels = (QuadHeapQueue<Pixel> **)Calloc(_numLevels * sizeof(QuadHeapQueue<Pixel> *));
-        for (int level = 0; level < thr_hqueue; level++)
+        for (int level = 0; level < _lowestUnsortedLevelAllocated; level++)
             _sortedLevels[level] = new QuadHeapQueue<Pixel>(_levelMaxSizes[level]);
 
-        _unsortedLevels = (QItem<Pixel> **)Calloc((_numLevels - thr_hqueue) * sizeof(QItem<Pixel> *));
-        _unsortedLevels -= thr_hqueue;
-        for (int level = thr_hqueue; level < _numLevels; level++)
+        _unsortedLevels =
+            (QItem<Pixel> **)Calloc((_numLevels - _lowestUnsortedLevelAllocated) * sizeof(QItem<Pixel> *));
+        _unsortedLevels -= _lowestUnsortedLevelAllocated;
+        for (int level = _lowestUnsortedLevelAllocated; level < _numLevels; level++)
             _unsortedLevels[level] = (QItem<Pixel> *)Malloc(_levelMaxSizes[level] * sizeof(QItem<Pixel>));
     }
 }

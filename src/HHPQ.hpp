@@ -7,22 +7,25 @@
 #include <defines.h>
 
 template <class Pixel> class HHPQ {
-    QItem<Pixel> *_cache;
-    QuadHeapQueue<Pixel> **_sortedLevels;
-    QItem<Pixel> **_unsortedLevels;
-    ImgIdx *_unsortedLevelSizes;
-    ImgIdx *_levelMaxSizes;
+    QItem<Pixel> *_cache = nullptr;
+    QuadHeapQueue<Pixel> **_sortedLevels = nullptr;
+    QItem<Pixel> **_unsortedLevels = nullptr;
+    ImgIdx *_unsortedLevelSizes = nullptr;
+    ImgIdx *_levelMaxSizes = nullptr;
 
-    ImgIdx thr_hqueue, _lowestUnsortedLevel, _numLevels;
-    double _a;
-    ImgIdx _lowestNonemptyLevel;
+    ImgIdx _lowestUnsortedLevelAllocated = -1;
+    ImgIdx _lowestUnsortedLevel = -1;
+    ImgIdx _numLevels = -1;
+    double _a = 0.0;
+    ImgIdx _lowestNonemptyLevel = -1;
 
-    _int16 _curSizeCache, _maxSizeCache;
-    int emptytop;
+    _int16 _curSizeCache = -1;
+    _int16 _maxSizeCache = -1;
+    int emptytop = 0;
 
-    ImgIdx maxSize;
+    ImgIdx maxSize = -1;
 
-    _uint8 *_isVisited;
+    _uint8 *_isVisited = nullptr;
 
   public:
     void print();
