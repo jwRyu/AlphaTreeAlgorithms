@@ -103,7 +103,7 @@ template <class Pixel> class AlphaTree {
     ImgIdx _channel = 0;
     ImgIdx _connectivity = 0;
     AlphaNode<Pixel> *_node = nullptr;
-    AlphaNode<Pixel> *node_in = nullptr;
+    AlphaNode<Pixel> *_nodeIn = nullptr;
     ImgIdx *_parentAry = nullptr;
     ImgIdx num_node = 0;
     ImgIdx num_node_in = 0;
