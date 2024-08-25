@@ -68,18 +68,19 @@ template <class Pixel> class AlphaNode {
     double sumPix = 0.0;
     Pixel minPix = std::numeric_limits<Pixel>::max();
     Pixel maxPix = std::numeric_limits<Pixel>::min();
-    ImgIdx parentidx = ROOTIDX;
+    ImgIdx parentIdx = ROOTIDX;
     ImgIdx _rootIdx = ROOTIDX;
 
     AlphaNode() = default;
     AlphaNode(Pixel pixelVal, double alpha_, ImgIdx parentidx_ = ROOTIDX);
     AlphaNode(double alpha_, ImgIdx parentidx_ = ROOTIDX);
 
-    void set(ImgIdx area_in, double level, double sumPix_in, Pixel minPix_in, Pixel maxPix_in);
-    void add(AlphaNode *q);
-    void add(Pixel pix_val);
-    void copy(AlphaNode *q);
-    void connect_to_parent(AlphaNode *pPar, ImgIdx iPar);
+    inline void set(ImgIdx area_in, double level, double sumPix_in, Pixel minPix_in, Pixel maxPix_in);
+    inline void add(AlphaNode *q);
+    inline void add(const AlphaNode &q);
+    inline void add(const Pixel &pix_val);
+    inline void copy(AlphaNode *q);
+    inline void connect_to_parent(AlphaNode *pPar, ImgIdx iPar);
     void print(AlphaNode *_node);
     void print(AlphaNode *_node, int heading);
 };
