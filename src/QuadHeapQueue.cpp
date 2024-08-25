@@ -12,6 +12,12 @@ template <class Pixel> QuadHeapQueue<Pixel>::QuadHeapQueue(ImgIdx maxsize_in) : 
         arr[1].alpha = FLT_MAX;
 }
 
+template <class Pixel> void QuadHeapQueue<Pixel>::print() {
+    for (int i = 0; i < cursize; i++)
+        arr[i + 1].print();
+    printf("\n");
+}
+
 template <class Pixel> QuadHeapQueue<Pixel>::~QuadHeapQueue() { Free(arr); }
 
 template <class Pixel> ImgIdx QuadHeapQueue<Pixel>::pop() {

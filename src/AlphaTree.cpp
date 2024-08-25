@@ -2085,7 +2085,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHeapQueue(Pixel *img) {
                 queue->pop();
                 continue;
             }
-            queue->start_pushes();
+            queue->startPushes();
             isVisited[p] = 1;
 
             isAv = isAvailable[p];
@@ -2122,7 +2122,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHeapQueue(Pixel *img) {
                 //?
             }
 
-            queue->end_pushes();
+            queue->endPushes();
             if (currentLevel > queue->get_minlev()) // remove typecasting later
             {
                 Pixel pix_val = img[p];
@@ -2242,7 +2242,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarQueue(Pixel *img) {
                 continue;
             }
 
-            queue->start_pushes();
+            queue->startPushes();
             isVisited[p] = 1;
             isAv = isAvailable[p];
             if (_connectivity == 4) {
@@ -2278,7 +2278,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarQueue(Pixel *img) {
                 //?
             }
 
-            queue->end_pushes();
+            queue->endPushes();
             if (currentLevel > (_uint64)queue->top_alpha()) // go to lower level
             {
                 Pixel pix_val = img[p];
@@ -2737,7 +2737,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueue(Pixel *img, d
                 continue;
             }
 
-            queue->start_pushes();
+            queue->startPushes();
             isVisited[p] = 1;
             // printAll(isVisited, edgeLabels, img);
 
@@ -2786,7 +2786,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueue(Pixel *img, d
             } else {
                 //?
             }
-            queue->end_pushes(isVisited);
+            queue->endPushes(isVisited);
             if ((double)currentLevel > (double)queue->top_alpha()) // go to lower level
             {
                 currentLevel = (double)queue->top_alpha();
@@ -2866,7 +2866,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
     compute_dimg(dimg, dhist, img, a); // calculate pixel differences and make histogram
 
     _uint8 *isVisited = (_uint8 *)Calloc((size_t)((imgSize)));
-    HHPQ<Pixel> *queue = new HHPQ<Pixel>(dhist, numlevels, nredges, isVisited, a, listsize, _connectivity, r);
+    HHPQ<Pixel> *queue = new HHPQ<Pixel>(dhist, numlevels, nredges, isVisited, a, listsize, r);
 
     _curSize = 0;
     _maxSize = 1 + imgSize + dimgSize;
@@ -2899,7 +2899,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
                 continue;
             }
 
-            queue->start_pushes();
+            queue->startPushes();
             isVisited[p] = 1;
 
             auto isAv = isAvailable[p];
@@ -2927,7 +2927,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
             } else {
                 //?
             }
-            queue->end_pushes();
+            queue->endPushes();
             if (currentLevel > queue->top().alpha) // go to lower level
             {
                 currentLevel = queue->top().alpha;
@@ -2964,8 +2964,8 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
         // go to higher level
         if (node[stackTop].area < imgSize) {
             ImgIdx newParentIdx = node[stackTop].parentidx;
-            if ((double)queue->top_alpha() < (double)node[newParentIdx].alpha) {
-                newParentIdx = NewAlphaNode1(queue->top_alpha(), node + stackTop);
+            if ((double)queue->top().alpha < (double)node[newParentIdx].alpha) {
+                newParentIdx = NewAlphaNode1(queue->top().alpha, node + stackTop);
                 node[newParentIdx].parentidx = node[stackTop].parentidx;
                 node[newParentIdx]._rootIdx = ROOTIDX;
                 node[stackTop].parentidx = newParentIdx;
@@ -3059,7 +3059,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierHeapQueueHisteq(Pixel *im
                 continue;
             }
 
-            queue->start_pushes();
+            queue->startPushes();
             isVisited[p] = 1;
             isAv = isAvailable[p];
             if (_connectivity == 4) {
@@ -3095,7 +3095,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierHeapQueueHisteq(Pixel *im
                 //?
             }
 
-            queue->end_pushes(isVisited);
+            queue->endPushes(isVisited);
             if ((_uint64)currentLevel > (_uint64)queue->top_alpha()) // go to lower level
             {
                 Pixel pix_val = img[p];

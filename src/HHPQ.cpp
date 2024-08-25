@@ -8,17 +8,35 @@ template <class Pixel> ImgIdx HHPQ<Pixel>::alphaToLevel(const double &alpha, con
 }
 
 template <class Pixel>
-void HHPQ<Pixel>::initHQ(ImgIdx *dhist, ImgIdx numlevels_in, ImgIdx size, double a_in, int cacheSize, int connectivity,
-                         double r) {
+HHPQ<Pixel>::HHPQ(ImgIdx *dhist, ImgIdx numLevels_, ImgIdx size, _uint8 *isVisited_, double a_, int cacheSize, double r)
+    : _numLevels(numLevels_), _a(a_), _lowestNonemptyLevel(numLevels_), _maxSizeCache(cacheSize - 1),
+      _isVisited(isVisited_) {
+    initHQ(dhist, size, r);
+}
+
+template <class Pixel> HHPQ<Pixel>::~HHPQ() {
+    Free(_cache);
+    Free(_levelMaxSizes);
+
+    for (int level = 0; level < _numLevels; level++)
+        if (_sortedLevels[level])
+            delete _sortedLevels[level];
+    Free(_sortedLevels);
+
+    if (_unsortedLevels) {
+        Free(_unsortedLevelSizes);
+        for (int level = thr_hqueue; level < _numLevels; level++)
+            if (_unsortedLevels[level])
+                Free(_unsortedLevels[level]);
+        Free(_unsortedLevels + thr_hqueue);
+    }
+}
+
+template <class Pixel> void HHPQ<Pixel>::initHQ(ImgIdx *dhist, ImgIdx size, double r) {
     maxSize = size;
 
-    _cache = (QItem<Pixel> *)Malloc((cacheSize) * sizeof(QItem<Pixel>));
-    maxSizeCache = cacheSize - 1;
-    curSizeCache = -1;
-
-    this->_numLevels = numlevels_in;
-    this->a = a_in;
-    this->_lowestNonemptyLevel = _numLevels;
+    _cache = (QItem<Pixel> *)Malloc((_maxSizeCache + 1) * sizeof(QItem<Pixel>));
+    _curSizeCache = -1;
 
     ImgIdx cumsum = 0;
     _levelMaxSizes = (ImgIdx *)Calloc((size_t)_numLevels * sizeof(ImgIdx));
@@ -52,17 +70,11 @@ void HHPQ<Pixel>::initHQ(ImgIdx *dhist, ImgIdx numlevels_in, ImgIdx size, double
     }
 }
 
-template <class Pixel> void QuadHeapQueue<Pixel>::print() {
-    for (int i = 0; i < cursize; i++)
-        arr[i + 1].print();
-    printf("\n");
-}
-
 template <class Pixel> void HHPQ<Pixel>::print() {
     printf("---------- HHPQ<Pixel>::print START -------------\n");
-    printf("Cache[%d / %d]: ", curSizeCache + 1, maxSizeCache + 1);
-    size_t size = curSizeCache;
-    for (int i = -1; i < curSizeCache; i++)
+    printf("Cache[%d / %d]: ", _curSizeCache + 1, _maxSizeCache + 1);
+    size_t size = _curSizeCache;
+    for (int i = -1; i < _curSizeCache; i++)
         _cache[i + 1].print();
     printf("\n");
 
@@ -89,32 +101,7 @@ template <class Pixel> void HHPQ<Pixel>::print() {
     // std::getchar();
 }
 
-template <class Pixel>
-HHPQ<Pixel>::HHPQ(ImgIdx *dhist, ImgIdx numlevels_in, ImgIdx size, _uint8 *isVisited_, double a_in, int cacheSize,
-                  ImgIdx connectivity, double r)
-    : _isVisited(isVisited_) {
-    initHQ(dhist, numlevels_in, size, a_in, cacheSize, (int)connectivity, r);
-}
-
-template <class Pixel> HHPQ<Pixel>::~HHPQ() {
-    Free(_cache);
-    Free(_levelMaxSizes);
-
-    for (int level = 0; level < _numLevels; level++)
-        if (_sortedLevels[level])
-            delete _sortedLevels[level];
-    Free(_sortedLevels);
-
-    if (_unsortedLevels) {
-        Free(_unsortedLevelSizes);
-        for (int level = thr_hqueue; level < _numLevels; level++)
-            if (_unsortedLevels[level])
-                Free(_unsortedLevels[level]);
-        Free(_unsortedLevels + thr_hqueue);
-    }
-}
-
-template <class Pixel> void HHPQ<Pixel>::end_pushes() {
+template <class Pixel> void HHPQ<Pixel>::endPushes() {
     if (emptytop)
         pop();
 }
@@ -124,8 +111,8 @@ template <class Pixel> void HHPQ<Pixel>::push(const ImgIdx &idx, const Pixel &al
 
     const QItem<Pixel> newItem(idx, alpha);
 
-    if (curSizeCache == -1) {
-        curSizeCache++;
+    if (_curSizeCache == -1) {
+        _curSizeCache++;
         _cache[0] = newItem;
         return;
     }
@@ -136,8 +123,8 @@ template <class Pixel> void HHPQ<Pixel>::push(const ImgIdx &idx, const Pixel &al
         return;
     }
 
-    const ImgIdx newItemLevel = alphaToLevel(newItem.alpha, a);
-    const bool isCacheNotFull = curSizeCache < maxSizeCache;
+    const ImgIdx newItemLevel = alphaToLevel(newItem.alpha, _a);
+    const bool isCacheNotFull = _curSizeCache < _maxSizeCache;
     const bool isLowerThanCacheBack = newItem < cacheBack();
     const bool isFrontLevelSorted = _lowestNonemptyLevel < _lowestUnsortedLevel;
     const bool isLowerThanLevelFront =
@@ -146,11 +133,11 @@ template <class Pixel> void HHPQ<Pixel>::push(const ImgIdx &idx, const Pixel &al
     bool pushToCache = isLowerThanLevelFront && (isCacheNotFull || isLowerThanCacheBack);
 
     if (pushToCache) {
-        int i = curSizeCache - 1;
+        int i = _curSizeCache - 1;
         if (isCacheNotFull)
-            i = curSizeCache++;
+            i = _curSizeCache++;
         else
-            push_queue(_cache[curSizeCache], alphaToLevel(_cache[curSizeCache].alpha, a));
+            push_queue(_cache[_curSizeCache], alphaToLevel(_cache[_curSizeCache].alpha, _a));
 
         for (; i >= 0 && newItem < _cache[i]; i--)
             _cache[i + 1] = _cache[i];
@@ -173,10 +160,10 @@ template <class Pixel> void HHPQ<Pixel>::push_queue(const QItem<Pixel> &item, co
 }
 
 template <class Pixel> void HHPQ<Pixel>::pop() {
-    if (curSizeCache) {
-        for (int i = 0; i < curSizeCache; i++)
+    if (_curSizeCache) {
+        for (int i = 0; i < _curSizeCache; i++)
             _cache[i] = _cache[i + 1];
-        curSizeCache--;
+        _curSizeCache--;
     } else {
         while (!check_queue_level())
             _lowestNonemptyLevel++;

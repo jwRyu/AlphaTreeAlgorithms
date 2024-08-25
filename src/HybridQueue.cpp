@@ -74,7 +74,7 @@ template <class Pixel> void HierarHeapQueue_HEQ<Pixel>::push_1stitem(ImgIdx idx,
     curSize_list++;
 }
 
-template <class Pixel> void HierarHeapQueue_HEQ<Pixel>::end_pushes(_uint8 *isVisited) {
+template <class Pixel> void HierarHeapQueue_HEQ<Pixel>::endPushes(_uint8 *isVisited) {
     if (emptytop)
         pop(isVisited);
 }
@@ -428,7 +428,7 @@ template <class Pixel> void HierarHeapQueue_cache<Pixel>::push_1stitem(ImgIdx id
 #endif
 }
 
-template <class Pixel> void HierarHeapQueue_cache<Pixel>::end_pushes(_uint8 *isVisited) {
+template <class Pixel> void HierarHeapQueue_cache<Pixel>::endPushes(_uint8 *isVisited) {
     if (emptytop)
         pop(isVisited);
 #if PROFILE
