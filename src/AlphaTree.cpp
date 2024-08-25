@@ -2856,6 +2856,16 @@ FLOOD_END:
     Free(isAvailable);
 }
 
+template <class Pixel> double AlphaTree<Pixel>::maxL2Difference() const {
+    assert(_channel > 0 && _channel < 256);
+    const double maxDiffPerChannel = (double)std::numeric_limits<Pixel>::max();
+    double maxL2Diff = 0.0;
+    for (int ch = 0; ch < _channel; ch++)
+        maxL2Diff += maxDiffPerChannel * maxDiffPerChannel;
+    maxL2Diff = maxL2Diff / _channel;
+    return std::sqrt(maxL2Diff);
+}
+
 // hhpq
 template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img, double a, double r, int listsize) {
     assert(_connectivity == 4 || _connectivity == 8);
@@ -2863,16 +2873,17 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
     const ImgIdx nredges = _width * (_height - 1) + (_width - 1) * _height +
                            ((_connectivity == 8) ? ((_width - 1) * (_height - 1) * 2) : 0);
     const ImgIdx dimgSize = (1 + (_connectivity >> 1)) * _width * _height;
-    const Pixel max_level = std::numeric_limits<Pixel>::max();
-    const _uint64 numlevels = HHPQ<Pixel>::alphaToLevel((double)max_level, a);
+    const double alphaMax = maxL2Difference();
+    const _uint64 numLevels = HHPQ<Pixel>::alphaToLevel((double)alphaMax, a);
+    assert(numLevels < 10e3); // More than 10k levels is unrealistic and expensive
 
-    ImgIdx *dhist = (ImgIdx *)Calloc((size_t)numlevels * sizeof(ImgIdx));
+    ImgIdx *dhist = (ImgIdx *)Calloc((size_t)numLevels * sizeof(ImgIdx));
     Pixel *dimg = (Pixel *)Malloc((size_t)dimgSize * sizeof(Pixel));
 
     compute_dimg(dimg, dhist, img, a); // calculate pixel differences and make histogram
 
     _uint8 *isVisited = (_uint8 *)Calloc((size_t)((imgSize)));
-    HHPQ<Pixel> *queue = new HHPQ<Pixel>(dhist, numlevels, nredges, isVisited, a, listsize, r);
+    HHPQ<Pixel> *queue = new HHPQ<Pixel>(dhist, numLevels, nredges, isVisited, a, listsize, r);
 
     _curSize = 0;
     _maxSize = 1 + imgSize + dimgSize;
