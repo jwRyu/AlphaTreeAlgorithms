@@ -80,8 +80,8 @@ template <class Pixel> class AlphaNode {
     void add(Pixel pix_val);
     void copy(AlphaNode *q);
     void connect_to_parent(AlphaNode *pPar, ImgIdx iPar);
-    void print(AlphaNode *node);
-    void print(AlphaNode *node, int heading);
+    void print(AlphaNode *_node);
+    void print(AlphaNode *_node, int heading);
 };
 
 template <class Pixel> class RankItem {
@@ -102,7 +102,7 @@ template <class Pixel> class AlphaTree {
     ImgIdx _width = 0;
     ImgIdx _channel = 0;
     ImgIdx _connectivity = 0;
-    AlphaNode<Pixel> *node = nullptr;
+    AlphaNode<Pixel> *_node = nullptr;
     AlphaNode<Pixel> *node_in = nullptr;
     ImgIdx *_parentAry = nullptr;
     ImgIdx num_node = 0;
@@ -110,7 +110,7 @@ template <class Pixel> class AlphaTree {
     ImgIdx _rootIdx = ROOTIDX;
     double nrmsd = 0.0;
 
-    AlphaTree() : _maxSize(0), _curSize(0), node(0), _parentAry(0) {}
+    AlphaTree() : _maxSize(0), _curSize(0), _node(0), _parentAry(0) {}
     ~AlphaTree();
     void clear();
 
