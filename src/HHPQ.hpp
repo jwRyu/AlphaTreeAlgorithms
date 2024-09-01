@@ -13,21 +13,23 @@ template <class Pixel> class HHPQ {
     ImgIdx *_unsortedLevelSizes = nullptr;
     ImgIdx *_levelMaxSizes = nullptr;
 
-    ImgIdx _lowestUnsortedLevelAllocated = -1;
+    ImgIdx _lowestUnsortedLevelInitial = -1;
     ImgIdx _lowestUnsortedLevel = -1;
-    ImgIdx _numLevels = -1;
+    const ImgIdx _numLevels = -1;
     double _a = 0.0;
     ImgIdx _lowestNonemptyLevel = -1;
 
     _int16 _curSizeCache = -1;
-    _int16 _maxSizeCache = -1;
+    const _int16 _maxSizeCache = -1;
     int _emptyTop = 0;
 
     _uint8 *_isVisited = nullptr;
 
+    ImgIdx _size = 0;
+
     bool isFrontLevelEmptyAfterSort();
     void pop_queue();
-    const QItem<Pixel> &cacheBack() { return _cache[_curSizeCache]; }
+    const QItem<Pixel> &cacheBack() { return _cache[_curSizeCache - 1]; }
 
     void push_queue(const QItem<Pixel> &item, const ImgIdx &level);
 
@@ -36,6 +38,8 @@ template <class Pixel> class HHPQ {
   public:
     /// @brief  Print the queue in terminal
     void print();
+
+    ImgIdx size() const { return _size; }
 
     /// @brief Create an HHPQ object
     /// @param dhist Histogram of all level items in the queue. Use alphaToLevel() on the image to build the histogram
@@ -57,18 +61,19 @@ template <class Pixel> class HHPQ {
     /// @param a Scaler constant for the HHPQ
     /// @return Level index converted from the alpha value
     static ImgIdx alphaToLevel(const double &alpha, const double &a);
+    ImgIdx alphaToLevel(const double &alpha) const;
 
     /// @brief Make the HHPQ ready for pushing multiple items followed by a single pop()
     /// @details This helps reducing memory swaps by simply replacing the top item instead of running separate pop() and
     /// push() operations, when the conditions are met. _emptytop represented that the top item should have been emptied
     /// but its operation has been amortized. If an item with an alpha value <= than the top it will replace the top
     /// (which should happen around 50% of the time), effectively removing computational costs of pop() and push().
-    void startPushes() { _emptyTop = true; }
+    // void startPushes();
 
     /// @brief Finish pushing multiple items
     /// @details If _emptytop is still true after pushing multiple items, which means the top item hasn't been replaced,
     /// run pop() operation. Otherwise, do nothing.
-    void endPushes();
+    // void endPushes();
 
     /// @brief Get the top item of the queue
     /// @return Const reference of the top item. The behavior is undefined if the queue was empty
@@ -78,6 +83,8 @@ template <class Pixel> class HHPQ {
     /// @param idx Index element of the new item
     /// @param alpha Alpha element of the new item
     void push(const ImgIdx &idx, const Pixel &alpha = std::numeric_limits<Pixel>::max());
+
+    ImgIdx empty() const { return _size == 0; }
 
     /// @brief Pop the top item from the queue
     void pop();

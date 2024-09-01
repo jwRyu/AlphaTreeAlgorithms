@@ -209,7 +209,7 @@ template <class Pixel> void AlphaTree<Pixel>::printGraph(_uint8 *isVisited, _uin
         for (int j = 0; j < _width - 1; j++) {
             int imgIdx = i * _width + j;
             int dimgIdx = imgIdx * 2 + 1;
-            if (edge[dimgIdx] == 0)
+            if (edge == 0 || edge[dimgIdx] == 0)
                 printf("%d   ", (int)isVisited[imgIdx]);
             else if (edge[dimgIdx] == 1)
                 printf("%d . ", (int)isVisited[imgIdx]);
@@ -233,7 +233,7 @@ template <class Pixel> void AlphaTree<Pixel>::printGraph(_uint8 *isVisited, _uin
         for (int j = 0; j < _width; j++) {
             int imgIdx = i * _width + j;
             int dimgIdx = imgIdx * 2;
-            if (edge[dimgIdx] == 0)
+            if (edge == 0 || edge[dimgIdx] == 0)
                 printf("    ");
             else if (edge[dimgIdx] == 1)
                 printf(".   ");
@@ -252,7 +252,7 @@ template <class Pixel> void AlphaTree<Pixel>::printGraph(_uint8 *isVisited, _uin
     for (int j = 0; j < _width - 1; j++) {
         int imgIdx = (_height - 1) * _width + j;
         int dimgIdx = imgIdx * 2 + 1;
-        if (edge[dimgIdx] == 0)
+        if (edge == 0 || edge[dimgIdx] == 0)
             printf("%d   ", (int)isVisited[imgIdx]);
         else if (edge[dimgIdx] == 1)
             printf("%d . ", (int)isVisited[imgIdx]);
@@ -292,7 +292,6 @@ template <class Pixel> void AlphaTree<Pixel>::printAll(_uint8 *isVisited, _uint8
     // printTree();
     printParentAry();
     printGraph(isVisited, edge, img);
-    std::getchar();
 }
 
 template <class Pixel> Pixel AlphaTree<Pixel>::abs_diff(Pixel p, Pixel q) {
@@ -2726,16 +2725,34 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueue(Pixel *img, d
     ImgIdx startingPixel = 0; /*arbitrary starting point*/
     ImgIdx prevTop = stackTop;
     queue->push(startingPixel);
-    while (_node[stackTop].area < imgSize) {           // Main flooding loop
-        while (queue->front().alpha <= currentLevel) { // Flood all levels below currentLevel
+    while (_node[stackTop].area < imgSize) { // Main flooding loop
+        while (_node[stackTop].area < imgSize && !queue->empty() &&
+               queue->front().alpha <= currentLevel) { // Flood all levels below currentLevel
             const ImgIdx p = queue->front().index;
+            currentLevel = queue->front().alpha;
+            queue->pop();
+            // printf("STACKTOP.AREA = %d / %d -----------------------------------------------------------\n",
+            //    _node[stackTop].area, imgSize);
             if (isVisited[p]) {
-                queue->pop();
+
+                // printf("Visiting %d at %f \n", p, currentLevel);
+                // queue->print();
+                // printTree();
+                // printAll(isVisited, nullptr, img);
+                // printf("---CONTINUE...---\n");
+                // std::getchar();
+
                 continue;
             }
-
-            queue->startPushes();
+            // queue->startPushes();
             isVisited[p] = 1;
+
+            // printf("Visiting %d at %f \n", p, currentLevel);
+            // queue->print();
+            // printTree();
+            // printAll(isVisited, nullptr, img);
+            // std::getchar();
+            // printf("===========================================================\n");
 
             auto isAv = isAvailable[p];
             if (_connectivity == 4) {
@@ -2762,7 +2779,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueue(Pixel *img, d
             } else {
                 //?
             }
-            queue->endPushes();
+            // queue->endPushes();
             if (currentLevel > queue->front().alpha) // go to lower level
             {
                 currentLevel = queue->front().alpha;
@@ -2799,7 +2816,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueue(Pixel *img, d
         // go to higher level
         if (_node[stackTop].area < imgSize) {
             ImgIdx newParentIdx = _node[stackTop].parentIdx;
-            if ((double)queue->front().alpha < (double)_node[newParentIdx].alpha) {
+            if (!queue->empty() && (double)queue->front().alpha < (double)_node[newParentIdx].alpha) {
                 newParentIdx = _curSize++;
                 _node[newParentIdx] = AlphaNode<Pixel>(_node[stackTop]);
                 _node[newParentIdx].alpha = queue->front().alpha;
@@ -2813,8 +2830,22 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueue(Pixel *img, d
             stackTop = newParentIdx;
             currentLevel = _node[stackTop].alpha;
         }
+
+        // printf("-----------------------------------------------------------\n");
+        // queue->print();
+        // printTree();
+        // printAll(isVisited, nullptr, img);
+        // printf("===========================================================\n");
+        // std::getchar();
     }
+    _rootIdx = _node[prevTop].area == imgSize ? prevTop : stackTop;
     _node[_rootIdx].parentIdx = ROOTIDX;
+
+    // queue->print();
+    // printTree();
+    // printAll(isVisited, nullptr, img);
+    // printf("END BYEBYE ===========================================================\n");
+    // std::getchar();
 
     delete queue;
     Free(dimg);
@@ -2875,12 +2906,12 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
     while (_node[stackTop].area < imgSize) {           // Main flooding loop
         while (queue->front().alpha <= currentLevel) { // Flood all levels below currentLevel
             const ImgIdx p = queue->front().index;
+            queue->pop();
             if (isVisited[p]) {
-                queue->pop();
                 continue;
             }
 
-            queue->startPushes();
+            // queue->startPushes();
             isVisited[p] = 1;
 
             auto isAv = isAvailable[p];
@@ -2908,7 +2939,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
             } else {
                 //?
             }
-            queue->endPushes();
+            // queue->endPushes();
             if (currentLevel > queue->front().alpha) // go to lower level
             {
                 currentLevel = queue->front().alpha;
@@ -2960,6 +2991,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
             currentLevel = _node[stackTop].alpha;
         }
     }
+    _rootIdx = _node[prevTop].area == imgSize ? prevTop : stackTop;
     _node[_rootIdx].parentIdx = ROOTIDX;
 
     delete queue;
