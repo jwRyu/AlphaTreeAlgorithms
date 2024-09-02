@@ -2846,6 +2846,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
 
     ImgIdx *dhist = (ImgIdx *)Calloc((size_t)numLevels * sizeof(ImgIdx));
     Pixel *dimg = (Pixel *)Malloc((size_t)dimgSize * sizeof(Pixel));
+    bool *isNonRedundant = (Pixel *)Calloc((size_t)dimgSize * sizeof(Pixel));
 
     compute_dimg(dimg, dhist, img, a); // Calculate pixel differences and make histogram
 
@@ -2908,7 +2909,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
             } else {
                 //?
             }
-            // queue->endPushes();
+
             if (currentLevel > queue->front().alpha) // go to lower level
             {
                 currentLevel = queue->front().alpha;
@@ -2965,6 +2966,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
 
     delete queue;
     Free(dimg);
+    Free(isNonRedundant);
     Free(isVisited);
     Free(isAvailable);
 }
