@@ -274,6 +274,55 @@ template <class Pixel> void AlphaTree<Pixel>::printGraph(_uint8 *isVisited, _uin
     printf("\n");
 }
 
+template <class Pixel> void AlphaTree<Pixel>::printGraph(_uint8 *isVisited, bool *isRedundant, Pixel *img) const {
+    printf("Index |   Graph (Left)   |   Image (Right)\n");
+    printf("------------------------------------------\n");
+    for (int i = 0; i < _height - 1; i++) {
+        printf("%3d | ", i * _width);
+        for (int j = 0; j < _width - 1; j++) {
+            int imgIdx = i * _width + j;
+            int dimgIdx = imgIdx * 2 + 1;
+            if (isRedundant == 0 || isRedundant[dimgIdx] == 0)
+                printf("%d   ", (int)isVisited[imgIdx]);
+            else
+                printf("%d x ", (int)isVisited[imgIdx]);
+        }
+        printf("%d   |   ", (int)isVisited[i * _width + _width - 1]);
+
+        for (int j = 0; j < _width; j++) {
+            int imgIdx = i * _width + j;
+            printf("%2d ", (int)img[imgIdx]);
+        }
+        printf("\n    | ");
+
+        for (int j = 0; j < _width; j++) {
+            int imgIdx = i * _width + j;
+            int dimgIdx = imgIdx * 2;
+            if (isRedundant == 0 || isRedundant[dimgIdx] == 0)
+                printf("    ");
+            else
+                printf("x   ");
+        }
+        printf("|\n");
+    }
+    printf("%3d | ", (_height - 1) * _width);
+    for (int j = 0; j < _width - 1; j++) {
+        int imgIdx = (_height - 1) * _width + j;
+        int dimgIdx = imgIdx * 2 + 1;
+        if (isRedundant == 0 || isRedundant[dimgIdx] == 0)
+            printf("%d   ", (int)isVisited[imgIdx]);
+        else
+            printf("%d x ", (int)isVisited[imgIdx]);
+    }
+    printf("%d   |   ", (int)isVisited[_width * _height - 1]);
+
+    for (int j = 0; j < _width; j++) {
+        int imgIdx = (_height - 1) * _width + j;
+        printf("%2d ", (int)img[imgIdx]);
+    }
+    printf("\n");
+}
+
 template <class Pixel> void AlphaTree<Pixel>::printParentAry() const {
     printf("Parent Array\n");
     for (int i = 0; i < _height; i++) {
@@ -286,6 +335,12 @@ template <class Pixel> void AlphaTree<Pixel>::printParentAry() const {
         }
         printf("\n");
     }
+}
+
+template <class Pixel> void AlphaTree<Pixel>::printAll(_uint8 *isVisited, bool *isRedundant, Pixel *img) const {
+    // printTree();
+    printParentAry();
+    printGraph(isVisited, isRedundant, img);
 }
 
 template <class Pixel> void AlphaTree<Pixel>::printAll(_uint8 *isVisited, _uint8 *edge, Pixel *img) const {
@@ -2832,6 +2887,10 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueue(Pixel *img, d
     Free(isAvailable);
 }
 
+template <class Pixel> void AlphaTree<Pixel>::printVisit(ImgIdx p, double q) const {
+    printf("Visiting %d at %.2f\n", p, q);
+}
+
 // hhpq
 template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img, double a, double r, int listsize) {
     assert(_connectivity == 4 || _connectivity == 8 || _connectivity == 12);
@@ -2846,12 +2905,12 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
 
     ImgIdx *dhist = (ImgIdx *)Calloc((size_t)numLevels * sizeof(ImgIdx));
     Pixel *dimg = (Pixel *)Malloc((size_t)dimgSize * sizeof(Pixel));
-    bool *isNonRedundant = (Pixel *)Calloc((size_t)dimgSize * sizeof(Pixel));
+    bool *isRedundant = (bool *)Calloc((size_t)dimgSize * sizeof(bool));
 
     compute_dimg(dimg, dhist, img, a); // Calculate pixel differences and make histogram
 
     _uint8 *isVisited = (_uint8 *)Calloc((size_t)((imgSize)));
-    HHPQ<Pixel> *queue = new HHPQ<Pixel>(dhist, numLevels, nredges, isVisited, a, listsize, r);
+    HHPQ<Pixel> *queue = new HHPQ<Pixel>(dhist, numLevels, nredges, isVisited, a, listsize, r, isRedundant);
 
     _curSize = 0;
     _maxSize = 1 + imgSize + dimgSize;
@@ -2877,11 +2936,19 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
         while (_node[stackTop].area < imgSize && !queue->empty() &&
                queue->front().alpha <= currentLevel) { // Flood all levels below currentLevel
             const ImgIdx p = queue->front().index;
+            const ImgIdx eIdx = queue->front().edgeIdx;
             currentLevel = queue->front().alpha;
             queue->pop();
-            if (isVisited[p])
+            if (isVisited[p]) {
+                isRedundant[eIdx] = true;
+                printf("PIIEEP PEIIIEP PIEEEEP\n");
+                std::getchar();
                 continue;
+            }
 
+            printVisit(p, currentLevel);
+            printAll(isVisited, isRedundant, img);
+            std::getchar();
             isVisited[p] = 1;
 
             auto isAv = isAvailable[p];
@@ -2960,13 +3027,15 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
             stackTop = newParentIdx;
             currentLevel = _node[stackTop].alpha;
         }
+        printAll(isVisited, isRedundant, img);
+        std::getchar();
     }
     _rootIdx = _node[prevTop].area == imgSize ? prevTop : stackTop;
     _node[_rootIdx].parentIdx = ROOTIDX;
 
     delete queue;
     Free(dimg);
-    Free(isNonRedundant);
+    Free(isRedundant);
     Free(isVisited);
     Free(isAvailable);
 }

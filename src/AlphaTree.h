@@ -122,9 +122,12 @@ template <class Pixel> class AlphaTree {
     void AreaFilter(double *outimg, double area);
 
     void printTree() const;
+    void printGraph(_uint8 *isVisited, bool *isRedundant, Pixel *img) const;
     void printGraph(_uint8 *isVisited, _uint8 *edge, Pixel *img) const;
     void printParentAry() const;
+    void printAll(_uint8 *isVisited, bool *isRedundant, Pixel *img) const;
     void printAll(_uint8 *isVisited, _uint8 *edge, Pixel *img) const;
+    void printVisit(ImgIdx p, double q) const;
 
   private:
     void Unionfind(Pixel *img);

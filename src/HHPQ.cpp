@@ -12,9 +12,10 @@ template <class Pixel> ImgIdx HHPQ<Pixel>::alphaToLevel(const double &alpha) con
 }
 
 template <class Pixel>
-HHPQ<Pixel>::HHPQ(ImgIdx *dhist, ImgIdx numLevels_, ImgIdx size, _uint8 *isVisited_, double a_, int cacheSize, double r)
+HHPQ<Pixel>::HHPQ(ImgIdx *dhist, ImgIdx numLevels_, ImgIdx size, _uint8 *isVisited_, double a_, int cacheSize, double r,
+                  bool *isRedundant_)
     : _numLevels(numLevels_), _a(a_), _lowestNonemptyLevel(numLevels_), _curSizeCache(0), _maxSizeCache(cacheSize),
-      _isVisited(isVisited_), _size(0) {
+      _isVisited(isVisited_), _isRedundant(isRedundant_), _size(0) {
     initHQ(dhist, size, r);
 }
 
@@ -202,8 +203,11 @@ template <class Pixel> bool HHPQ<Pixel>::isFrontLevelEmptyAfterSort() {
         const ImgIdx levelSize = _unsortedLevelSizes[_lowestNonemptyLevel];
         QuadHeapQueue<Pixel> *pQ = _sortedLevels[_lowestNonemptyLevel];
         for (ImgIdx p = 0; p < levelSize; p++) {
-            if (!_isVisited[level[p].index])
+            if (!_isVisited[level[p].index]) {
                 pQ->push(level[p]);
+                if (_isRedundant)
+                    _isRedundant[level[p].edgeIdx] = true;
+            }
         }
         Free(_unsortedLevels[_lowestNonemptyLevel]);
         _unsortedLevels[_lowestNonemptyLevel] = 0;
