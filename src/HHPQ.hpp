@@ -84,7 +84,9 @@ template <class Pixel> class HHPQ {
     /// @param alpha Alpha element of the new item
     void push(const ImgIdx &idx, const Pixel &alpha = std::numeric_limits<Pixel>::max());
 
-    ImgIdx empty() const { return _size == 0; }
+    /// @brief Check if the queue is empty
+    /// @return True if the queue is empty
+    bool empty() const { return _size == 0; }
 
     /// @brief Pop the top item from the queue
     void pop();

@@ -101,22 +101,10 @@ template <class Pixel> void HHPQ<Pixel>::print() {
 
     printf("size = %d _size = %d\n", (int)size, (int)_size - _emptyTop);
     printf("---------- HHPQ<Pixel>::print END -------------\n");
-    // std::getchar();
 }
-
-// template <class Pixel> void HHPQ<Pixel>::startPushes() { _emptyTop = true; }
-
-// template <class Pixel> void HHPQ<Pixel>::endPushes() {
-//     if (_emptyTop)
-//         pop();
-//     else
-//         _size--;
-// }
 
 template <class Pixel> void HHPQ<Pixel>::push(const ImgIdx &idx, const Pixel &alpha) {
     _size++;
-    // printf("***HHPQ*** Pushing %d at %.2f (_size = %d)\n", idx, (double)alpha, (int)_size);
-
     const QItem<Pixel> newItem(idx, alpha);
 
     if (_curSizeCache == 0) {
@@ -173,11 +161,9 @@ template <class Pixel> void HHPQ<Pixel>::push_queue(const QItem<Pixel> &item, co
 
 template <class Pixel> void HHPQ<Pixel>::pop() {
     if (_size == 0) {
-        // printf("***HHPQ*** POPPING EMPTY QUEUE\n");
         return;
     }
     _size--;
-    // printf("***HHPQ*** pop %d at %.2f (_size = %d)\n", _cache[0].index, (double)_cache[0].alpha, (int)_size);
     bool popLevel = true;
     if (_curSizeCache > 0) {
         // Overwrite _cache[0] and shift cache to the front
