@@ -31,7 +31,7 @@ template <class Pixel> class HierarHeapQueue_HEQ {
     _int16 curSize_list, maxSize_list;
     ImgIdx maxSize_queue, mask_field;
     _int8 shamt, nbit;
-    int emptytop;
+    int _emptyTop;
 
   public:
     void initHQ(ImgIdx *dhist, _uint32 *histeqmap_in, ImgIdx numlevels_in, ImgIdx size, double a_in, int listsize);
@@ -41,9 +41,9 @@ template <class Pixel> class HierarHeapQueue_HEQ {
     ~HierarHeapQueue_HEQ();
 
     void push_1stitem(ImgIdx idx, Pixel alpha);
-    void end_pushes(_uint8 *isVisited);
+    void endPushes(_uint8 *isVisited);
 
-    inline void start_pushes() { emptytop = 1; }
+    inline void startPushes() { _emptyTop = 1; }
     inline Pixel get_minlev() { return list[0].alpha; }
     inline ImgIdx top() { return list[0].pidx; }
     inline Pixel top_alpha() { return list[0].alpha; }
@@ -73,7 +73,7 @@ template <class Pixel> class HierarHeapQueue {
     inline ImgIdx top() { return hqueue[queue_minlev]->top(); }
     inline Pixel top_alpha() { return hqueue[queue_minlev]->top_alpha(); }
     inline void push_1stitem(ImgIdx idx, Pixel alpha) { push_queue(idx, alpha); }
-    inline void end_pushes(_uint8 *isVisited) { pop(isVisited); }
+    inline void endPushes(_uint8 *isVisited) { pop(isVisited); }
     inline void push(ImgIdx idx, Pixel alpha) { push_queue(idx, alpha); }
     void push_queue(ImgIdx idx, Pixel alpha);
 
@@ -82,6 +82,7 @@ template <class Pixel> class HierarHeapQueue {
     void pop_queue(_uint8 *isVisited);
 };
 
+// hhpq
 template <class Pixel> class HierarHeapQueue_cache {
     HQentry<Pixel> *list;
     HeapQueue_naive_quad<Pixel> **hqueue;
@@ -96,7 +97,7 @@ template <class Pixel> class HierarHeapQueue_cache {
     _int16 curSize_list, maxSize_list;
     ImgIdx maxSize_queue, mask_field;
     _int8 shamt, nbit;
-    int emptytop;
+    int _emptyTop;
 
     ImgIdx maxSize;
 
@@ -130,12 +131,12 @@ template <class Pixel> class HierarHeapQueue_cache {
     HierarHeapQueue_cache(ImgIdx *dhist, ImgIdx numlevels_in, ImgIdx size, double a_in, int listsize,
                           ImgIdx connectivity = 4, double r = 0.2);
     ~HierarHeapQueue_cache();
-    inline void start_pushes() { emptytop = 1; }
+    inline void startPushes() { _emptyTop = 1; }
     inline Pixel get_minlev() { return list[0].alpha; }
     inline ImgIdx top() { return list[0].pidx; }
     inline Pixel top_alpha() { return list[0].alpha; }
     void push_1stitem(ImgIdx idx, Pixel alpha);
-    void end_pushes(_uint8 *isVisited);
+    void endPushes(_uint8 *isVisited);
     void push(ImgIdx idx, Pixel alpha);
     void push_queue(ImgIdx idx, Pixel alpha);
     ImgIdx pop(_uint8 *isVisited);
@@ -150,7 +151,7 @@ template <class Pixel> class Cache_Heapqueue {
     _int16 curSize_list, maxSize_list;
     ImgIdx maxSize_queue, mask_field;
     _int8 shamt, nbit;
-    int emptytop;
+    int _emptyTop;
 
     void initHQ(ImgIdx size, size_t listsize);
 
@@ -161,12 +162,12 @@ template <class Pixel> class Cache_Heapqueue {
     Cache_Heapqueue(ImgIdx size, size_t listsize);
     ~Cache_Heapqueue();
 
-    inline void start_pushes() { emptytop = 1; }
+    inline void startPushes() { _emptyTop = 1; }
     inline ImgIdx get_minlev() { return list[0].alpha; }
     inline ImgIdx top() { return list[0].pidx; }
     inline Pixel top_alpha() { return list[0].alpha; }
-    inline void end_pushes() {
-        if (emptytop)
+    inline void endPushes() {
+        if (_emptyTop)
             pop();
     }
     inline void push_queue(ImgIdx idx, Pixel alpha) { hqueue->push(idx, alpha); }
@@ -184,7 +185,7 @@ template <class Pixel> class Cache_Quad_Heapqueue {
     _int16 curSize_list, maxSize_list;
     ImgIdx maxSize_queue, mask_field;
     _int8 shamt, nbit;
-    int emptytop;
+    int _emptyTop;
 
     void initHQ(ImgIdx size, size_t listsize);
 
@@ -195,12 +196,12 @@ template <class Pixel> class Cache_Quad_Heapqueue {
     Cache_Quad_Heapqueue(ImgIdx size, size_t listsize);
     ~Cache_Quad_Heapqueue();
 
-    inline void start_pushes() { emptytop = 1; }
+    inline void startPushes() { _emptyTop = 1; }
     inline Pixel get_minlev() { return list[0].alpha; }
     inline ImgIdx top() { return list[0].pidx; }
     inline Pixel top_alpha() { return list[0].alpha; }
-    inline void end_pushes() {
-        if (emptytop)
+    inline void endPushes() {
+        if (_emptyTop)
             pop();
     }
     inline void push_queue(ImgIdx idx, Pixel alpha) { hqueue->push(idx, alpha); }
@@ -217,7 +218,7 @@ template <class Pixel> class CirCache_Hierqueue {
     ImgIdx minidx_queue;
     _int16 curSize_list, maxSize_list, liststart, mask;
     ImgIdx maxSize_queue, mask_field;
-    int emptytop;
+    int _emptyTop;
     void initHQ(_uint64 qsize_in, ImgIdx *dhist, _int32 numlevels, size_t listsize);
 
   public:
@@ -227,12 +228,12 @@ template <class Pixel> class CirCache_Hierqueue {
     CirCache_Hierqueue(_uint64 qsize_in, ImgIdx *dhist, _int32 numlevels, size_t listsize);
     ~CirCache_Hierqueue();
 
-    inline void start_pushes() { emptytop = 1; }
+    inline void startPushes() { _emptyTop = 1; }
     inline _int32 get_minlev() { return list[liststart].alpha; }
     inline ImgIdx top() { return list[liststart].pidx; }
     inline _int32 top_alpha() { return list[liststart].alpha; }
-    inline void end_pushes() {
-        if (emptytop)
+    inline void endPushes() {
+        if (_emptyTop)
             pop();
     }
     inline void push_queue(ImgIdx idx, _int32 alpha) { hqueue->push(idx, alpha); }
@@ -253,7 +254,7 @@ template <class Pixel> class HierarQueueCache {
     _int16 curSize_list, maxSize_list;
     ImgIdx maxSize_queue, mask_field;
     _int8 shamt, nbit;
-    int emptytop;
+    int _emptyTop;
     void initHQ(_uint64 qsize_in, ImgIdx *dhist, _int32 numlevels, size_t listsize = LISTSIZE_DEFAULT);
 
   public:
@@ -263,12 +264,12 @@ template <class Pixel> class HierarQueueCache {
     HierarQueueCache(_uint64 qsize_in, ImgIdx *dhist, _int32 numlevels, size_t listsize);
     ~HierarQueueCache();
 
-    inline void start_pushes() { emptytop = 1; }
+    inline void startPushes() { _emptyTop = 1; }
     inline _int32 get_minlev() { return list[0].alpha; }
     inline ImgIdx top() { return list[0].pidx; }
     inline _int32 top_alpha() { return list[0].alpha; }
-    inline void end_pushes() {
-        if (emptytop)
+    inline void endPushes() {
+        if (_emptyTop)
             pop();
     }
     inline void push_queue(ImgIdx idx, _int32 alpha) { hqueue->push(idx, alpha); }
@@ -289,7 +290,7 @@ template <class Pixel> class Cache_Hierqueue_l1 {
     _int16 curSize_list, maxSize_list;
     ImgIdx maxSize_queue, mask_field;
     _int8 shamt, nbit;
-    int emptytop;
+    int _emptyTop;
 
     void initHQ(_uint64 qsize_in, ImgIdx *dhist, _int32 numlevels, size_t listsize);
 
@@ -300,12 +301,12 @@ template <class Pixel> class Cache_Hierqueue_l1 {
     Cache_Hierqueue_l1(_uint64 qsize_in, ImgIdx *dhist, _int32 numlevels, size_t listsize);
     ~Cache_Hierqueue_l1();
 
-    inline void start_pushes() { emptytop = 1; }
+    inline void startPushes() { _emptyTop = 1; }
     inline _int32 get_minlev() { return list[0].alpha; }
     inline ImgIdx top() { return list[0].pidx; }
     inline _int32 top_alpha() { return list[0].alpha; }
-    inline void end_pushes() {
-        if (emptytop)
+    inline void endPushes() {
+        if (_emptyTop)
             pop();
     }
     inline void push_queue(ImgIdx idx, _int32 alpha) { hqueue->push(idx, alpha); }
@@ -326,7 +327,7 @@ template <class Pixel> class Cache_Hierqueue_l2 {
     _int16 curSize_list, maxSize_list;
     ImgIdx maxSize_queue, mask_field;
     _int8 shamt, nbit;
-    int emptytop;
+    int _emptyTop;
 
     void initHQ(_uint64 qsize_in, ImgIdx *dhist, _int32 numlevels, size_t listsize);
 
@@ -337,12 +338,12 @@ template <class Pixel> class Cache_Hierqueue_l2 {
     Cache_Hierqueue_l2(_uint64 qsize_in, ImgIdx *dhist, _int32 numlevels, size_t listsize);
     ~Cache_Hierqueue_l2();
 
-    inline void start_pushes() { emptytop = 1; }
+    inline void startPushes() { _emptyTop = 1; }
     inline _int32 get_minlev() { return list[0].alpha; }
     inline ImgIdx top() { return list[0].pidx; }
     inline _int32 top_alpha() { return list[0].alpha; }
-    inline void end_pushes() {
-        if (emptytop)
+    inline void endPushes() {
+        if (_emptyTop)
             pop();
     }
     inline void push_queue(ImgIdx idx, _int32 alpha) { hqueue->push(idx, alpha); }

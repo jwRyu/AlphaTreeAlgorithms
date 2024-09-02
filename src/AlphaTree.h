@@ -68,20 +68,21 @@ template <class Pixel> class AlphaNode {
     double sumPix = 0.0;
     Pixel minPix = std::numeric_limits<Pixel>::max();
     Pixel maxPix = std::numeric_limits<Pixel>::min();
-    ImgIdx parentidx = ROOTIDX;
+    ImgIdx parentIdx = ROOTIDX;
     ImgIdx _rootIdx = ROOTIDX;
 
     AlphaNode() = default;
     AlphaNode(Pixel pixelVal, double alpha_, ImgIdx parentidx_ = ROOTIDX);
     AlphaNode(double alpha_, ImgIdx parentidx_ = ROOTIDX);
 
-    void set(ImgIdx area_in, double level, double sumPix_in, Pixel minPix_in, Pixel maxPix_in);
-    void add(AlphaNode *q);
-    void add(Pixel pix_val);
-    void copy(AlphaNode *q);
-    void connect_to_parent(AlphaNode *pPar, ImgIdx iPar);
-    void print(AlphaNode *node);
-    void print(AlphaNode *node, int heading);
+    inline void set(ImgIdx area_in, double level, double sumPix_in, Pixel minPix_in, Pixel maxPix_in);
+    inline void add(AlphaNode *q);
+    inline void add(const AlphaNode &q);
+    inline void add(const Pixel &pix_val);
+    inline void copy(AlphaNode *q);
+    inline void connect_to_parent(AlphaNode *pPar, ImgIdx iPar);
+    void print(AlphaNode *_node);
+    void print(AlphaNode *_node, int heading);
 };
 
 template <class Pixel> class RankItem {
@@ -102,15 +103,15 @@ template <class Pixel> class AlphaTree {
     ImgIdx _width = 0;
     ImgIdx _channel = 0;
     ImgIdx _connectivity = 0;
-    AlphaNode<Pixel> *node = nullptr;
-    AlphaNode<Pixel> *node_in = nullptr;
+    AlphaNode<Pixel> *_node = nullptr;
+    AlphaNode<Pixel> *_nodeIn = nullptr;
     ImgIdx *_parentAry = nullptr;
     ImgIdx num_node = 0;
     ImgIdx num_node_in = 0;
     ImgIdx _rootIdx = ROOTIDX;
     double nrmsd = 0.0;
 
-    AlphaTree() : _maxSize(0), _curSize(0), node(0), _parentAry(0) {}
+    AlphaTree() : _maxSize(0), _curSize(0), _node(0), _parentAry(0) {}
     ~AlphaTree();
     void clear();
 
@@ -140,6 +141,7 @@ template <class Pixel> class AlphaTree {
     void Flood_Hierarqueue_par(Pixel *img, int numthreads);
     void FloodTrieHypergraph(Pixel *img);
 
+    double maxL2Difference() const;
     Pixel abs_diff(Pixel p, Pixel q);
     _uint8 compute_incidedge_queue(Pixel d0, Pixel d1);
     void compute_dimg_par4(RankItem<double> *&rankitem, Pixel *img, SortValue<double> *&vals);
