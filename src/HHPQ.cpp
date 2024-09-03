@@ -13,9 +13,9 @@ template <class Pixel> ImgIdx HHPQ<Pixel>::alphaToLevel(const double &alpha) con
 
 template <class Pixel>
 HHPQ<Pixel>::HHPQ(ImgIdx *dhist, ImgIdx numLevels_, ImgIdx size, _uint8 *isVisited_, double a_, int cacheSize, double r,
-                  bool *isRedundant_)
+                  _uint8 *edgeStatus_)
     : _numLevels(numLevels_), _a(a_), _lowestNonemptyLevel(numLevels_), _curSizeCache(0), _maxSizeCache(cacheSize),
-      _isVisited(isVisited_), _isRedundant(isRedundant_), _size(0) {
+      _isVisited(isVisited_), _edgeStatus(edgeStatus_), _size(0) {
     initHQ(dhist, size, r);
 }
 
@@ -107,6 +107,8 @@ template <class Pixel> void HHPQ<Pixel>::print() {
 template <class Pixel> void HHPQ<Pixel>::push(const ImgIdx &idx, const Pixel &alpha, ImgIdx edgeIdx) {
     _size++;
     const QItem<Pixel> newItem(idx, alpha, edgeIdx);
+    if (_edgeStatus)
+        _edgeStatus[edgeIdx] = QItem<Pixel>::EDGE_ENQUEUED;
 
     if (_curSizeCache == 0) {
         _curSizeCache++;
@@ -205,8 +207,8 @@ template <class Pixel> bool HHPQ<Pixel>::isFrontLevelEmptyAfterSort() {
         for (ImgIdx p = 0; p < levelSize; p++) {
             if (!_isVisited[level[p].index])
                 pQ->push(level[p]);
-            else if (_isRedundant)
-                _isRedundant[level[p].edgeIdx] = true;
+            else if (_edgeStatus)
+                _edgeStatus[level[p].edgeIdx] = QItem<Pixel>::EDGE_REDUNDANT;
         }
         Free(_unsortedLevels[_lowestNonemptyLevel]);
         _unsortedLevels[_lowestNonemptyLevel] = 0;

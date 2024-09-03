@@ -18,7 +18,8 @@ template <class Pixel> struct QItem {
 
     static constexpr _uint8 EDGE_STANDBY = 0;
     static constexpr _uint8 EDGE_ENQUEUED = 1;
-    static constexpr _uint8 EDGE_CONNECTED = 2;
-    static constexpr _uint8 EDGE_REDUNDANT = 3;
-    static constexpr _uint8 EDGE_ESSENTIAL = 4;
+    static constexpr _uint8 EDGE_DEQUEUED = 2;
+    static constexpr _uint8 EDGE_CONNECTED = 3;
+    static constexpr _uint8 EDGE_REDUNDANT = 4;
+    static constexpr _uint8 EDGE_ESSENTIAL = 5;
 };

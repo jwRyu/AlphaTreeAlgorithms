@@ -24,7 +24,7 @@ template <class Pixel> class HHPQ {
     int _emptyTop = 0;
 
     _uint8 *_isVisited = nullptr;
-    bool *_isRedundant = nullptr;
+    _uint8 *_edgeStatus = nullptr;
 
     ImgIdx _size = 0;
 
@@ -53,7 +53,7 @@ template <class Pixel> class HHPQ {
     /// @param r Percentile of the number of sorted levels in the initial HHPQ setup. Should correlate to the ratio of
     /// redundant edges, but this parameter does not terribly affect the performace. Using default value is recommended.
     HHPQ(ImgIdx *dhist, ImgIdx numLevels_, ImgIdx size, _uint8 *isVisited_, double a_ = 15.0, int cacheSize = 15,
-         double r = 0.2, bool *isRedundant = nullptr);
+         double r = 0.2, _uint8 *edgeStatus_ = nullptr);
     ~HHPQ();
 
     /// @brief Convert alpha value to HHPQ level. Use this outside the class to build the pixel difference histogram

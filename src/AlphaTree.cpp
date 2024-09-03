@@ -209,16 +209,18 @@ template <class Pixel> void AlphaTree<Pixel>::printGraph(_uint8 *isVisited, _uin
         for (int j = 0; j < _width - 1; j++) {
             int imgIdx = i * _width + j;
             int dimgIdx = imgIdx * 2 + 1;
-            if (edge == 0 || edge[dimgIdx] == 0)
+            if (edge == 0 || edge[dimgIdx] == QItem<Pixel>::EDGE_STANDBY)
                 printf("%d   ", (int)isVisited[imgIdx]);
-            else if (edge[dimgIdx] == 1)
+            else if (edge[dimgIdx] == QItem<Pixel>::EDGE_ENQUEUED)
                 printf("%d . ", (int)isVisited[imgIdx]);
-            else if (edge[dimgIdx] == 2)
-                printf("%d - ", (int)isVisited[imgIdx]);
-            else if (edge[dimgIdx] == 3)
-                printf("%d x ", (int)isVisited[imgIdx]);
-            else if (edge[dimgIdx] == 4)
+            else if (edge[dimgIdx] == QItem<Pixel>::EDGE_DEQUEUED)
                 printf("%d ^ ", (int)isVisited[imgIdx]);
+            else if (edge[dimgIdx] == QItem<Pixel>::EDGE_CONNECTED)
+                printf("%d - ", (int)isVisited[imgIdx]);
+            else if (edge[dimgIdx] == QItem<Pixel>::EDGE_REDUNDANT)
+                printf("%d x ", (int)isVisited[imgIdx]);
+            else if (edge[dimgIdx] == QItem<Pixel>::EDGE_ESSENTIAL)
+                printf("%d * ", (int)isVisited[imgIdx]);
             else
                 printf("%d ? ", (int)isVisited[imgIdx]);
         }
@@ -233,16 +235,18 @@ template <class Pixel> void AlphaTree<Pixel>::printGraph(_uint8 *isVisited, _uin
         for (int j = 0; j < _width; j++) {
             int imgIdx = i * _width + j;
             int dimgIdx = imgIdx * 2;
-            if (edge == 0 || edge[dimgIdx] == 0)
+            if (edge == 0 || edge[dimgIdx] == QItem<Pixel>::EDGE_STANDBY)
                 printf("    ");
-            else if (edge[dimgIdx] == 1)
+            else if (edge[dimgIdx] == QItem<Pixel>::EDGE_ENQUEUED)
                 printf(".   ");
-            else if (edge[dimgIdx] == 2)
-                printf("-   ");
-            else if (edge[dimgIdx] == 3)
-                printf("x   ");
-            else if (edge[dimgIdx] == 4)
+            else if (edge[dimgIdx] == QItem<Pixel>::EDGE_DEQUEUED)
                 printf("^   ");
+            else if (edge[dimgIdx] == QItem<Pixel>::EDGE_CONNECTED)
+                printf("|   ");
+            else if (edge[dimgIdx] == QItem<Pixel>::EDGE_REDUNDANT)
+                printf("x   ");
+            else if (edge[dimgIdx] == QItem<Pixel>::EDGE_ESSENTIAL)
+                printf("*   ");
             else
                 printf("?   ");
         }
@@ -252,16 +256,18 @@ template <class Pixel> void AlphaTree<Pixel>::printGraph(_uint8 *isVisited, _uin
     for (int j = 0; j < _width - 1; j++) {
         int imgIdx = (_height - 1) * _width + j;
         int dimgIdx = imgIdx * 2 + 1;
-        if (edge == 0 || edge[dimgIdx] == 0)
+        if (edge == 0 || edge[dimgIdx] == QItem<Pixel>::EDGE_STANDBY)
             printf("%d   ", (int)isVisited[imgIdx]);
-        else if (edge[dimgIdx] == 1)
+        else if (edge[dimgIdx] == QItem<Pixel>::EDGE_ENQUEUED)
             printf("%d . ", (int)isVisited[imgIdx]);
-        else if (edge[dimgIdx] == 2)
-            printf("%d - ", (int)isVisited[imgIdx]);
-        else if (edge[dimgIdx] == 3)
-            printf("%d x ", (int)isVisited[imgIdx]);
-        else if (edge[dimgIdx] == 4)
+        else if (edge[dimgIdx] == QItem<Pixel>::EDGE_DEQUEUED)
             printf("%d ^ ", (int)isVisited[imgIdx]);
+        else if (edge[dimgIdx] == QItem<Pixel>::EDGE_CONNECTED)
+            printf("%d - ", (int)isVisited[imgIdx]);
+        else if (edge[dimgIdx] == QItem<Pixel>::EDGE_REDUNDANT)
+            printf("%d x ", (int)isVisited[imgIdx]);
+        else if (edge[dimgIdx] == QItem<Pixel>::EDGE_ESSENTIAL)
+            printf("%d * ", (int)isVisited[imgIdx]);
         else
             printf("%d ? ", (int)isVisited[imgIdx]);
     }
@@ -2905,12 +2911,12 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
 
     ImgIdx *dhist = (ImgIdx *)Calloc((size_t)numLevels * sizeof(ImgIdx));
     Pixel *dimg = (Pixel *)Malloc((size_t)dimgSize * sizeof(Pixel));
-    bool *isRedundant = (bool *)Calloc((size_t)dimgSize * sizeof(bool));
+    _uint8 *edgeStatus = (_uint8 *)Calloc((size_t)dimgSize * sizeof(_uint8));
 
     compute_dimg(dimg, dhist, img, a); // Calculate pixel differences and make histogram
 
     _uint8 *isVisited = (_uint8 *)Calloc((size_t)((imgSize)));
-    HHPQ<Pixel> *queue = new HHPQ<Pixel>(dhist, numLevels, nredges, isVisited, a, listsize, r, isRedundant);
+    HHPQ<Pixel> *queue = new HHPQ<Pixel>(dhist, numLevels, nredges, isVisited, a, listsize, r, edgeStatus);
 
     _curSize = 0;
     _maxSize = 1 + imgSize + dimgSize;
@@ -2940,19 +2946,19 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
             currentLevel = queue->front().alpha;
             queue->pop();
             if (isVisited[p]) {
-                isRedundant[eIdx] = true;
+                edgeStatus[eIdx] = QItem<Pixel>::EDGE_REDUNDANT;
                 printVisit(p, currentLevel);
                 queue->print();
-                printAll(isVisited, isRedundant, img);
-                printf("PIIEEP PEIIIEP PIEEEEP\n");
+                printAll(isVisited, edgeStatus, img);
                 std::getchar();
                 continue;
             }
+            edgeStatus[eIdx] = QItem<Pixel>::EDGE_CONNECTED;
 
             isVisited[p] = 1;
             printVisit(p, currentLevel);
             queue->print();
-            printAll(isVisited, isRedundant, img);
+            printAll(isVisited, edgeStatus, img);
             std::getchar();
 
             auto isAv = isAvailable[p];
@@ -2984,6 +2990,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
             if (currentLevel > queue->front().alpha) // go to lower level
             {
                 currentLevel = queue->front().alpha;
+                edgeStatus[queue->front().edgeIdx] = QItem<Pixel>::EDGE_CONNECTED;
                 const ImgIdx newNodeIdx = _curSize++;
                 _node[newNodeIdx] = AlphaNode<Pixel>(img[p], queue->front().alpha, stackTop);
                 prevTop = stackTop;
@@ -3034,7 +3041,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
 
         // printVisit(p, currentLevel);
         queue->print();
-        printAll(isVisited, isRedundant, img);
+        printAll(isVisited, edgeStatus, img);
         std::getchar();
     }
     _rootIdx = _node[prevTop].area == imgSize ? prevTop : stackTop;
@@ -3042,7 +3049,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
 
     delete queue;
     Free(dimg);
-    Free(isRedundant);
+    Free(edgeStatus);
     Free(isVisited);
     Free(isAvailable);
 }
