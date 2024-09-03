@@ -104,9 +104,9 @@ template <class Pixel> void HHPQ<Pixel>::print() {
     printf("---------- HHPQ<Pixel>::print END -------------\n");
 }
 
-template <class Pixel> void HHPQ<Pixel>::push(const ImgIdx &idx, const Pixel &alpha) {
+template <class Pixel> void HHPQ<Pixel>::push(const ImgIdx &idx, const Pixel &alpha, ImgIdx edgeIdx) {
     _size++;
-    const QItem<Pixel> newItem(idx, alpha);
+    const QItem<Pixel> newItem(idx, alpha, edgeIdx);
 
     if (_curSizeCache == 0) {
         _curSizeCache++;
@@ -203,11 +203,10 @@ template <class Pixel> bool HHPQ<Pixel>::isFrontLevelEmptyAfterSort() {
         const ImgIdx levelSize = _unsortedLevelSizes[_lowestNonemptyLevel];
         QuadHeapQueue<Pixel> *pQ = _sortedLevels[_lowestNonemptyLevel];
         for (ImgIdx p = 0; p < levelSize; p++) {
-            if (!_isVisited[level[p].index]) {
+            if (!_isVisited[level[p].index])
                 pQ->push(level[p]);
-                if (_isRedundant)
-                    _isRedundant[level[p].edgeIdx] = true;
-            }
+            else if (_isRedundant)
+                _isRedundant[level[p].edgeIdx] = true;
         }
         Free(_unsortedLevels[_lowestNonemptyLevel]);
         _unsortedLevels[_lowestNonemptyLevel] = 0;

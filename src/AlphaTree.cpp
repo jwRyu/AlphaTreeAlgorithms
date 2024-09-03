@@ -2941,37 +2941,41 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
             queue->pop();
             if (isVisited[p]) {
                 isRedundant[eIdx] = true;
+                printVisit(p, currentLevel);
+                queue->print();
+                printAll(isVisited, isRedundant, img);
                 printf("PIIEEP PEIIIEP PIEEEEP\n");
                 std::getchar();
                 continue;
             }
 
+            isVisited[p] = 1;
             printVisit(p, currentLevel);
+            queue->print();
             printAll(isVisited, isRedundant, img);
             std::getchar();
-            isVisited[p] = 1;
 
             auto isAv = isAvailable[p];
             if (_connectivity == 4) {
                 const ImgIdx q = p << 1;
                 // clang-format off
-                if (is_available(isAv, 0) && !isVisited[p + _width])    queue->push(p + _width, dimg[q]);
-                if (is_available(isAv, 1) && !isVisited[p + 1])         queue->push(p + 1, dimg[q + 1]);
-                if (is_available(isAv, 2) && !isVisited[p - 1])         queue->push(p - 1, dimg[q - 1]);
-                if (is_available(isAv, 3) && !isVisited[p - _width])    queue->push(p - _width, dimg[q - (_width << 1)]);
+                if (is_available(isAv, 0) && !isVisited[p + _width])    queue->push(p + _width, dimg[q], q);
+                if (is_available(isAv, 1) && !isVisited[p + 1])         queue->push(p + 1, dimg[q + 1], q + 1);
+                if (is_available(isAv, 2) && !isVisited[p - 1])         queue->push(p - 1, dimg[q - 1], q - 1);
+                if (is_available(isAv, 3) && !isVisited[p - _width])    queue->push(p - _width, dimg[q - (_width << 1)], q - (_width << 1));
                 // clang-format on
             } else if (_connectivity == 8) {
                 const ImgIdx width4 = _width << 2;
                 const ImgIdx q = p << 2;
                 // clang-format off
-                if (is_available(isAv, 0) && !isVisited[p + _width])        queue->push(p + _width, dimg[q]);
-                if (is_available(isAv, 1) && !isVisited[p + _width + 1])    queue->push(p + _width + 1, dimg[q + 1]);
-                if (is_available(isAv, 2) && !isVisited[p + 1])             queue->push(p + 1, dimg[q + 2]);
-                if (is_available(isAv, 3) && !isVisited[p - _width + 1])    queue->push(p - _width + 1, dimg[q + 3]);
-                if (is_available(isAv, 4) && !isVisited[p - _width])        queue->push(p - _width, dimg[q - width4]);
-                if (is_available(isAv, 5) && !isVisited[p - _width - 1])    queue->push(p - _width - 1, dimg[q - width4 - 3]);
-                if (is_available(isAv, 6) && !isVisited[p - 1])             queue->push(p - 1, dimg[q - 2]);
-                if (is_available(isAv, 7) && !isVisited[p + _width - 1])    queue->push(p + _width - 1, dimg[q + width4 - 1]);
+                if (is_available(isAv, 0) && !isVisited[p + _width])        queue->push(p + _width, dimg[q], q);
+                if (is_available(isAv, 1) && !isVisited[p + _width + 1])    queue->push(p + _width + 1, dimg[q + 1], q + 1);
+                if (is_available(isAv, 2) && !isVisited[p + 1])             queue->push(p + 1, dimg[q + 2], q + 2);
+                if (is_available(isAv, 3) && !isVisited[p - _width + 1])    queue->push(p - _width + 1, dimg[q + 3], q + 3);
+                if (is_available(isAv, 4) && !isVisited[p - _width])        queue->push(p - _width, dimg[q - width4], q - width4);
+                if (is_available(isAv, 5) && !isVisited[p - _width - 1])    queue->push(p - _width - 1, dimg[q - width4 - 3], q - width4 - 3);
+                if (is_available(isAv, 6) && !isVisited[p - 1])             queue->push(p - 1, dimg[q - 2], q - 2);
+                if (is_available(isAv, 7) && !isVisited[p + _width - 1])    queue->push(p + _width - 1, dimg[q + width4 - 1], q + width4 - 1);
                 // clang-format on
             } else {
                 //?
@@ -3027,6 +3031,9 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
             stackTop = newParentIdx;
             currentLevel = _node[stackTop].alpha;
         }
+
+        // printVisit(p, currentLevel);
+        queue->print();
         printAll(isVisited, isRedundant, img);
         std::getchar();
     }

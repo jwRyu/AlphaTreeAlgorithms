@@ -83,7 +83,7 @@ template <class Pixel> class HHPQ {
     /// @brief Push an item into HHPQ
     /// @param idx Index element of the new item
     /// @param alpha Alpha element of the new item
-    void push(const ImgIdx &idx, const Pixel &alpha = std::numeric_limits<Pixel>::max());
+    void push(const ImgIdx &idx, const Pixel &alpha = std::numeric_limits<Pixel>::max(), ImgIdx edgeIdx = -1);
 
     /// @brief Check if the queue is empty
     /// @return True if the queue is empty

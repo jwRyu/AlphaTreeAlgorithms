@@ -15,4 +15,10 @@ template <class Pixel> struct QItem {
     bool operator<(const QItem &other) const { return alpha < other.alpha; }
     bool operator<=(const QItem &other) const { return alpha <= other.alpha; }
     void print() { printf("(%d, %.2f) ", (int)index, (double)alpha); }
+
+    static constexpr _uint8 EDGE_STANDBY = 0;
+    static constexpr _uint8 EDGE_ENQUEUED = 1;
+    static constexpr _uint8 EDGE_CONNECTED = 2;
+    static constexpr _uint8 EDGE_REDUNDANT = 3;
+    static constexpr _uint8 EDGE_ESSENTIAL = 4;
 };
