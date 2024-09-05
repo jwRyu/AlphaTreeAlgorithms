@@ -6,10 +6,10 @@
 #include <cstdio>
 #include <defines.h>
 
-template <class Pixel> class HHPQ {
-    QItem<Pixel> *_cache = nullptr;
-    QuadHeapQueue<Pixel> **_sortedLevels = nullptr;
-    QItem<Pixel> **_unsortedLevels = nullptr;
+class HHPQ {
+    QItem *_cache = nullptr;
+    QuadHeapQueue **_sortedLevels = nullptr;
+    QItem **_unsortedLevels = nullptr;
     ImgIdx *_unsortedLevelSizes = nullptr;
     ImgIdx *_levelMaxSizes = nullptr;
 
@@ -30,9 +30,9 @@ template <class Pixel> class HHPQ {
 
     bool isFrontLevelEmptyAfterSort();
     void pop_queue();
-    const QItem<Pixel> &cacheBack() { return _cache[_curSizeCache - 1]; }
+    const QItem &cacheBack() { return _cache[_curSizeCache - 1]; }
 
-    void push_queue(const QItem<Pixel> &item, const ImgIdx &level);
+    void push_queue(const QItem &item, const ImgIdx &level);
 
     void initHQ(ImgIdx *dhist, ImgIdx size, double r);
 
@@ -78,12 +78,12 @@ template <class Pixel> class HHPQ {
 
     /// @brief Get the top item of the queue
     /// @return Const reference of the top item. The behavior is undefined if the queue was empty
-    const QItem<Pixel> &front() const { return _cache[0]; }
+    const QItem &front() const { return _cache[0]; }
 
     /// @brief Push an item into HHPQ
     /// @param idx Index element of the new item
     /// @param alpha Alpha element of the new item
-    void push(const ImgIdx &idx, const Pixel &alpha = std::numeric_limits<Pixel>::max(), ImgIdx edgeIdx = -1);
+    void push(const ImgIdx &idx, const double &alpha = std::numeric_limits<double>::infinity(), ImgIdx edgeIdx = -1);
 
     /// @brief Check if the queue is empty
     /// @return True if the queue is empty

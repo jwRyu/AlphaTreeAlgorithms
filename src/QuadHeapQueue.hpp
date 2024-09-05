@@ -2,11 +2,11 @@
 #include <QItem.hpp>
 #include <defines.h>
 
-template <class Pixel> class QuadHeapQueue {
+class QuadHeapQueue {
     ImgIdx cursize;
     ImgIdx maxsize;
-    QItem<Pixel> *arr;
-    Pixel pop_level;
+    QItem *arr;
+    double pop_level;
 
   public:
     ImgIdx get_cursize() { return cursize; }
@@ -20,6 +20,6 @@ template <class Pixel> class QuadHeapQueue {
     void print();
 
     ImgIdx pop();
-    void push(QItem<Pixel> item);
-    inline const QItem<Pixel> &top() const { return arr[1]; }
+    void push(QItem item);
+    inline const QItem &top() const { return arr[1]; }
 };

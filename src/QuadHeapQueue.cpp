@@ -2,27 +2,22 @@
 #include <allocator.h>
 #include <cfloat>
 
-template <class Pixel> QuadHeapQueue<Pixel>::QuadHeapQueue(ImgIdx maxsize_in) : cursize(0), maxsize(maxsize_in) {
-    arr = (QItem<Pixel> *)Malloc(sizeof(QItem<Pixel>) * (maxsize + 2));
-    if ((Pixel)-1 > (Pixel)1)
-        arr[1].alpha = (Pixel)-1;
-    else if (sizeof(Pixel) == 8)
-        arr[1].alpha = DBL_MAX;
-    else
-        arr[1].alpha = FLT_MAX;
+QuadHeapQueue::QuadHeapQueue(ImgIdx maxsize_in) : cursize(0), maxsize(maxsize_in) {
+    arr = (QItem *)Malloc(sizeof(QItem) * (maxsize + 2));
+    arr[1].alpha = DBL_MAX;
 }
 
-template <class Pixel> void QuadHeapQueue<Pixel>::print() {
+void QuadHeapQueue::print() {
     for (int i = 0; i < cursize; i++)
         arr[i + 1].print();
     printf("\n");
 }
 
-template <class Pixel> QuadHeapQueue<Pixel>::~QuadHeapQueue() { Free(arr); }
+QuadHeapQueue::~QuadHeapQueue() { Free(arr); }
 
-template <class Pixel> ImgIdx QuadHeapQueue<Pixel>::pop() {
+ImgIdx QuadHeapQueue::pop() {
     const ImgIdx outval = arr[1].index;
-    const QItem<Pixel> &lastItem = arr[cursize];
+    const QItem &lastItem = arr[cursize];
     cursize--;
     if (cursize == 0)
         return 0;
@@ -65,7 +60,7 @@ template <class Pixel> ImgIdx QuadHeapQueue<Pixel>::pop() {
     return outval;
 }
 
-template <class Pixel> void QuadHeapQueue<Pixel>::push(QItem<Pixel> item) {
+void QuadHeapQueue::push(QItem item) {
     cursize++;
     ImgIdx current = cursize;
     ImgIdx next = (current + 2) >> 2;
@@ -76,10 +71,3 @@ template <class Pixel> void QuadHeapQueue<Pixel>::push(QItem<Pixel> item) {
     }
     arr[current] = item;
 }
-
-template class QuadHeapQueue<_uint8>;
-template class QuadHeapQueue<_uint16>;
-template class QuadHeapQueue<_uint32>;
-template class QuadHeapQueue<_uint64>;
-template class QuadHeapQueue<float>;
-template class QuadHeapQueue<double>;

@@ -9,6 +9,7 @@
 #include "radixsort_teeninga/sort/radix_sort_parallel.h"
 #include "radixsort_teeninga/sort/sort_item.h"
 #include "walltime.h"
+#include <PixelDissimilarity.hpp>
 #include <cassert>
 #include <cfloat>
 #include <cmath>
@@ -115,8 +116,9 @@ template <class Pixel> class AlphaTree {
     ~AlphaTree();
     void clear();
 
-    void BuildAlphaTree(Pixel *img, int height_in, int width_in, int channel_in, int connectivity_in, int algorithm,
-                        int numthreads, int tse, double fparam1 = 0.0, double fparam2 = 0.0, int iparam1 = 0);
+    void BuildAlphaTree(Pixel *img, int height_in, int width_in, int channel_in, std::string dMetric,
+                        int connectivity_in, int algorithm, int numthreads, int tse, double fparam1 = 0.0,
+                        double fparam2 = 0.0, int iparam1 = 0);
 
     void AlphaFilter(double *outimg, double alpha);
     void AreaFilter(double *outimg, double area);
@@ -130,6 +132,8 @@ template <class Pixel> class AlphaTree {
     void printVisit(ImgIdx p, double q) const;
 
   private:
+    PixelDissimilarity<Pixel> _pixelDissim;
+
     void Unionfind(Pixel *img);
     void FloodHierarQueueNoCache(Pixel *img, int tse);
     void FloodHeapQueueNoCache(Pixel *img);
@@ -144,6 +148,7 @@ template <class Pixel> class AlphaTree {
     void Flood_Hierarqueue_par(Pixel *img, int numthreads);
     void FloodTrieHypergraph(Pixel *img);
 
+    void compute_dimg_par_hhpq(double *dimg, ImgIdx *dhist, Pixel *img, double a, _uint8 *edgeStatus);
     double maxL2Difference() const;
     Pixel abs_diff(Pixel p, Pixel q);
     _uint8 compute_incidedge_queue(Pixel d0, Pixel d1);
