@@ -1204,17 +1204,21 @@ template <class Pixel> void AlphaTree<Pixel>::compute_dimg_hhpq(double *dimg, Im
 
 template <class Pixel>
 void AlphaTree<Pixel>::compute_dimg_hhpq_par(double *dimg, ImgIdx *dhist, Pixel *img, double a, _uint8 *edgeStatus) {
+
     if (_connectivity == 4) {
+#pragma omp parallel for
         for (ImgIdx i = 0; i < _height; i++) {
             for (ImgIdx j = 0; j < _width; j++) {
                 const ImgIdx imgidx = i * _width + j;
                 const ImgIdx dimgidx = imgidx * (_connectivity / 2);
                 if (i < _height - 1) {
                     dimg[dimgidx] = _pixelDissim.computeDissimilarity(imgidx, imgidx + _width);
+#pragma omp atomic
                     dhist[HHPQ::alphaToLevel(dimg[dimgidx], a)]++;
                 }
                 if (j < _width - 1) {
                     dimg[dimgidx + 1] = _pixelDissim.computeDissimilarity(imgidx, imgidx + 1);
+#pragma omp atomic
                     dhist[HHPQ::alphaToLevel(dimg[dimgidx + 1], a)]++;
                 }
             }
@@ -1224,6 +1228,7 @@ void AlphaTree<Pixel>::compute_dimg_hhpq_par(double *dimg, ImgIdx *dhist, Pixel 
         //   -  p  2
         //   -  0  1
         // top,middle
+#pragma omp parallel for
         for (ImgIdx i = 0; i < _height; i++) {
             const bool top = i > 0;
             const bool bottom = i < _height - 1;
@@ -1233,18 +1238,22 @@ void AlphaTree<Pixel>::compute_dimg_hhpq_par(double *dimg, ImgIdx *dhist, Pixel 
                 const ImgIdx dimgidx = imgidx * (_connectivity / 2);
                 if (bottom) {
                     dimg[dimgidx] = _pixelDissim.computeDissimilarity(imgidx, imgidx + _width);
+#pragma omp atomic
                     dhist[HHPQ::alphaToLevel(dimg[dimgidx], a)]++;
                 }
                 if (bottom && right) {
                     dimg[dimgidx + 1] = _pixelDissim.computeDissimilarity(imgidx, imgidx + _width + 1);
+#pragma omp atomic
                     dhist[HHPQ::alphaToLevel(dimg[dimgidx + 1], a)]++;
                 }
                 if (right) {
                     dimg[dimgidx + 2] = _pixelDissim.computeDissimilarity(imgidx, imgidx + 1);
+#pragma omp atomic
                     dhist[HHPQ::alphaToLevel(dimg[dimgidx + 2], a)]++;
                 }
                 if (top && right) {
                     dimg[dimgidx + 3] = _pixelDissim.computeDissimilarity(imgidx, imgidx - _width + 1);
+#pragma omp atomic
                     dhist[HHPQ::alphaToLevel(dimg[dimgidx + 3], a)]++;
                 }
             }
