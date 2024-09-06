@@ -1140,9 +1140,70 @@ void AlphaTree<Pixel>::compute_dimg(ImgIdx &minidx, double &mindiff, Pixel *dimg
     }
 }
 
-// convert difference values from Pixel to double
+template <class Pixel> void AlphaTree<Pixel>::compute_dimg_hhpq(double *dimg, ImgIdx *dhist, Pixel *img, double a) {
+    ImgIdx imgidx = 0;
+    ImgIdx dimgidx = 0;
+    if (_connectivity == 4) {
+        for (ImgIdx i = 0; i < _height - 1; i++) {
+            for (ImgIdx j = 0; j < _width - 1; j++) {
+                dimg[dimgidx] = _pixelDissim.computeDissimilarity(imgidx, imgidx + _width);
+                dhist[HHPQ::alphaToLevel(dimg[dimgidx++], a)]++;
+                dimg[dimgidx] = _pixelDissim.computeDissimilarity(imgidx, imgidx + 1);
+                dhist[HHPQ::alphaToLevel(dimg[dimgidx++], a)]++;
+                imgidx++;
+            }
+            dimg[dimgidx] = _pixelDissim.computeDissimilarity(imgidx, imgidx + _width);
+            dhist[HHPQ::alphaToLevel(dimg[dimgidx++], a)]++;
+            dimgidx++;
+            imgidx++;
+        }
+        for (ImgIdx j = 0; j < _width - 1; j++) {
+            dimgidx++;
+            dimg[dimgidx] = _pixelDissim.computeDissimilarity(imgidx, imgidx + 1);
+            dhist[HHPQ::alphaToLevel(dimg[dimgidx++], a)]++;
+            imgidx++;
+        }
+    } else if (_connectivity == 8) {
+        //   -  -  3
+        //   -  p  2
+        //   -  0  1
+        // top,middle
+        for (ImgIdx i = 0; i < _height - 1; i++) {
+            for (ImgIdx j = 0; j < _width - 1; j++) {
+                dimg[dimgidx] = _pixelDissim.computeDissimilarity(imgidx, imgidx + _width);
+                dhist[HHPQ::alphaToLevel(dimg[dimgidx++], a)]++;
+                dimg[dimgidx] = _pixelDissim.computeDissimilarity(imgidx, imgidx + _width + 1);
+                dhist[HHPQ::alphaToLevel(dimg[dimgidx++], a)]++;
+                dimg[dimgidx] = _pixelDissim.computeDissimilarity(imgidx, imgidx + 1);
+                dhist[HHPQ::alphaToLevel(dimg[dimgidx++], a)]++;
+                if (i > 0) {
+                    dimg[dimgidx] = _pixelDissim.computeDissimilarity(imgidx, imgidx - _width + 1);
+                    dhist[HHPQ::alphaToLevel(dimg[dimgidx], a)]++;
+                }
+                dimgidx++;
+                imgidx++;
+            }
+            dimg[dimgidx] = _pixelDissim.computeDissimilarity(imgidx, imgidx + _width);
+            dhist[HHPQ::alphaToLevel(dimg[dimgidx], a)]++;
+            dimgidx += 4;
+            imgidx++;
+        }
+
+        // bottom
+        dimgidx += 2; // skip 0,1
+        for (ImgIdx j = 0; j < _width - 1; j++) {
+            dimg[dimgidx] = _pixelDissim.computeDissimilarity(imgidx, imgidx + 1);
+            dhist[HHPQ::alphaToLevel(dimg[dimgidx++], a)]++;
+            dimg[dimgidx] = _pixelDissim.computeDissimilarity(imgidx, imgidx - _width + 1);
+            dhist[HHPQ::alphaToLevel(dimg[dimgidx], a)]++;
+            dimgidx += 3;
+            imgidx++;
+        }
+    }
+}
+
 template <class Pixel>
-void AlphaTree<Pixel>::compute_dimg_par_hhpq(double *dimg, ImgIdx *dhist, Pixel *img, double a, _uint8 *edgeStatus) {
+void AlphaTree<Pixel>::compute_dimg_hhpq_par(double *dimg, ImgIdx *dhist, Pixel *img, double a, _uint8 *edgeStatus) {
     ImgIdx imgidx = 0;
     ImgIdx dimgidx = 0;
     if (_connectivity == 4) {
@@ -2841,16 +2902,6 @@ FLOOD_END:
     Free(isAvailable);
 }
 
-template <class Pixel> double AlphaTree<Pixel>::maxL2Difference() const {
-    assert(_channel > 0 && _channel < 256);
-    const double maxDiffPerChannel = (double)std::numeric_limits<Pixel>::max();
-    double maxL2Diff = 0.0;
-    for (int ch = 0; ch < _channel; ch++)
-        maxL2Diff += maxDiffPerChannel * maxDiffPerChannel;
-    maxL2Diff = maxL2Diff / _channel;
-    return std::sqrt(maxL2Diff);
-}
-
 template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueue(Pixel *img, double a, double r, int listsize) {
     assert(_connectivity == 4 || _connectivity == 8 || _connectivity == 12);
     clear();
@@ -2858,14 +2909,14 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueue(Pixel *img, d
     const ImgIdx nredges = _width * (_height - 1) + (_width - 1) * _height +
                            ((_connectivity == 8) ? ((_width - 1) * (_height - 1) * 2) : 0);
     const ImgIdx dimgSize = (1 + (_connectivity >> 1)) * _width * _height;
-    const double alphaMax = maxL2Difference();
+    const double alphaMax = _pixelDissim.maximumDissmilarity();
     const _uint64 numLevels = HHPQ::alphaToLevel((double)alphaMax, a);
     assert(numLevels < 10e3); // More than 10k levels is unrealistic and expensive
 
     ImgIdx *dhist = (ImgIdx *)Calloc((size_t)numLevels * sizeof(ImgIdx));
-    Pixel *dimg = (Pixel *)Malloc((size_t)dimgSize * sizeof(Pixel));
+    double *dimg = (double *)Calloc((size_t)dimgSize * sizeof(double));
 
-    compute_dimg(dimg, dhist, img, a); // Calculate pixel differences and make histogram
+    compute_dimg_hhpq(dimg, dhist, img, a); // Calculate pixel differences and make histogram
 
     _uint8 *isVisited = (_uint8 *)Calloc((size_t)((imgSize)));
     HHPQ *queue = new HHPQ(dhist, numLevels, nredges, isVisited, a, listsize, r);
@@ -3007,7 +3058,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
     double *dimg = (double *)Malloc((size_t)dimgSize * sizeof(double));
     _uint8 *edgeStatus = (_uint8 *)Calloc((size_t)dimgSize * sizeof(_uint8));
 
-    compute_dimg_par_hhpq(dimg, dhist, img, a, edgeStatus); // Calculate pixel differences and make histogram
+    compute_dimg_hhpq_par(dimg, dhist, img, a, edgeStatus); // Calculate pixel differences and make histogram
 
     _uint8 *isVisited = (_uint8 *)Calloc((size_t)((imgSize)));
     HHPQ *queue = new HHPQ(dhist, numLevels, nredges, isVisited, a, listsize, r, edgeStatus);
@@ -3028,12 +3079,10 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
 
     ImgIdx stackTop = _curSize++; // Dummy root with maximum possible alpha
     double currentLevel = std::numeric_limits<double>::infinity();
-    printf("currentLevel = %f\n", currentLevel);
     _node[stackTop] = AlphaNode<Pixel>(currentLevel);
     ImgIdx startingPixel = 0; // Arbitrary starting point
     ImgIdx prevTop = stackTop;
     queue->push(startingPixel, currentLevel);
-    printf("queueFront = %f\n", queue->front().alpha);
 
     int threadIdx = 0;
 
@@ -3047,19 +3096,20 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
                 queue->pop();
                 if (isVisited[p]) {
                     edgeStatus[eIdx] = QItem::EDGE_REDUNDANT;
-                    printVisit(p, currentLevel);
-                    queue->print();
-                    printAll(isVisited, edgeStatus, img);
-                    std::getchar();
+
+                    // printVisit(p, currentLevel);
+                    // queue->print();
+                    // printAll(isVisited, edgeStatus, img);
+                    // std::getchar();
                     continue;
                 }
                 edgeStatus[eIdx] = QItem::EDGE_CONNECTED;
 
                 isVisited[p] = 1;
-                printVisit(p, currentLevel);
-                queue->print();
-                printAll(isVisited, edgeStatus, img);
-                std::getchar();
+                // printVisit(p, currentLevel);
+                // queue->print();
+                // printAll(isVisited, edgeStatus, img);
+                // std::getchar();
 
                 auto isAv = isAvailable[p];
                 if (_connectivity == 4) {
@@ -3140,15 +3190,15 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
             }
 
             // printVisit(p, currentLevel);
-            queue->print();
-            printAll(isVisited, edgeStatus, img);
-            std::getchar();
+            // queue->print();
+            // printAll(isVisited, edgeStatus, img);
+            // std::getchar();
         }
         _rootIdx = _node[prevTop].area == imgSize ? prevTop : stackTop;
         _node[_rootIdx].parentIdx = ROOTIDX;
     }
 
-    printTree();
+    // printTree();
 
     delete queue;
     Free(dimg);

@@ -148,8 +148,8 @@ template <class Pixel> class AlphaTree {
     void Flood_Hierarqueue_par(Pixel *img, int numthreads);
     void FloodTrieHypergraph(Pixel *img);
 
-    void compute_dimg_par_hhpq(double *dimg, ImgIdx *dhist, Pixel *img, double a, _uint8 *edgeStatus);
-    double maxL2Difference() const;
+    void compute_dimg_hhpq(double *dimg, ImgIdx *dhist, Pixel *img, double a);
+    void compute_dimg_hhpq_par(double *dimg, ImgIdx *dhist, Pixel *img, double a, _uint8 *edgeStatus);
     Pixel abs_diff(Pixel p, Pixel q);
     _uint8 compute_incidedge_queue(Pixel d0, Pixel d1);
     void compute_dimg_par4(RankItem<double> *&rankitem, Pixel *img, SortValue<double> *&vals);
