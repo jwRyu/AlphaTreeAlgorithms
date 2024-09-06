@@ -1204,63 +1204,50 @@ template <class Pixel> void AlphaTree<Pixel>::compute_dimg_hhpq(double *dimg, Im
 
 template <class Pixel>
 void AlphaTree<Pixel>::compute_dimg_hhpq_par(double *dimg, ImgIdx *dhist, Pixel *img, double a, _uint8 *edgeStatus) {
-    ImgIdx imgidx = 0;
-    ImgIdx dimgidx = 0;
     if (_connectivity == 4) {
-        for (ImgIdx i = 0; i < _height - 1; i++) {
-            for (ImgIdx j = 0; j < _width - 1; j++) {
-                dimg[dimgidx] = _pixelDissim.computeDissimilarity(imgidx, imgidx + _width);
-                dhist[HHPQ::alphaToLevel(dimg[dimgidx++], a)]++;
-                dimg[dimgidx] = _pixelDissim.computeDissimilarity(imgidx, imgidx + 1);
-                dhist[HHPQ::alphaToLevel(dimg[dimgidx++], a)]++;
-                imgidx++;
+        for (ImgIdx i = 0; i < _height; i++) {
+            for (ImgIdx j = 0; j < _width; j++) {
+                const ImgIdx imgidx = i * _width + j;
+                const ImgIdx dimgidx = imgidx * (_connectivity / 2);
+                if (i < _height - 1) {
+                    dimg[dimgidx] = _pixelDissim.computeDissimilarity(imgidx, imgidx + _width);
+                    dhist[HHPQ::alphaToLevel(dimg[dimgidx], a)]++;
+                }
+                if (j < _width - 1) {
+                    dimg[dimgidx + 1] = _pixelDissim.computeDissimilarity(imgidx, imgidx + 1);
+                    dhist[HHPQ::alphaToLevel(dimg[dimgidx + 1], a)]++;
+                }
             }
-            dimg[dimgidx] = _pixelDissim.computeDissimilarity(imgidx, imgidx + _width);
-            dhist[HHPQ::alphaToLevel(dimg[dimgidx++], a)]++;
-            dimgidx++;
-            imgidx++;
-        }
-        for (ImgIdx j = 0; j < _width - 1; j++) {
-            dimgidx++;
-            dimg[dimgidx] = _pixelDissim.computeDissimilarity(imgidx, imgidx + 1);
-            dhist[HHPQ::alphaToLevel(dimg[dimgidx++], a)]++;
-            imgidx++;
         }
     } else if (_connectivity == 8) {
         //   -  -  3
         //   -  p  2
         //   -  0  1
         // top,middle
-        for (ImgIdx i = 0; i < _height - 1; i++) {
-            for (ImgIdx j = 0; j < _width - 1; j++) {
-                dimg[dimgidx] = _pixelDissim.computeDissimilarity(imgidx, imgidx + _width);
-                dhist[HHPQ::alphaToLevel(dimg[dimgidx++], a)]++;
-                dimg[dimgidx] = _pixelDissim.computeDissimilarity(imgidx, imgidx + _width + 1);
-                dhist[HHPQ::alphaToLevel(dimg[dimgidx++], a)]++;
-                dimg[dimgidx] = _pixelDissim.computeDissimilarity(imgidx, imgidx + 1);
-                dhist[HHPQ::alphaToLevel(dimg[dimgidx++], a)]++;
-                if (i > 0) {
-                    dimg[dimgidx] = _pixelDissim.computeDissimilarity(imgidx, imgidx - _width + 1);
+        for (ImgIdx i = 0; i < _height; i++) {
+            const bool top = i > 0;
+            const bool bottom = i < _height - 1;
+            for (ImgIdx j = 0; j < _width; j++) {
+                const bool right = j < _width - 1;
+                const ImgIdx imgidx = i * _width + j;
+                const ImgIdx dimgidx = imgidx * (_connectivity / 2);
+                if (bottom) {
+                    dimg[dimgidx] = _pixelDissim.computeDissimilarity(imgidx, imgidx + _width);
                     dhist[HHPQ::alphaToLevel(dimg[dimgidx], a)]++;
                 }
-                dimgidx++;
-                imgidx++;
+                if (bottom && right) {
+                    dimg[dimgidx + 1] = _pixelDissim.computeDissimilarity(imgidx, imgidx + _width + 1);
+                    dhist[HHPQ::alphaToLevel(dimg[dimgidx + 1], a)]++;
+                }
+                if (right) {
+                    dimg[dimgidx + 2] = _pixelDissim.computeDissimilarity(imgidx, imgidx + 1);
+                    dhist[HHPQ::alphaToLevel(dimg[dimgidx + 2], a)]++;
+                }
+                if (top && right) {
+                    dimg[dimgidx + 3] = _pixelDissim.computeDissimilarity(imgidx, imgidx - _width + 1);
+                    dhist[HHPQ::alphaToLevel(dimg[dimgidx + 3], a)]++;
+                }
             }
-            dimg[dimgidx] = _pixelDissim.computeDissimilarity(imgidx, imgidx + _width);
-            dhist[HHPQ::alphaToLevel(dimg[dimgidx], a)]++;
-            dimgidx += 4;
-            imgidx++;
-        }
-
-        // bottom
-        dimgidx += 2; // skip 0,1
-        for (ImgIdx j = 0; j < _width - 1; j++) {
-            dimg[dimgidx] = _pixelDissim.computeDissimilarity(imgidx, imgidx + 1);
-            dhist[HHPQ::alphaToLevel(dimg[dimgidx++], a)]++;
-            dimg[dimgidx] = _pixelDissim.computeDissimilarity(imgidx, imgidx - _width + 1);
-            dhist[HHPQ::alphaToLevel(dimg[dimgidx], a)]++;
-            dimgidx += 3;
-            imgidx++;
         }
     }
 }
