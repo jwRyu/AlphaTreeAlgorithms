@@ -3089,7 +3089,7 @@ template <class Pixel> void AlphaTree<Pixel>::printVisit(ImgIdx p, double q) con
 }
 
 template <class Pixel>
-void AlphaTree<Pixel>::queueEdge(ImgIdx imgIdx, ImgIdx edgeIdx, ImgIdx *queuedEdges, _uint8 *numQueuedEdges) const {
+void AlphaTree<Pixel>::registerEdge(ImgIdx imgIdx, ImgIdx edgeIdx, ImgIdx *queuedEdges, _uint8 *numQueuedEdges) const {
     auto nqe = numQueuedEdges[imgIdx]++;
     queuedEdges[imgIdx * _connectivity + nqe] = edgeIdx;
 }
@@ -3106,16 +3106,18 @@ void AlphaTree<Pixel>::markRedundant(ImgIdx imgIdx, ImgIdx eIdx, _uint8 *edgeSta
 }
 
 template <class Pixel>
-void AlphaTree<Pixel>::floodProbe(const Pixel *img, double a, double r, int listsize, ImgIdx imgSize, ImgIdx nredges,
-                                  ImgIdx dimgSize, _uint64 numLevels, const ImgIdx *dhist, const double *dimg,
-                                  _uint8 *edgeStatus, const _uint8 *isAvailable) const {
+void AlphaTree<Pixel>::floodProbe(ImgIdx startingPixel, const Pixel *img, double a, double r, int listsize,
+                                  ImgIdx imgSize, ImgIdx nredges, ImgIdx dimgSize, _uint64 numLevels,
+                                  const ImgIdx *dhist, const double *dimg, _uint8 *edgeStatus,
+                                  const _uint8 *isAvailable) const {
     _uint8 *isVisited = (_uint8 *)Calloc((size_t)((imgSize)));
     HHPQ *queue = new HHPQ(dhist, numLevels, nredges, isVisited, a, listsize, r, nullptr);
     ImgIdx *queuedEdges = (ImgIdx *)Calloc((size_t)imgSize * (size_t)_connectivity * sizeof(ImgIdx));
     _uint8 *numQueuedEdges = (_uint8 *)Calloc((size_t)dimgSize * sizeof(_uint8));
     double currentLevel = std::numeric_limits<double>::infinity();
 
-    ImgIdx startingPixel = 0; // Arbitrary starting point
+    printf("floodProbe Start\n");
+
     queue->push(startingPixel, currentLevel);
 
     int numVisited = 0;
@@ -3153,56 +3155,61 @@ void AlphaTree<Pixel>::floodProbe(const Pixel *img, double a, double r, int list
             auto isAv = isAvailable[p];
             if (_connectivity == 4) {
                 const ImgIdx q = p << 1;
-                if (is_available(isAv, 0) && !isVisited[p + _width]) {
+                const ImgIdx width2 = _width * 2;
+                if (is_available(isAv, 0) && edgeStatus[q] != QItem::EDGE_REDUNDANT && !isVisited[p + _width]) {
                     queue->push(p + _width, dimg[q], q);
-                    queueEdge(p + _width, q, queuedEdges, numQueuedEdges);
+                    registerEdge(p + _width, q, queuedEdges, numQueuedEdges);
                 }
-                if (is_available(isAv, 1) && !isVisited[p + 1]) {
+                if (is_available(isAv, 1) && edgeStatus[q + 1] != QItem::EDGE_REDUNDANT && !isVisited[p + 1]) {
                     queue->push(p + 1, dimg[q + 1], q + 1);
-                    queueEdge(p + 1, q + 1, queuedEdges, numQueuedEdges);
+                    registerEdge(p + 1, q + 1, queuedEdges, numQueuedEdges);
                 }
-                if (is_available(isAv, 2) && !isVisited[p - 1]) {
+                if (is_available(isAv, 2) && edgeStatus[q - 1] != QItem::EDGE_REDUNDANT && !isVisited[p - 1]) {
                     queue->push(p - 1, dimg[q - 1], q - 1);
-                    queueEdge(p - 1, q - 1, queuedEdges, numQueuedEdges);
+                    registerEdge(p - 1, q - 1, queuedEdges, numQueuedEdges);
                 }
-                if (is_available(isAv, 3) && !isVisited[p - _width]) {
-                    queue->push(p - _width, dimg[q - (_width << 1)], q - (_width << 1));
-                    queueEdge(p - _width, q - (_width << 1), queuedEdges, numQueuedEdges);
+                if (is_available(isAv, 3) && edgeStatus[q - width2] != QItem::EDGE_REDUNDANT &&
+                    !isVisited[p - _width]) {
+                    queue->push(p - _width, dimg[q - width2], q - width2);
+                    registerEdge(p - _width, q - width2, queuedEdges, numQueuedEdges);
                 }
             } else if (_connectivity == 8) {
                 const ImgIdx width4 = _width << 2;
                 const ImgIdx q = p << 2;
-                if (is_available(isAv, 0) && !isVisited[p + _width]) {
+                if (is_available(isAv, 0) && edgeStatus[q] != QItem::EDGE_REDUNDANT && !isVisited[p + _width]) {
                     queue->push(p + _width, dimg[q], q);
-                    queueEdge(p + _width, q, queuedEdges, numQueuedEdges);
+                    registerEdge(p + _width, q, queuedEdges, numQueuedEdges);
                 }
-                if (is_available(isAv, 1) && !isVisited[p + _width + 1]) {
+                if (is_available(isAv, 1) && edgeStatus[q + 1] != QItem::EDGE_REDUNDANT && !isVisited[p + _width + 1]) {
                     queue->push(p + _width + 1, dimg[q + 1], q + 1);
-                    queueEdge(p + _width + 1, q + 1, queuedEdges, numQueuedEdges);
+                    registerEdge(p + _width + 1, q + 1, queuedEdges, numQueuedEdges);
                 }
-                if (is_available(isAv, 2) && !isVisited[p + 1]) {
+                if (is_available(isAv, 2) && edgeStatus[q + 2] != QItem::EDGE_REDUNDANT && !isVisited[p + 1]) {
                     queue->push(p + 1, dimg[q + 2], q + 2);
-                    queueEdge(p + 1, q + 2, queuedEdges, numQueuedEdges);
+                    registerEdge(p + 1, q + 2, queuedEdges, numQueuedEdges);
                 }
-                if (is_available(isAv, 3) && !isVisited[p - _width + 1]) {
+                if (is_available(isAv, 3) && edgeStatus[q + 3] != QItem::EDGE_REDUNDANT && !isVisited[p - _width + 1]) {
                     queue->push(p - _width + 1, dimg[q + 3], q + 3);
-                    queueEdge(p - _width + 1, q + 3, queuedEdges, numQueuedEdges);
+                    registerEdge(p - _width + 1, q + 3, queuedEdges, numQueuedEdges);
                 }
-                if (is_available(isAv, 4) && !isVisited[p - _width]) {
+                if (is_available(isAv, 4) && edgeStatus[q - width4] != QItem::EDGE_REDUNDANT &&
+                    !isVisited[p - _width]) {
                     queue->push(p - _width, dimg[q - width4], q - width4);
-                    queueEdge(p - _width, q - width4, queuedEdges, numQueuedEdges);
+                    registerEdge(p - _width, q - width4, queuedEdges, numQueuedEdges);
                 }
-                if (is_available(isAv, 5) && !isVisited[p - _width - 1]) {
+                if (is_available(isAv, 5) && edgeStatus[q - width4 - 3] != QItem::EDGE_REDUNDANT &&
+                    !isVisited[p - _width - 1]) {
                     queue->push(p - _width - 1, dimg[q - width4 - 3], q - width4 - 3);
-                    queueEdge(p - _width - 1, q - width4 - 3, queuedEdges, numQueuedEdges);
+                    registerEdge(p - _width - 1, q - width4 - 3, queuedEdges, numQueuedEdges);
                 }
-                if (is_available(isAv, 6) && !isVisited[p - 1]) {
+                if (is_available(isAv, 6) && edgeStatus[q - 2] != QItem::EDGE_REDUNDANT && !isVisited[p - 1]) {
                     queue->push(p - 1, dimg[q - 2], q - 2);
-                    queueEdge(p - 1, q - 2, queuedEdges, numQueuedEdges);
+                    registerEdge(p - 1, q - 2, queuedEdges, numQueuedEdges);
                 }
-                if (is_available(isAv, 7) && !isVisited[p + _width - 1]) {
+                if (is_available(isAv, 7) && edgeStatus[q + width4 - 1] != QItem::EDGE_REDUNDANT &&
+                    !isVisited[p + _width - 1]) {
                     queue->push(p + _width - 1, dimg[q + width4 - 1], q + width4 - 1);
-                    queueEdge(p + _width - 1, q + width4 - 1, queuedEdges, numQueuedEdges);
+                    registerEdge(p + _width - 1, q + width4 - 1, queuedEdges, numQueuedEdges);
                 }
             } else {
                 //?
@@ -3233,9 +3240,10 @@ void AlphaTree<Pixel>::floodProbe(const Pixel *img, double a, double r, int list
 }
 
 template <class Pixel>
-void AlphaTree<Pixel>::floodMain(const Pixel *img, double a, double r, int listsize, ImgIdx imgSize, ImgIdx nredges,
-                                 ImgIdx dimgSize, _uint64 numLevels, const ImgIdx *dhist, const double *dimg,
-                                 _uint8 *edgeStatus, const _uint8 *isAvailable) {
+void AlphaTree<Pixel>::floodMain(ImgIdx startingPixel, const Pixel *img, double a, double r, int listsize,
+                                 ImgIdx imgSize, ImgIdx nredges, ImgIdx dimgSize, _uint64 numLevels,
+                                 const ImgIdx *dhist, const double *dimg, _uint8 *edgeStatus,
+                                 const _uint8 *isAvailable) {
     _uint8 *isVisited = (_uint8 *)Calloc((size_t)((imgSize)));
     HHPQ *queue = new HHPQ(dhist, numLevels, nredges, isVisited, a, listsize, r, edgeStatus);
 
@@ -3243,8 +3251,9 @@ void AlphaTree<Pixel>::floodMain(const Pixel *img, double a, double r, int lists
     double currentLevel = std::numeric_limits<double>::infinity();
     _node[stackTop] = AlphaNode<Pixel>(currentLevel);
 
+    printf("floodMain Start\n");
+
     ImgIdx prevTop = stackTop;
-    ImgIdx startingPixel = 0; // Arbitrary starting point
     queue->push(startingPixel, currentLevel);
 
     while (_node[stackTop].area < imgSize) { // Main flooding loop
@@ -3399,17 +3408,72 @@ void AlphaTree<Pixel>::FloodHierarHeapQueuePar(const Pixel *img, double a, doubl
     memset(_parentAry, ROOTIDX, imgSize * sizeof(ImgIdx));
     _node = (AlphaNode<Pixel> *)Malloc((size_t)_maxSize * sizeof(AlphaNode<Pixel>));
 
+    ImgIdx startingPixel = 0;
+
     // printAll(isVisited, edgeStatus, img);
     // std::getchar();
 
-    floodProbe(img, a, r, listsize, imgSize, nredges, dimgSize, numLevels, dhist, dimg, edgeStatus, isAvailable);
-    floodMain(img, a, r, listsize, imgSize, nredges, dimgSize, numLevels, dhist, dimg, edgeStatus, isAvailable);
+#pragma omp parallel for shared(edgeStatus)
+    for (int thread = 0; thread < 16; thread++) {
+        if (thread == 0)
+            floodMain(startingPixel, img, a, r, listsize, imgSize, nredges, dimgSize, numLevels, dhist, dimg,
+                      edgeStatus, isAvailable);
+        else
+            floodProbe(startingPixel, img, a, r, listsize, imgSize, nredges, dimgSize, numLevels, dhist, dimg,
+                       edgeStatus, isAvailable);
+    }
 
     Free(dimg);
     Free(dhist);
     Free(edgeStatus);
     Free(isAvailable);
 }
+
+/*rewrite following code for parallel computing, where the main thread runs floodMain while all others run floodProbe
+whose startingPixel is spreadout in the image as much as possible:
+
+template <class Pixel>
+void AlphaTree<Pixel>::FloodHierarHeapQueuePar(const Pixel *img, double a, double r, int listsize) {
+    assert(_connectivity == 4 || _connectivity == 8 || _connectivity == 12);
+    clear();
+    const ImgIdx imgSize = _width * _height;
+    const ImgIdx nredges = _width * (_height - 1) + (_width - 1) * _height +
+                           ((_connectivity == 8) ? ((_width - 1) * (_height - 1) * 2) : 0);
+    const ImgIdx dimgSize = (1 + (_connectivity >> 1)) * _width * _height;
+    const double alphaMax = _pixelDissim.maximumDissmilarity();
+    const _uint64 numLevels = HHPQ::alphaToLevel((double)alphaMax, a);
+    assert(numLevels < 10e3); // More than 10k levels is infeasible and inefficient
+
+    ImgIdx *dhist = (ImgIdx *)Calloc((size_t)numLevels * sizeof(ImgIdx));
+    double *dimg = (double *)Malloc((size_t)dimgSize * sizeof(double));
+    _uint8 *edgeStatus = (_uint8 *)Calloc((size_t)dimgSize * sizeof(_uint8));
+
+    compute_dimg_hhpq_par(dimg, dhist, img, a); // Calculate pixel differences and make histogram
+
+    _uint8 *isAvailable = (_uint8 *)Malloc((size_t)(imgSize));
+    set_isAvailable(isAvailable);
+
+    _curSize = 0;
+    _maxSize = 1 + imgSize + dimgSize;
+    _parentAry = (ImgIdx *)Malloc((size_t)imgSize * sizeof(ImgIdx));
+    memset(_parentAry, ROOTIDX, imgSize * sizeof(ImgIdx));
+    _node = (AlphaNode<Pixel> *)Malloc((size_t)_maxSize * sizeof(AlphaNode<Pixel>));
+
+    ImgIdx startingPixel = 0;
+
+    // printAll(isVisited, edgeStatus, img);
+    // std::getchar();
+
+    floodProbe(startingPixel, img, a, r, listsize, imgSize, nredges, dimgSize, numLevels, dhist, dimg, edgeStatus,
+               isAvailable);
+    floodMain(startingPixel, img, a, r, listsize, imgSize, nredges, dimgSize, numLevels, dhist, dimg, edgeStatus,
+              isAvailable);
+
+    Free(dimg);
+    Free(dhist);
+    Free(edgeStatus);
+    Free(isAvailable);
+}*/
 
 template <class Pixel> void AlphaTree<Pixel>::sortAlphaNodes() {
     // Step 1: Capture the original indices

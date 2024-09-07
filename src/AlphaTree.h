@@ -150,17 +150,17 @@ template <class Pixel> class AlphaTree {
     void Flood_Hierarqueue_par(const Pixel *img, int numthreads);
     void FloodTrieHypergraph(const Pixel *img);
 
-    void floodProbe(const Pixel *img, double a, double r, int listsize, ImgIdx imgSize, ImgIdx nredges, ImgIdx dimgSize,
-                    _uint64 numLevels, const ImgIdx *dhist, const double *dimg, _uint8 *edgeStatus,
-                    const _uint8 *isAvailable) const;
-    void floodMain(const Pixel *img, double a, double r, int listsize, ImgIdx imgSize, ImgIdx nredges, ImgIdx dimgSize,
-                   _uint64 numLevels, const ImgIdx *dhist, const double *dimg, _uint8 *edgeStatus,
-                   const _uint8 *isAvailable);
+    void floodProbe(ImgIdx startingPixel, const Pixel *img, double a, double r, int listsize, ImgIdx imgSize,
+                    ImgIdx nredges, ImgIdx dimgSize, _uint64 numLevels, const ImgIdx *dhist, const double *dimg,
+                    _uint8 *edgeStatus, const _uint8 *isAvailable) const;
+    void floodMain(ImgIdx startingPixel, const Pixel *img, double a, double r, int listsize, ImgIdx imgSize,
+                   ImgIdx nredges, ImgIdx dimgSize, _uint64 numLevels, const ImgIdx *dhist, const double *dimg,
+                   _uint8 *edgeStatus, const _uint8 *isAvailable);
 
     void sortAlphaNodes();
     void markRedundant(ImgIdx imgIdx, ImgIdx eIdx, _uint8 *edgeStatus, ImgIdx *queuedEdges,
                        _uint8 *numQueuedEdges) const;
-    void queueEdge(ImgIdx imgIdx, ImgIdx edgeIdx, ImgIdx *queuedEdges, _uint8 *numQueuedEdges) const;
+    void registerEdge(ImgIdx imgIdx, ImgIdx edgeIdx, ImgIdx *queuedEdges, _uint8 *numQueuedEdges) const;
     void compute_dimg_hhpq(double *dimg, ImgIdx *dhist, const Pixel *img, double a);
     void compute_dimg_hhpq_par(double *dimg, ImgIdx *dhist, const Pixel *img, double a);
     Pixel abs_diff(Pixel p, Pixel q);
