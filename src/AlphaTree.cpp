@@ -3241,6 +3241,10 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
         _node[_rootIdx].parentIdx = ROOTIDX;
     }
 
+    sortAlphaNodes();
+    _curSize--; // Remove dummy root
+
+    printParentAry();
     printTree();
 
     delete queue;
@@ -3248,6 +3252,48 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
     Free(edgeStatus);
     Free(isVisited);
     Free(isAvailable);
+}
+
+template <class Pixel> void AlphaTree<Pixel>::sortAlphaNodes() {
+    // Step 1: Capture the original indices
+    std::vector<ImgIdx> original_indices(_curSize);
+    for (ImgIdx i = 0; i < _curSize; ++i) {
+        original_indices[i] = i;
+    }
+
+    AlphaNode<Pixel> *node = _node;
+    // Step 2: Sort the array and keep track of the new indices
+    std::sort(original_indices.begin(), original_indices.end(), [&node](ImgIdx a, ImgIdx b) {
+        return node[a] < node[b]; // Sort based on the AlphaNode's alpha values
+    });
+
+    // Create a new sorted array
+    std::vector<AlphaNode<Pixel>> sorted_nodes(_curSize);
+    for (ImgIdx i = 0; i < _curSize; ++i) {
+        sorted_nodes[i] = _node[original_indices[i]];
+    }
+
+    // Step 3: Create a mapping from old index to new index
+    std::vector<ImgIdx> index_map(_curSize);
+    for (ImgIdx i = 0; i < _curSize; ++i) {
+        index_map[original_indices[i]] = i;
+    }
+
+    // Step 4: Update the parentIdx to reflect the new positions
+    for (size_t i = 0; i < sorted_nodes.size(); ++i) {
+        if (sorted_nodes[i].parentIdx != ROOTIDX) {
+            sorted_nodes[i].parentIdx = index_map[sorted_nodes[i].parentIdx];
+        }
+    }
+
+    for (int i = 0; i < _height * _width; ++i) {
+        if (_parentAry[i] != ROOTIDX)
+            _parentAry[i] = index_map[_parentAry[i]];
+    }
+
+    // Replace the original array with the sorted one
+    for (size_t i = 0; i < sorted_nodes.size(); i++)
+        _node[i] = sorted_nodes[i];
 }
 
 template <class Pixel> void AlphaTree<Pixel>::FloodHierHeapQueueHisteq(Pixel *img, int listsize, int a) {

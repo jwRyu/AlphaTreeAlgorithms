@@ -84,6 +84,8 @@ template <class Pixel> class AlphaNode {
     inline void connect_to_parent(AlphaNode *pPar, ImgIdx iPar);
     void print(AlphaNode *_node);
     void print(AlphaNode *_node, int heading);
+
+    bool operator<(const AlphaNode &other) const { return alpha < other.alpha; }
 };
 
 template <class Pixel> class RankItem {
@@ -148,6 +150,7 @@ template <class Pixel> class AlphaTree {
     void Flood_Hierarqueue_par(Pixel *img, int numthreads);
     void FloodTrieHypergraph(Pixel *img);
 
+    void sortAlphaNodes();
     void compute_dimg_hhpq(double *dimg, ImgIdx *dhist, Pixel *img, double a);
     void compute_dimg_hhpq_par(double *dimg, ImgIdx *dhist, Pixel *img, double a);
     Pixel abs_diff(Pixel p, Pixel q);
