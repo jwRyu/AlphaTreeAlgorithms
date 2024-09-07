@@ -3111,7 +3111,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
     _uint8 *isAvailable = (_uint8 *)Malloc((size_t)(imgSize));
     set_isAvailable(isAvailable);
 
-    _parentAry = (ImgIdx *)Malloc((size_t)imgSize * sizeof(_int32));
+    _parentAry = (ImgIdx *)Malloc((size_t)imgSize * sizeof(ImgIdx));
     for (int i = 0; i < imgSize; i++)
         _parentAry[i] = -1;
     _node = (AlphaNode<Pixel> *)Malloc((size_t)_maxSize * sizeof(AlphaNode<Pixel>));
@@ -3124,6 +3124,9 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
     queue->push(startingPixel, currentLevel);
 
     int threadIdx = 0;
+    ImgIdx *stack = (ImgIdx *)Malloc((size_t)imgSize * sizeof(ImgIdx));
+    ImgIdx stackCur = 0;
+    stack[stackCur++] = stackTop;
 
     printAll(isVisited, edgeStatus, img);
     std::getchar();
@@ -3187,8 +3190,20 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
                     edgeStatus[queue->front().edgeIdx] = QItem::EDGE_CONNECTED;
                     const ImgIdx newNodeIdx = _curSize++;
                     _node[newNodeIdx] = AlphaNode<Pixel>(img[p], queue->front().alpha, stackTop);
+                    stack[stackCur++] = newNodeIdx;
+                    printf("****Pushing stack[%d] = %d\n", stackCur - 1, newNodeIdx);
                     prevTop = stackTop;
                     stackTop = newNodeIdx;
+
+                    {
+                        auto *walker = &_node[stackTop];
+                        for (int i = stackCur - 1; i >= 0; i--) {
+                            printf("[%d]: node stack[i] = %d / stackstack[i] = %d\n", (int)i, (int)(walker - _node),
+                                   stack[i]);
+                            walker = &_node[walker->parentIdx];
+                        }
+                    }
+
                     if (currentLevel > 0) {
                         const ImgIdx singletonNodeIdx = _curSize++;
                         _node[singletonNodeIdx] = AlphaNode<Pixel>(img[p], 0.0, newNodeIdx);
@@ -3213,24 +3228,37 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
                 _node[prevTop].parentIdx = _node[stackTop].parentIdx;
                 stackTop = prevTop;
                 _curSize--;
+                // stackCur--;
+                // printf("-------popping stack stackCur = %d\n", stackCur);
             }
 
             // go to higher level
             if (_node[stackTop].area < imgSize) {
                 ImgIdx newParentIdx = _node[stackTop].parentIdx;
+                stackCur--;
+                printf("****popping stack stackCur = %d\n", stackCur);
                 if (!queue->empty() && (double)queue->front().alpha < (double)_node[newParentIdx].alpha) {
                     newParentIdx = _curSize++;
                     _node[newParentIdx] = AlphaNode<Pixel>(_node[stackTop]);
                     _node[newParentIdx].alpha = queue->front().alpha;
                     _node[newParentIdx].parentIdx = _node[stackTop].parentIdx;
                     _node[stackTop].parentIdx = newParentIdx;
-
+                    stack[stackCur++] = newParentIdx;
+                    printf("****Pushing stack[%d] = %d\n", stackCur - 1, newParentIdx);
                 } else // go to existing _node
                     _node[newParentIdx].add(_node[stackTop]);
 
                 prevTop = stackTop;
                 stackTop = newParentIdx;
                 currentLevel = _node[stackTop].alpha;
+                {
+                    auto *walker = &_node[stackTop];
+                    for (int i = stackCur - 1; i >= 0; i--) {
+                        printf("[%d]: node stack[i] = %d / stackstack[i] = %d\n", (int)i, (int)(walker - _node),
+                               stack[i]);
+                        walker = &_node[walker->parentIdx];
+                    }
+                }
             }
 
             queue->print();
@@ -3248,6 +3276,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
     printTree();
 
     delete queue;
+    Free(stack);
     Free(dimg);
     Free(edgeStatus);
     Free(isVisited);
