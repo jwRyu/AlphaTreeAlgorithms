@@ -151,6 +151,8 @@ template <class Pixel> class AlphaTree {
     void FloodTrieHypergraph(Pixel *img);
 
     void sortAlphaNodes();
+    void markRedundant(ImgIdx imgIdx, ImgIdx eIdx, _uint8 *edgeStatus, ImgIdx *queuedEdges, _uint8 *numQueuedEdges);
+    void queueEdge(ImgIdx imgIdx, ImgIdx edgeIdx, ImgIdx *queuedEdges, _uint8 *numQueuedEdges);
     void compute_dimg_hhpq(double *dimg, ImgIdx *dhist, Pixel *img, double a);
     void compute_dimg_hhpq_par(double *dimg, ImgIdx *dhist, Pixel *img, double a);
     Pixel abs_diff(Pixel p, Pixel q);
