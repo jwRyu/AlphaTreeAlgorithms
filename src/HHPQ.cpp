@@ -9,8 +9,8 @@ ImgIdx HHPQ::alphaToLevel(const double &alpha) const {
     return std::min<ImgIdx>((ImgIdx)(_a * log2(1.0 + alpha)), _numLevels - 1);
 }
 
-HHPQ::HHPQ(ImgIdx *dhist, ImgIdx numLevels_, ImgIdx size, _uint8 *isVisited_, double a_, int cacheSize, double r,
-           _uint8 *edgeStatus_)
+HHPQ::HHPQ(const ImgIdx *dhist, ImgIdx numLevels_, ImgIdx size, const _uint8 *isVisited_, double a_, int cacheSize,
+           double r, _uint8 *edgeStatus_)
     : _numLevels(numLevels_), _a(a_), _lowestNonemptyLevel(numLevels_), _curSizeCache(0), _maxSizeCache(cacheSize),
       _isVisited(isVisited_), _edgeStatus(edgeStatus_), _size(0) {
     initHQ(dhist, size, r);
@@ -34,7 +34,7 @@ HHPQ::~HHPQ() {
     }
 }
 
-void HHPQ::initHQ(ImgIdx *dhist, ImgIdx size, double r) {
+void HHPQ::initHQ(const ImgIdx *dhist, ImgIdx size, double r) {
     _cache = (QItem *)Malloc(_maxSizeCache * sizeof(QItem));
     ImgIdx cumsum = 0;
     _levelMaxSizes = (ImgIdx *)Calloc((size_t)_numLevels * sizeof(ImgIdx));

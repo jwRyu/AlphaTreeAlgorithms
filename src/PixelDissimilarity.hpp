@@ -12,7 +12,7 @@ template <class Pixel> class PixelDissimilarity {
 
     // // Constructor that accepts a function pointer
     PixelDissimilarity() = default;
-    PixelDissimilarity(Pixel *image_, ImgIdx imageSize_, _uint8 channels_, DissimilarityFunc func)
+    PixelDissimilarity(const Pixel *image_, ImgIdx imageSize_, _uint8 channels_, DissimilarityFunc func)
         : _image(image_), _imageSize(imageSize_), _channels(channels_), dissimilarityFunc(func) {}
 
     // Function to compute dissimilarity using the selected method
@@ -29,7 +29,7 @@ template <class Pixel> class PixelDissimilarity {
     double LInfinity(ImgIdx index1, ImgIdx index2) const;
 
   private:
-    Pixel *_image = nullptr;
+    const Pixel *_image = nullptr;
     ImgIdx _imageSize = 0;
     _uint8 _channels = 0;
     DissimilarityFunc dissimilarityFunc;
