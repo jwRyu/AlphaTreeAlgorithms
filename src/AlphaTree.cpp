@@ -1,5 +1,6 @@
 #include <AlphaTree.h>
 #include <HHPQ.hpp>
+#include <cmath>
 
 template <class Pixel> AlphaTree<Pixel>::~AlphaTree() { clear(); }
 
@@ -1202,8 +1203,50 @@ template <class Pixel> void AlphaTree<Pixel>::compute_dimg_hhpq(double *dimg, Im
     }
 }
 
-template <class Pixel>
-void AlphaTree<Pixel>::compute_dimg_hhpq_par(double *dimg, ImgIdx *dhist, Pixel *img, double a, _uint8 *edgeStatus) {
+// void setEdgeStatus(double *dimg, ImgIdx *dhist, Pixel *img, double a, _uint8 *edgeStatus) {
+// {
+//     const auto width2 = _width * 2;
+//         for (ImgIdx i = 0; i < _height; i++) {
+//             const bool top = i > 0;
+//             const bool bottom = i < _height - 1;
+//             for (ImgIdx j = 0; j < _width; j++) {
+//                 const bool left = j > 0;
+//                 const bool right = j < _width - 1;
+//                 const ImgIdx imgidx = i * _width + j;
+//                 const ImgIdx dimgidx = imgidx * (_connectivity / 2);
+//                 double minAlpha = INFINITY;
+//                 ImgIdx minIdx = dimgidx;
+
+//                 if (bottom && dimg[dimgidx] < minAlpha) {
+//                     minAlpha = dimg[dimgidx];
+//                     minIdx = dimgidx;
+//                 }
+//                 if (right && dimg[dimgidx + 1] < minAlpha) {
+//                     minAlpha = dimg[dimgidx + 1];
+//                     minIdx = dimgidx + 1;
+//                 }
+//                 if (left && dimg[dimgidx - 1] < minAlpha) {
+//                     minAlpha = dimg[dimgidx - 1];
+//                     minIdx = dimgidx - 1;
+//                 }
+//                 if (top && dimg[dimgidx] < minAlpha) {
+//                     minAlpha = dimg[dimgidx - width2];
+//                     minIdx = dimgidx - width2;
+//                 }
+//                 edgeStatus[minIdx] = QItem::EDGE_ESSENTIAL;
+
+//                 //                 dimg[dimgidx] = _pixelDissim.computeDissimilarity(imgidx, imgidx + _width);
+//                 // #pragma omp atomic
+//                 //                 dhist[HHPQ::alphaToLevel(dimg[dimgidx], a)]++;
+
+//                 //                 dimg[dimgidx + 1] = _pixelDissim.computeDissimilarity(imgidx, imgidx + 1);
+//                 // #pragma omp atomic
+//                 //                 dhist[HHPQ::alphaToLevel(dimg[dimgidx + 1], a)]++;
+//             }
+//         }
+// }
+
+template <class Pixel> void AlphaTree<Pixel>::compute_dimg_hhpq_par(double *dimg, ImgIdx *dhist, Pixel *img, double a) {
 
     if (_connectivity == 4) {
 #pragma omp parallel for
@@ -3054,7 +3097,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
     double *dimg = (double *)Malloc((size_t)dimgSize * sizeof(double));
     _uint8 *edgeStatus = (_uint8 *)Calloc((size_t)dimgSize * sizeof(_uint8));
 
-    compute_dimg_hhpq_par(dimg, dhist, img, a, edgeStatus); // Calculate pixel differences and make histogram
+    compute_dimg_hhpq_par(dimg, dhist, img, a); // Calculate pixel differences and make histogram
 
     _uint8 *isVisited = (_uint8 *)Calloc((size_t)((imgSize)));
     HHPQ *queue = new HHPQ(dhist, numLevels, nredges, isVisited, a, listsize, r, edgeStatus);
@@ -3082,6 +3125,9 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
 
     int threadIdx = 0;
 
+    printAll(isVisited, edgeStatus, img);
+    std::getchar();
+
     if (threadIdx == 0) {
         while (_node[stackTop].area < imgSize) { // Main flooding loop
             while (_node[stackTop].area < imgSize && !queue->empty() &&
@@ -3093,19 +3139,21 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
                 if (isVisited[p]) {
                     edgeStatus[eIdx] = QItem::EDGE_REDUNDANT;
 
-                    // printVisit(p, currentLevel);
-                    // queue->print();
-                    // printAll(isVisited, edgeStatus, img);
-                    // std::getchar();
+                    printVisit(p, currentLevel);
+                    queue->print();
+                    printAll(isVisited, edgeStatus, img);
+                    std::getchar();
+
                     continue;
                 }
                 edgeStatus[eIdx] = QItem::EDGE_CONNECTED;
 
                 isVisited[p] = 1;
-                // printVisit(p, currentLevel);
-                // queue->print();
-                // printAll(isVisited, edgeStatus, img);
-                // std::getchar();
+
+                printVisit(p, currentLevel);
+                queue->print();
+                printAll(isVisited, edgeStatus, img);
+                std::getchar();
 
                 auto isAv = isAvailable[p];
                 if (_connectivity == 4) {
@@ -3185,16 +3233,15 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
                 currentLevel = _node[stackTop].alpha;
             }
 
-            // printVisit(p, currentLevel);
-            // queue->print();
-            // printAll(isVisited, edgeStatus, img);
-            // std::getchar();
+            queue->print();
+            printAll(isVisited, edgeStatus, img);
+            std::getchar();
         }
         _rootIdx = _node[prevTop].area == imgSize ? prevTop : stackTop;
         _node[_rootIdx].parentIdx = ROOTIDX;
     }
 
-    // printTree();
+    printTree();
 
     delete queue;
     Free(dimg);
