@@ -150,9 +150,15 @@ template <class Pixel> class AlphaTree {
     void Flood_Hierarqueue_par(Pixel *img, int numthreads);
     void FloodTrieHypergraph(Pixel *img);
 
+    void floodProbe(Pixel *img, double a, double r, int listsize, ImgIdx imgSize, ImgIdx nredges, ImgIdx dimgSize,
+                    _uint64 numLevels, ImgIdx *dhist, double *dimg, _uint8 *edgeStatus, _uint8 *isAvailable) const;
+    void floodMain(Pixel *img, double a, double r, int listsize, ImgIdx imgSize, ImgIdx nredges, ImgIdx dimgSize,
+                   _uint64 numLevels, ImgIdx *dhist, double *dimg, _uint8 *edgeStatus, _uint8 *isAvailable);
+
     void sortAlphaNodes();
-    void markRedundant(ImgIdx imgIdx, ImgIdx eIdx, _uint8 *edgeStatus, ImgIdx *queuedEdges, _uint8 *numQueuedEdges);
-    void queueEdge(ImgIdx imgIdx, ImgIdx edgeIdx, ImgIdx *queuedEdges, _uint8 *numQueuedEdges);
+    void markRedundant(ImgIdx imgIdx, ImgIdx eIdx, _uint8 *edgeStatus, ImgIdx *queuedEdges,
+                       _uint8 *numQueuedEdges) const;
+    void queueEdge(ImgIdx imgIdx, ImgIdx edgeIdx, ImgIdx *queuedEdges, _uint8 *numQueuedEdges) const;
     void compute_dimg_hhpq(double *dimg, ImgIdx *dhist, Pixel *img, double a);
     void compute_dimg_hhpq_par(double *dimg, ImgIdx *dhist, Pixel *img, double a);
     Pixel abs_diff(Pixel p, Pixel q);
@@ -167,7 +173,7 @@ template <class Pixel> class AlphaTree {
     double compute_dimg(double *dimg, ImgIdx *dhist, Pixel *img);
     void set_isAvailable(_uint8 *isAvailable);
     void set_isAvailable(_uint8 *isAvailable, int npartitions_hor, int npartitions_ver);
-    _uint8 is_available(_uint8 isAvailable, _uint8 iNeighbour);
+    _uint8 is_available(_uint8 isAvailable, _uint8 iNeighbour) const;
     void set_field(_uint8 *arr, ImgIdx idx, _uint8 in);
     _uint8 get_field(_uint8 *arr, ImgIdx idx);
     void connectPix2Node(ImgIdx pidx, Pixel pix_val, ImgIdx iNode, Pixel level);

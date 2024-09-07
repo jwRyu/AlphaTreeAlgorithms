@@ -1645,7 +1645,7 @@ void AlphaTree<Pixel>::set_isAvailable(_uint8 *isAvailable, int npartitions_hor,
     }
 }
 
-template <class Pixel> _uint8 AlphaTree<Pixel>::is_available(_uint8 isAvailable, _uint8 iNeighbour) {
+template <class Pixel> _uint8 AlphaTree<Pixel>::is_available(_uint8 isAvailable, _uint8 iNeighbour) const {
     return (isAvailable >> iNeighbour) & 1;
 }
 
@@ -3082,20 +3082,282 @@ template <class Pixel> void AlphaTree<Pixel>::printVisit(ImgIdx p, double q) con
 }
 
 template <class Pixel>
-void AlphaTree<Pixel>::queueEdge(ImgIdx imgIdx, ImgIdx edgeIdx, ImgIdx *queuedEdges, _uint8 *numQueuedEdges) {
+void AlphaTree<Pixel>::queueEdge(ImgIdx imgIdx, ImgIdx edgeIdx, ImgIdx *queuedEdges, _uint8 *numQueuedEdges) const {
     auto nqe = numQueuedEdges[imgIdx]++;
     queuedEdges[imgIdx * _connectivity + nqe] = edgeIdx;
 }
 
 template <class Pixel>
 void AlphaTree<Pixel>::markRedundant(ImgIdx imgIdx, ImgIdx eIdx, _uint8 *edgeStatus, ImgIdx *queuedEdges,
-                                     _uint8 *numQueuedEdges) {
+                                     _uint8 *numQueuedEdges) const {
     auto nqe = numQueuedEdges[imgIdx];
     for (int i = 0; i < nqe; i++) {
         auto edgeIdx = queuedEdges[imgIdx * _connectivity + i];
         if (edgeIdx != eIdx)
             edgeStatus[edgeIdx] = QItem::EDGE_REDUNDANT;
     }
+}
+
+template <class Pixel>
+void AlphaTree<Pixel>::floodProbe(Pixel *img, double a, double r, int listsize, ImgIdx imgSize, ImgIdx nredges,
+                                  ImgIdx dimgSize, _uint64 numLevels, ImgIdx *dhist, double *dimg, _uint8 *edgeStatus,
+                                  _uint8 *isAvailable) const {
+    _uint8 *isVisited = (_uint8 *)Calloc((size_t)((imgSize)));
+    HHPQ *queue = new HHPQ(dhist, numLevels, nredges, isVisited, a, listsize, r, edgeStatus);
+    ImgIdx *queuedEdges = (ImgIdx *)Calloc((size_t)imgSize * (size_t)_connectivity * sizeof(ImgIdx));
+    _uint8 *numQueuedEdges = (_uint8 *)Calloc((size_t)dimgSize * sizeof(_uint8));
+    double currentLevel = std::numeric_limits<double>::infinity();
+
+    ImgIdx startingPixel = 0; // Arbitrary starting point
+    queue->push(startingPixel, currentLevel);
+
+    int numVisited = 0;
+    while (numVisited < imgSize) { // Main flooding loop
+        while (numVisited < imgSize && !queue->empty() &&
+               queue->front().alpha <= currentLevel) { // Flood all levels below currentLevel
+            const ImgIdx p = queue->front().index;
+            const ImgIdx eIdx = queue->front().edgeIdx;
+            currentLevel = queue->front().alpha;
+            queue->pop();
+            if (isVisited[p]) {
+                edgeStatus[eIdx] = QItem::EDGE_REDUNDANT;
+
+                // printVisit(p, currentLevel);
+                // queue->print();
+                // printAll(isVisited, edgeStatus, img);
+                printGraph(isVisited, edgeStatus, img);
+                std::getchar();
+
+                continue;
+            }
+            edgeStatus[eIdx] = QItem::EDGE_CONNECTED;
+
+            isVisited[p] = 1;
+            if (numVisited > 0)
+                markRedundant(p, eIdx, edgeStatus, queuedEdges, numQueuedEdges);
+            numVisited++;
+
+            // printVisit(p, currentLevel);
+            // queue->print();
+            // printAll(isVisited, edgeStatus, img);
+            printGraph(isVisited, edgeStatus, img);
+            std::getchar();
+
+            auto isAv = isAvailable[p];
+            if (_connectivity == 4) {
+                const ImgIdx q = p << 1;
+                if (is_available(isAv, 0) && !isVisited[p + _width]) {
+                    queue->push(p + _width, dimg[q], q);
+                    queueEdge(p + _width, q, queuedEdges, numQueuedEdges);
+                }
+                if (is_available(isAv, 1) && !isVisited[p + 1]) {
+                    queue->push(p + 1, dimg[q + 1], q + 1);
+                    queueEdge(p + 1, q + 1, queuedEdges, numQueuedEdges);
+                }
+                if (is_available(isAv, 2) && !isVisited[p - 1]) {
+                    queue->push(p - 1, dimg[q - 1], q - 1);
+                    queueEdge(p - 1, q - 1, queuedEdges, numQueuedEdges);
+                }
+                if (is_available(isAv, 3) && !isVisited[p - _width]) {
+                    queue->push(p - _width, dimg[q - (_width << 1)], q - (_width << 1));
+                    queueEdge(p - _width, q - (_width << 1), queuedEdges, numQueuedEdges);
+                }
+            } else if (_connectivity == 8) {
+                const ImgIdx width4 = _width << 2;
+                const ImgIdx q = p << 2;
+                if (is_available(isAv, 0) && !isVisited[p + _width]) {
+                    queue->push(p + _width, dimg[q], q);
+                    queueEdge(p + _width, q, queuedEdges, numQueuedEdges);
+                }
+                if (is_available(isAv, 1) && !isVisited[p + _width + 1]) {
+                    queue->push(p + _width + 1, dimg[q + 1], q + 1);
+                    queueEdge(p + _width + 1, q + 1, queuedEdges, numQueuedEdges);
+                }
+                if (is_available(isAv, 2) && !isVisited[p + 1]) {
+                    queue->push(p + 1, dimg[q + 2], q + 2);
+                    queueEdge(p + 1, q + 2, queuedEdges, numQueuedEdges);
+                }
+                if (is_available(isAv, 3) && !isVisited[p - _width + 1]) {
+                    queue->push(p - _width + 1, dimg[q + 3], q + 3);
+                    queueEdge(p - _width + 1, q + 3, queuedEdges, numQueuedEdges);
+                }
+                if (is_available(isAv, 4) && !isVisited[p - _width]) {
+                    queue->push(p - _width, dimg[q - width4], q - width4);
+                    queueEdge(p - _width, q - width4, queuedEdges, numQueuedEdges);
+                }
+                if (is_available(isAv, 5) && !isVisited[p - _width - 1]) {
+                    queue->push(p - _width - 1, dimg[q - width4 - 3], q - width4 - 3);
+                    queueEdge(p - _width - 1, q - width4 - 3, queuedEdges, numQueuedEdges);
+                }
+                if (is_available(isAv, 6) && !isVisited[p - 1]) {
+                    queue->push(p - 1, dimg[q - 2], q - 2);
+                    queueEdge(p - 1, q - 2, queuedEdges, numQueuedEdges);
+                }
+                if (is_available(isAv, 7) && !isVisited[p + _width - 1]) {
+                    queue->push(p + _width - 1, dimg[q + width4 - 1], q + width4 - 1);
+                    queueEdge(p + _width - 1, q + width4 - 1, queuedEdges, numQueuedEdges);
+                }
+            } else {
+                //?
+            }
+
+            if (currentLevel > queue->front().alpha) // go to lower level
+            {
+                currentLevel = queue->front().alpha;
+                edgeStatus[queue->front().edgeIdx] = QItem::EDGE_CONNECTED;
+            } else {
+            }
+        }
+        // go to higher level
+        if (numVisited < imgSize && !queue->empty()) {
+            currentLevel = queue->front().alpha;
+        }
+
+        // queue->print();
+        // printAll(isVisited, edgeStatus, img);
+        printGraph(isVisited, edgeStatus, img);
+        std::getchar();
+    }
+
+    delete queue;
+    Free(isVisited);
+    Free(queuedEdges);
+    Free(numQueuedEdges);
+}
+
+template <class Pixel>
+void AlphaTree<Pixel>::floodMain(Pixel *img, double a, double r, int listsize, ImgIdx imgSize, ImgIdx nredges,
+                                 ImgIdx dimgSize, _uint64 numLevels, ImgIdx *dhist, double *dimg, _uint8 *edgeStatus,
+                                 _uint8 *isAvailable) {
+    _uint8 *isVisited = (_uint8 *)Calloc((size_t)((imgSize)));
+    HHPQ *queue = new HHPQ(dhist, numLevels, nredges, isVisited, a, listsize, r, edgeStatus);
+
+    ImgIdx stackTop = _curSize++; // Dummy root with maximum possible alpha
+    double currentLevel = std::numeric_limits<double>::infinity();
+    _node[stackTop] = AlphaNode<Pixel>(currentLevel);
+
+    ImgIdx prevTop = stackTop;
+    ImgIdx startingPixel = 0; // Arbitrary starting point
+    queue->push(startingPixel, currentLevel);
+
+    while (_node[stackTop].area < imgSize) { // Main flooding loop
+        while (_node[stackTop].area < imgSize && !queue->empty() &&
+               queue->front().alpha <= currentLevel) { // Flood all levels below currentLevel
+            const ImgIdx p = queue->front().index;
+            const ImgIdx eIdx = queue->front().edgeIdx;
+            currentLevel = queue->front().alpha;
+            queue->pop();
+            if (isVisited[p]) {
+                edgeStatus[eIdx] = QItem::EDGE_REDUNDANT;
+
+                printVisit(p, currentLevel);
+                queue->print();
+                printAll(isVisited, edgeStatus, img);
+                std::getchar();
+
+                continue;
+            }
+            edgeStatus[eIdx] = QItem::EDGE_CONNECTED;
+
+            isVisited[p] = 1;
+
+            printVisit(p, currentLevel);
+            queue->print();
+            printAll(isVisited, edgeStatus, img);
+            std::getchar();
+
+            auto isAv = isAvailable[p];
+            if (_connectivity == 4) {
+                const ImgIdx q = p << 1;
+                // clang-format off
+                if (is_available(isAv, 0) && !isVisited[p + _width])    queue->push(p + _width, dimg[q], q);
+                if (is_available(isAv, 1) && !isVisited[p + 1])         queue->push(p + 1, dimg[q + 1], q + 1);
+                if (is_available(isAv, 2) && !isVisited[p - 1])         queue->push(p - 1, dimg[q - 1], q - 1);
+                if (is_available(isAv, 3) && !isVisited[p - _width])    queue->push(p - _width, dimg[q - (_width << 1)], q - (_width << 1));
+                // clang-format on
+            } else if (_connectivity == 8) {
+                const ImgIdx width4 = _width << 2;
+                const ImgIdx q = p << 2;
+                // clang-format off
+                if (is_available(isAv, 0) && !isVisited[p + _width])        queue->push(p + _width, dimg[q], q);
+                if (is_available(isAv, 1) && !isVisited[p + _width + 1])    queue->push(p + _width + 1, dimg[q + 1], q + 1);
+                if (is_available(isAv, 2) && !isVisited[p + 1])             queue->push(p + 1, dimg[q + 2], q + 2);
+                if (is_available(isAv, 3) && !isVisited[p - _width + 1])    queue->push(p - _width + 1, dimg[q + 3], q + 3);
+                if (is_available(isAv, 4) && !isVisited[p - _width])        queue->push(p - _width, dimg[q - width4], q - width4);
+                if (is_available(isAv, 5) && !isVisited[p - _width - 1])    queue->push(p - _width - 1, dimg[q - width4 - 3], q - width4 - 3);
+                if (is_available(isAv, 6) && !isVisited[p - 1])             queue->push(p - 1, dimg[q - 2], q - 2);
+                if (is_available(isAv, 7) && !isVisited[p + _width - 1])    queue->push(p + _width - 1, dimg[q + width4 - 1], q + width4 - 1);
+                // clang-format on
+            } else {
+                //?
+            }
+
+            if (currentLevel > queue->front().alpha) // go to lower level
+            {
+                currentLevel = queue->front().alpha;
+                edgeStatus[queue->front().edgeIdx] = QItem::EDGE_CONNECTED;
+                const ImgIdx newNodeIdx = _curSize++;
+                _node[newNodeIdx] = AlphaNode<Pixel>(img[p], queue->front().alpha, stackTop);
+                prevTop = stackTop;
+                stackTop = newNodeIdx;
+
+                if (currentLevel > 0) {
+                    const ImgIdx singletonNodeIdx = _curSize++;
+                    _node[singletonNodeIdx] = AlphaNode<Pixel>(img[p], 0.0, newNodeIdx);
+                    _parentAry[p] = singletonNodeIdx;
+                } else
+                    _parentAry[p] = stackTop;
+            } else {
+                if (currentLevel > 0) {
+                    const ImgIdx singletonNodeIdx = _curSize++;
+                    _node[singletonNodeIdx] = AlphaNode<Pixel>(img[p], 0.0, stackTop);
+                    _node[stackTop].add(_node[singletonNodeIdx]);
+                    _parentAry[p] = singletonNodeIdx;
+                } else
+                    connectPix2Node(p, img[p], stackTop);
+                if (_node[stackTop].area == imgSize)
+                    break;
+            }
+        }
+
+        if (_node[stackTop].area < imgSize && _node[prevTop].parentIdx == stackTop &&
+            _node[prevTop].area == _node[stackTop].area) {
+            _node[prevTop].parentIdx = _node[stackTop].parentIdx;
+            stackTop = prevTop;
+            _curSize--;
+        }
+
+        // go to higher level
+        if (_node[stackTop].area < imgSize) {
+            ImgIdx newParentIdx = _node[stackTop].parentIdx;
+            if (!queue->empty() && (double)queue->front().alpha < (double)_node[newParentIdx].alpha) {
+                newParentIdx = _curSize++;
+                _node[newParentIdx] = AlphaNode<Pixel>(_node[stackTop]);
+                _node[newParentIdx].alpha = queue->front().alpha;
+                _node[newParentIdx].parentIdx = _node[stackTop].parentIdx;
+                _node[stackTop].parentIdx = newParentIdx;
+            } else // go to existing _node
+                _node[newParentIdx].add(_node[stackTop]);
+
+            prevTop = stackTop;
+            stackTop = newParentIdx;
+            currentLevel = _node[stackTop].alpha;
+        }
+
+        queue->print();
+        printAll(isVisited, edgeStatus, img);
+        std::getchar();
+    }
+    _rootIdx = _node[prevTop].area == imgSize ? prevTop : stackTop;
+    _node[_rootIdx].parentIdx = ROOTIDX;
+
+    sortAlphaNodes();
+    _curSize--; // Remove dummy root
+
+    printParentAry();
+    printTree();
+    delete queue;
+    Free(isVisited);
 }
 
 // hhpq
@@ -3116,306 +3378,28 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueuePar(Pixel *img
 
     compute_dimg_hhpq_par(dimg, dhist, img, a); // Calculate pixel differences and make histogram
 
-    _uint8 *isVisited = (_uint8 *)Calloc((size_t)((imgSize)));
-    HHPQ *queue = new HHPQ(dhist, numLevels, nredges, isVisited, a, listsize, r, edgeStatus);
-
-    _curSize = 0;
-    _maxSize = 1 + imgSize + dimgSize;
-
-    Free(dhist);
-    dhist = nullptr;
-
     _uint8 *isAvailable = (_uint8 *)Malloc((size_t)(imgSize));
     set_isAvailable(isAvailable);
 
+    _curSize = 0;
+    _maxSize = 1 + imgSize + dimgSize;
     _parentAry = (ImgIdx *)Malloc((size_t)imgSize * sizeof(ImgIdx));
-    for (int i = 0; i < imgSize; i++)
-        _parentAry[i] = -1;
+    memset(_parentAry, ROOTIDX, imgSize * sizeof(ImgIdx));
     _node = (AlphaNode<Pixel> *)Malloc((size_t)_maxSize * sizeof(AlphaNode<Pixel>));
 
-    ImgIdx stackTop = _curSize++; // Dummy root with maximum possible alpha
-    double currentLevel = std::numeric_limits<double>::infinity();
-    _node[stackTop] = AlphaNode<Pixel>(currentLevel);
-
-    srand(time(NULL));
-    ImgIdx startingPixel = rand() % imgSize; // Arbitrary starting point
-
-    ImgIdx prevTop = stackTop;
-    queue->push(startingPixel, currentLevel);
-
-    ImgIdx *stack = (ImgIdx *)Malloc((size_t)imgSize * sizeof(ImgIdx));
-    ImgIdx stackCur = 0;
-    stack[stackCur++] = stackTop;
-
-    printAll(isVisited, edgeStatus, img);
-    std::getchar();
+    // printAll(isVisited, edgeStatus, img);
+    // std::getchar();
 
     int threadIdx = 0;
-    if (threadIdx == 0) {
-        ImgIdx *queuedEdges = (ImgIdx *)Calloc((size_t)imgSize * (size_t)_connectivity * sizeof(ImgIdx));
-        _uint8 *numQueuedEdges = (_uint8 *)Calloc((size_t)dimgSize * sizeof(_uint8));
-
-        int numVisited = 0;
-        while (numVisited < imgSize) { // Main flooding loop
-            while (numVisited < imgSize && !queue->empty() &&
-                   queue->front().alpha <= currentLevel) { // Flood all levels below currentLevel
-                const ImgIdx p = queue->front().index;
-                const ImgIdx eIdx = queue->front().edgeIdx;
-                currentLevel = queue->front().alpha;
-                queue->pop();
-                if (isVisited[p]) {
-                    edgeStatus[eIdx] = QItem::EDGE_REDUNDANT;
-
-                    // printVisit(p, currentLevel);
-                    // queue->print();
-                    // printAll(isVisited, edgeStatus, img);
-                    printGraph(isVisited, edgeStatus, img);
-                    std::getchar();
-
-                    continue;
-                }
-                edgeStatus[eIdx] = QItem::EDGE_CONNECTED;
-
-                isVisited[p] = 1;
-                if (numVisited > 0)
-                    markRedundant(p, eIdx, edgeStatus, queuedEdges, numQueuedEdges);
-                numVisited++;
-
-                // printVisit(p, currentLevel);
-                // queue->print();
-                // printAll(isVisited, edgeStatus, img);
-                printGraph(isVisited, edgeStatus, img);
-                std::getchar();
-
-                auto isAv = isAvailable[p];
-                if (_connectivity == 4) {
-                    const ImgIdx q = p << 1;
-                    if (is_available(isAv, 0) && !isVisited[p + _width]) {
-                        queue->push(p + _width, dimg[q], q);
-                        queueEdge(p + _width, q, queuedEdges, numQueuedEdges);
-                    }
-                    if (is_available(isAv, 1) && !isVisited[p + 1]) {
-                        queue->push(p + 1, dimg[q + 1], q + 1);
-                        queueEdge(p + 1, q + 1, queuedEdges, numQueuedEdges);
-                    }
-                    if (is_available(isAv, 2) && !isVisited[p - 1]) {
-                        queue->push(p - 1, dimg[q - 1], q - 1);
-                        queueEdge(p - 1, q - 1, queuedEdges, numQueuedEdges);
-                    }
-                    if (is_available(isAv, 3) && !isVisited[p - _width]) {
-                        queue->push(p - _width, dimg[q - (_width << 1)], q - (_width << 1));
-                        queueEdge(p - _width, q - (_width << 1), queuedEdges, numQueuedEdges);
-                    }
-                } else if (_connectivity == 8) {
-                    const ImgIdx width4 = _width << 2;
-                    const ImgIdx q = p << 2;
-                    if (is_available(isAv, 0) && !isVisited[p + _width]) {
-                        queue->push(p + _width, dimg[q], q);
-                        queueEdge(p + _width, q, queuedEdges, numQueuedEdges);
-                    }
-                    if (is_available(isAv, 1) && !isVisited[p + _width + 1]) {
-                        queue->push(p + _width + 1, dimg[q + 1], q + 1);
-                        queueEdge(p + _width + 1, q + 1, queuedEdges, numQueuedEdges);
-                    }
-                    if (is_available(isAv, 2) && !isVisited[p + 1]) {
-                        queue->push(p + 1, dimg[q + 2], q + 2);
-                        queueEdge(p + 1, q + 2, queuedEdges, numQueuedEdges);
-                    }
-                    if (is_available(isAv, 3) && !isVisited[p - _width + 1]) {
-                        queue->push(p - _width + 1, dimg[q + 3], q + 3);
-                        queueEdge(p - _width + 1, q + 3, queuedEdges, numQueuedEdges);
-                    }
-                    if (is_available(isAv, 4) && !isVisited[p - _width]) {
-                        queue->push(p - _width, dimg[q - width4], q - width4);
-                        queueEdge(p - _width, q - width4, queuedEdges, numQueuedEdges);
-                    }
-                    if (is_available(isAv, 5) && !isVisited[p - _width - 1]) {
-                        queue->push(p - _width - 1, dimg[q - width4 - 3], q - width4 - 3);
-                        queueEdge(p - _width - 1, q - width4 - 3, queuedEdges, numQueuedEdges);
-                    }
-                    if (is_available(isAv, 6) && !isVisited[p - 1]) {
-                        queue->push(p - 1, dimg[q - 2], q - 2);
-                        queueEdge(p - 1, q - 2, queuedEdges, numQueuedEdges);
-                    }
-                    if (is_available(isAv, 7) && !isVisited[p + _width - 1]) {
-                        queue->push(p + _width - 1, dimg[q + width4 - 1], q + width4 - 1);
-                        queueEdge(p + _width - 1, q + width4 - 1, queuedEdges, numQueuedEdges);
-                    }
-                } else {
-                    //?
-                }
-
-                if (currentLevel > queue->front().alpha) // go to lower level
-                {
-                    currentLevel = queue->front().alpha;
-                    edgeStatus[queue->front().edgeIdx] = QItem::EDGE_CONNECTED;
-                } else {
-                }
-            }
-            // go to higher level
-            if (numVisited < imgSize && !queue->empty()) {
-                currentLevel = queue->front().alpha;
-            }
-
-            // queue->print();
-            // printAll(isVisited, edgeStatus, img);
-            printGraph(isVisited, edgeStatus, img);
-            std::getchar();
-        }
-
-        Free(queuedEdges);
-        Free(numQueuedEdges);
+    if (threadIdx == 1) {
+        floodProbe(img, a, r, listsize, imgSize, nredges, dimgSize, numLevels, dhist, dimg, edgeStatus, isAvailable);
     } else {
-        if (threadIdx == 0) {
-            while (_node[stackTop].area < imgSize) { // Main flooding loop
-                while (_node[stackTop].area < imgSize && !queue->empty() &&
-                       queue->front().alpha <= currentLevel) { // Flood all levels below currentLevel
-                    const ImgIdx p = queue->front().index;
-                    const ImgIdx eIdx = queue->front().edgeIdx;
-                    currentLevel = queue->front().alpha;
-                    queue->pop();
-                    if (isVisited[p]) {
-                        edgeStatus[eIdx] = QItem::EDGE_REDUNDANT;
-
-                        printVisit(p, currentLevel);
-                        queue->print();
-                        printAll(isVisited, edgeStatus, img);
-                        std::getchar();
-
-                        continue;
-                    }
-                    edgeStatus[eIdx] = QItem::EDGE_CONNECTED;
-
-                    isVisited[p] = 1;
-
-                    printVisit(p, currentLevel);
-                    queue->print();
-                    printAll(isVisited, edgeStatus, img);
-                    std::getchar();
-
-                    auto isAv = isAvailable[p];
-                    if (_connectivity == 4) {
-                        const ImgIdx q = p << 1;
-                        // clang-format off
-                if (is_available(isAv, 0) && !isVisited[p + _width])    queue->push(p + _width, dimg[q], q);
-                if (is_available(isAv, 1) && !isVisited[p + 1])         queue->push(p + 1, dimg[q + 1], q + 1);
-                if (is_available(isAv, 2) && !isVisited[p - 1])         queue->push(p - 1, dimg[q - 1], q - 1);
-                if (is_available(isAv, 3) && !isVisited[p - _width])    queue->push(p - _width, dimg[q - (_width << 1)], q - (_width << 1));
-                        // clang-format on
-                    } else if (_connectivity == 8) {
-                        const ImgIdx width4 = _width << 2;
-                        const ImgIdx q = p << 2;
-                        // clang-format off
-                if (is_available(isAv, 0) && !isVisited[p + _width])        queue->push(p + _width, dimg[q], q);
-                if (is_available(isAv, 1) && !isVisited[p + _width + 1])    queue->push(p + _width + 1, dimg[q + 1], q + 1);
-                if (is_available(isAv, 2) && !isVisited[p + 1])             queue->push(p + 1, dimg[q + 2], q + 2);
-                if (is_available(isAv, 3) && !isVisited[p - _width + 1])    queue->push(p - _width + 1, dimg[q + 3], q + 3);
-                if (is_available(isAv, 4) && !isVisited[p - _width])        queue->push(p - _width, dimg[q - width4], q - width4);
-                if (is_available(isAv, 5) && !isVisited[p - _width - 1])    queue->push(p - _width - 1, dimg[q - width4 - 3], q - width4 - 3);
-                if (is_available(isAv, 6) && !isVisited[p - 1])             queue->push(p - 1, dimg[q - 2], q - 2);
-                if (is_available(isAv, 7) && !isVisited[p + _width - 1])    queue->push(p + _width - 1, dimg[q + width4 - 1], q + width4 - 1);
-                        // clang-format on
-                    } else {
-                        //?
-                    }
-
-                    if (currentLevel > queue->front().alpha) // go to lower level
-                    {
-                        currentLevel = queue->front().alpha;
-                        edgeStatus[queue->front().edgeIdx] = QItem::EDGE_CONNECTED;
-                        const ImgIdx newNodeIdx = _curSize++;
-                        _node[newNodeIdx] = AlphaNode<Pixel>(img[p], queue->front().alpha, stackTop);
-                        stack[stackCur++] = newNodeIdx;
-                        printf("****Pushing stack[%d] = %d\n", stackCur - 1, newNodeIdx);
-                        prevTop = stackTop;
-                        stackTop = newNodeIdx;
-
-                        {
-                            auto *walker = &_node[stackTop];
-                            for (int i = stackCur - 1; i >= 0; i--) {
-                                printf("[%d]: node stack[i] = %d / stackstack[i] = %d\n", (int)i, (int)(walker - _node),
-                                       stack[i]);
-                                walker = &_node[walker->parentIdx];
-                            }
-                        }
-
-                        if (currentLevel > 0) {
-                            const ImgIdx singletonNodeIdx = _curSize++;
-                            _node[singletonNodeIdx] = AlphaNode<Pixel>(img[p], 0.0, newNodeIdx);
-                            _parentAry[p] = singletonNodeIdx;
-                        } else
-                            _parentAry[p] = stackTop;
-                    } else {
-                        if (currentLevel > 0) {
-                            const ImgIdx singletonNodeIdx = _curSize++;
-                            _node[singletonNodeIdx] = AlphaNode<Pixel>(img[p], 0.0, stackTop);
-                            _node[stackTop].add(_node[singletonNodeIdx]);
-                            _parentAry[p] = singletonNodeIdx;
-                        } else
-                            connectPix2Node(p, img[p], stackTop);
-                        if (_node[stackTop].area == imgSize)
-                            break;
-                    }
-                }
-
-                if (_node[stackTop].area < imgSize && _node[prevTop].parentIdx == stackTop &&
-                    _node[prevTop].area == _node[stackTop].area) {
-                    _node[prevTop].parentIdx = _node[stackTop].parentIdx;
-                    stackTop = prevTop;
-                    _curSize--;
-                    // stackCur--;
-                    // printf("-------popping stack stackCur = %d\n", stackCur);
-                }
-
-                // go to higher level
-                if (_node[stackTop].area < imgSize) {
-                    ImgIdx newParentIdx = _node[stackTop].parentIdx;
-                    stackCur--;
-                    printf("****popping stack stackCur = %d\n", stackCur);
-                    if (!queue->empty() && (double)queue->front().alpha < (double)_node[newParentIdx].alpha) {
-                        newParentIdx = _curSize++;
-                        _node[newParentIdx] = AlphaNode<Pixel>(_node[stackTop]);
-                        _node[newParentIdx].alpha = queue->front().alpha;
-                        _node[newParentIdx].parentIdx = _node[stackTop].parentIdx;
-                        _node[stackTop].parentIdx = newParentIdx;
-                        stack[stackCur++] = newParentIdx;
-                        printf("****Pushing stack[%d] = %d\n", stackCur - 1, newParentIdx);
-                    } else // go to existing _node
-                        _node[newParentIdx].add(_node[stackTop]);
-
-                    prevTop = stackTop;
-                    stackTop = newParentIdx;
-                    currentLevel = _node[stackTop].alpha;
-                    {
-                        auto *walker = &_node[stackTop];
-                        for (int i = stackCur - 1; i >= 0; i--) {
-                            printf("[%d]: node stack[i] = %d / stackstack[i] = %d\n", (int)i, (int)(walker - _node),
-                                   stack[i]);
-                            walker = &_node[walker->parentIdx];
-                        }
-                    }
-                }
-
-                queue->print();
-                printAll(isVisited, edgeStatus, img);
-                std::getchar();
-            }
-            _rootIdx = _node[prevTop].area == imgSize ? prevTop : stackTop;
-            _node[_rootIdx].parentIdx = ROOTIDX;
-        }
-
-        sortAlphaNodes();
-        _curSize--; // Remove dummy root
-
-        printParentAry();
-        printTree();
+        floodMain(img, a, r, listsize, imgSize, nredges, dimgSize, numLevels, dhist, dimg, edgeStatus, isAvailable);
     }
 
-    delete queue;
-    Free(stack);
     Free(dimg);
+    Free(dhist);
     Free(edgeStatus);
-    Free(isVisited);
     Free(isAvailable);
 }
 
