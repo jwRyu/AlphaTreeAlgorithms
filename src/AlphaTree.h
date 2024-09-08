@@ -145,7 +145,6 @@ template <class Pixel> class AlphaTree {
     void FloodLadderQueue(const Pixel *img, int thres = 64);
     void FloodHierarHeapQueueNoCache(const Pixel *img, double a = 12.0, double r = 0.5, int listsize = 12);
     void FloodHierarHeapQueue(const Pixel *img, double a = 12.0, double r = 0.5, int listsize = 12);
-    void FloodHierarHeapQueuePar(const Pixel *img, double a = 12.0, double r = 0.5, int listsize = 12);
     void FloodHierHeapQueueHisteq(const Pixel *img, int listsize = 12, int a = 0);
     void FloodTrieHypergraph(const Pixel *img);
     void FloodHierarQueueHypergraph(const Pixel *img);
@@ -154,12 +153,9 @@ template <class Pixel> class AlphaTree {
     void Flood_Hierarqueue_par(const Pixel *img, int numthreads);
     void HybridParallel(const Pixel *img, int numthreads);
 
-    void floodProbe(ImgIdx startingPixel, const Pixel *img, double a, double r, int listsize, ImgIdx imgSize,
-                    ImgIdx nredges, ImgIdx dimgSize, _uint64 numLevels, const ImgIdx *dhist, const double *dimg,
-                    _uint8 *edgeStatus, const _uint8 *isAvailable) const;
     void runFloodHHPQ(ImgIdx startingPixel, const Pixel *img, double a, double r, int listsize, ImgIdx imgSize,
                       ImgIdx nredges, ImgIdx dimgSize, _uint64 numLevels, const ImgIdx *dhist, const double *dimg,
-                      _uint8 *edgeStatus, const _uint8 *isAvailable);
+                      const _uint8 *isAvailable);
 
     void sortAlphaNodes();
     void markRedundant(ImgIdx imgIdx, ImgIdx eIdx, _uint8 *edgeStatus, ImgIdx *queuedEdges,
