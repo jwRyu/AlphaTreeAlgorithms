@@ -20,6 +20,7 @@ class AlphaTreeConfig {
         int randomGenImageWidth;
         int randomGenImageHeight;
         int alphaTreeAlgorithmCode;
+        std::string dissimilarityMetric;
         int bitdepth;
         int tse;
         int connectivity;

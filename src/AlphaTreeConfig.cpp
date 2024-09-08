@@ -65,25 +65,26 @@ std::optional<AlphaTreeConfig::AlphaTreeParameters> AlphaTreeConfig::load(int ar
             }
         }
         configFile.close();
-    } else if (argc == 19) {
-        config["ImageFileName"] = std::string(argv[1]);
-        config["LogFileName"] = std::string(argv[2]);
-        config["UseRandomlyGeneratedImages"] = std::string(argv[3]);
-        config["RandomlyGeneratedImageWidth"] = std::string(argv[4]);
-        config["RandomlyGeneratedImageHeight"] = std::string(argv[5]);
-        config["NumberOfChannels"] = std::string(argv[6]);
-        config["NumberOfThreads"] = std::string(argv[7]);
-        config["AlphaTreeAlgorithm"] = std::string(argv[8]);
-        config["BitDepth"] = std::string(argv[9]);
-        config["UseTreeSizeEstimation"] = std::string(argv[10]);
-        config["Connectivity"] = std::string(argv[11]);
-        config["NumberOfTestIterations"] = std::string(argv[12]);
-        config["ParameterInteger1"] = std::string(argv[13]);
-        config["ParameterInteger2"] = std::string(argv[14]);
-        config["ParameterInteger3"] = std::string(argv[15]);
-        config["ParameterFloat1"] = std::string(argv[16]);
-        config["ParameterFloat2"] = std::string(argv[17]);
-        config["ParameterFloat3"] = std::string(argv[18]);
+        // }
+        // else if (argc == 19) {
+        // config["ImageFileName"] = std::string(argv[1]);
+        // config["LogFileName"] = std::string(argv[2]);
+        // config["UseRandomlyGeneratedImages"] = std::string(argv[3]);
+        // config["RandomlyGeneratedImageWidth"] = std::string(argv[4]);
+        // config["RandomlyGeneratedImageHeight"] = std::string(argv[5]);
+        // config["NumberOfChannels"] = std::string(argv[6]);
+        // config["NumberOfThreads"] = std::string(argv[7]);
+        // config["AlphaTreeAlgorithm"] = std::string(argv[8]);
+        // config["BitDepth"] = std::string(argv[9]);
+        // config["UseTreeSizeEstimation"] = std::string(argv[10]);
+        // config["Connectivity"] = std::string(argv[11]);
+        // config["NumberOfTestIterations"] = std::string(argv[12]);
+        // config["ParameterInteger1"] = std::string(argv[13]);
+        // config["ParameterInteger2"] = std::string(argv[14]);
+        // config["ParameterInteger3"] = std::string(argv[15]);
+        // config["ParameterFloat1"] = std::string(argv[16]);
+        // config["ParameterFloat2"] = std::string(argv[17]);
+        // config["ParameterFloat3"] = std::string(argv[18]);
     } else {
         std::cerr << "[AlphaTreeConfig::load] Invalid argument (requires either 0 or 18)" << std::endl;
         return std::nullopt;
@@ -98,6 +99,7 @@ std::optional<AlphaTreeConfig::AlphaTreeParameters> AlphaTreeConfig::load(int ar
     params.randomGenImageWidth = getInteger("RandomlyGeneratedImageWidth");
     params.randomGenImageHeight = getInteger("RandomlyGeneratedImageHeight");
     params.alphaTreeAlgorithmCode = getAlphaTreeAlgorithmCode(getString("AlphaTreeAlgorithm"));
+    params.dissimilarityMetric = getString("DissimilarityMetric");
     params.bitdepth = getInteger("BitDepth");
     params.tse = getInteger("UseTreeSizeEstimation");
     params.connectivity = getInteger("Connectivity");
