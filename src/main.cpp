@@ -114,9 +114,8 @@ int main(int argc, char **argv) {
         double imgsize = (double)(width * height);
 
         printf("================== Summary ==================\n");
-        for (int thridx = 0; thridx < nthr; thridx++) {
-            printf("#thr = %d: %.3fMpix/s / %.3fB/pix \n", 1, (imgsize / minRuntime) * 1e-6, 0.0);
-        }
+        printf("Processing speed: %.3fMpix/s / Memory use %.3fB/pix \n", (imgsize / minRuntime) * 1e-6,
+               (double)max_memuse / imgsize);
         printf("=============================================\n");
     }
 
