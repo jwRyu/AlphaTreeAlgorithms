@@ -3240,10 +3240,10 @@ void AlphaTree<Pixel>::floodProbe(ImgIdx startingPixel, const Pixel *img, double
 }
 
 template <class Pixel>
-void AlphaTree<Pixel>::floodMain(ImgIdx startingPixel, const Pixel *img, double a, double r, int listsize,
-                                 ImgIdx imgSize, ImgIdx nredges, ImgIdx dimgSize, _uint64 numLevels,
-                                 const ImgIdx *dhist, const double *dimg, _uint8 *edgeStatus,
-                                 const _uint8 *isAvailable) {
+void AlphaTree<Pixel>::runFloodHHPQ(ImgIdx startingPixel, const Pixel *img, double a, double r, int listsize,
+                                    ImgIdx imgSize, ImgIdx nredges, ImgIdx dimgSize, _uint64 numLevels,
+                                    const ImgIdx *dhist, const double *dimg, _uint8 *edgeStatus,
+                                    const _uint8 *isAvailable) {
     _uint8 *isVisited = (_uint8 *)Calloc((size_t)((imgSize)));
     HHPQ *queue = new HHPQ(dhist, numLevels, nredges, isVisited, a, listsize, r, edgeStatus);
 
@@ -3251,7 +3251,7 @@ void AlphaTree<Pixel>::floodMain(ImgIdx startingPixel, const Pixel *img, double 
     double currentLevel = std::numeric_limits<double>::infinity();
     _node[stackTop] = AlphaNode<Pixel>(currentLevel);
 
-    printf("floodMain Start\n");
+    printf("runFloodHHPQ Start\n");
 
     ImgIdx prevTop = stackTop;
     queue->push(startingPixel, currentLevel);
@@ -3416,8 +3416,8 @@ void AlphaTree<Pixel>::FloodHierarHeapQueuePar(const Pixel *img, double a, doubl
 #pragma omp parallel for shared(edgeStatus)
     for (int thread = 0; thread < 16; thread++) {
         if (thread == 0)
-            floodMain(startingPixel, img, a, r, listsize, imgSize, nredges, dimgSize, numLevels, dhist, dimg,
-                      edgeStatus, isAvailable);
+            runFloodHHPQ(startingPixel, img, a, r, listsize, imgSize, nredges, dimgSize, numLevels, dhist, dimg,
+                         edgeStatus, isAvailable);
         else
             floodProbe(startingPixel, img, a, r, listsize, imgSize, nredges, dimgSize, numLevels, dhist, dimg,
                        edgeStatus, isAvailable);
@@ -3428,52 +3428,6 @@ void AlphaTree<Pixel>::FloodHierarHeapQueuePar(const Pixel *img, double a, doubl
     Free(edgeStatus);
     Free(isAvailable);
 }
-
-/*rewrite following code for parallel computing, where the main thread runs floodMain while all others run floodProbe
-whose startingPixel is spreadout in the image as much as possible:
-
-template <class Pixel>
-void AlphaTree<Pixel>::FloodHierarHeapQueuePar(const Pixel *img, double a, double r, int listsize) {
-    assert(_connectivity == 4 || _connectivity == 8 || _connectivity == 12);
-    clear();
-    const ImgIdx imgSize = _width * _height;
-    const ImgIdx nredges = _width * (_height - 1) + (_width - 1) * _height +
-                           ((_connectivity == 8) ? ((_width - 1) * (_height - 1) * 2) : 0);
-    const ImgIdx dimgSize = (1 + (_connectivity >> 1)) * _width * _height;
-    const double alphaMax = _pixelDissim.maximumDissmilarity();
-    const _uint64 numLevels = HHPQ::alphaToLevel((double)alphaMax, a);
-    assert(numLevels < 10e3); // More than 10k levels is infeasible and inefficient
-
-    ImgIdx *dhist = (ImgIdx *)Calloc((size_t)numLevels * sizeof(ImgIdx));
-    double *dimg = (double *)Malloc((size_t)dimgSize * sizeof(double));
-    _uint8 *edgeStatus = (_uint8 *)Calloc((size_t)dimgSize * sizeof(_uint8));
-
-    compute_dimg_hhpq_par(dimg, dhist, img, a); // Calculate pixel differences and make histogram
-
-    _uint8 *isAvailable = (_uint8 *)Malloc((size_t)(imgSize));
-    set_isAvailable(isAvailable);
-
-    _curSize = 0;
-    _maxSize = 1 + imgSize + dimgSize;
-    _parentAry = (ImgIdx *)Malloc((size_t)imgSize * sizeof(ImgIdx));
-    memset(_parentAry, ROOTIDX, imgSize * sizeof(ImgIdx));
-    _node = (AlphaNode<Pixel> *)Malloc((size_t)_maxSize * sizeof(AlphaNode<Pixel>));
-
-    ImgIdx startingPixel = 0;
-
-    // printAll(isVisited, edgeStatus, img);
-    // std::getchar();
-
-    floodProbe(startingPixel, img, a, r, listsize, imgSize, nredges, dimgSize, numLevels, dhist, dimg, edgeStatus,
-               isAvailable);
-    floodMain(startingPixel, img, a, r, listsize, imgSize, nredges, dimgSize, numLevels, dhist, dimg, edgeStatus,
-              isAvailable);
-
-    Free(dimg);
-    Free(dhist);
-    Free(edgeStatus);
-    Free(isAvailable);
-}*/
 
 template <class Pixel> void AlphaTree<Pixel>::sortAlphaNodes() {
     // Step 1: Capture the original indices

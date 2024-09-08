@@ -147,15 +147,19 @@ template <class Pixel> class AlphaTree {
     void FloodHierarHeapQueue(const Pixel *img, double a = 12.0, double r = 0.5, int listsize = 12);
     void FloodHierarHeapQueuePar(const Pixel *img, double a = 12.0, double r = 0.5, int listsize = 12);
     void FloodHierHeapQueueHisteq(const Pixel *img, int listsize = 12, int a = 0);
-    void Flood_Hierarqueue_par(const Pixel *img, int numthreads);
     void FloodTrieHypergraph(const Pixel *img);
+    void FloodHierarQueueHypergraph(const Pixel *img);
+    void FloodTrieNoCache(const Pixel *img);
+    void FloodTrie(const Pixel *img);
+    void Flood_Hierarqueue_par(const Pixel *img, int numthreads);
+    void HybridParallel(const Pixel *img, int numthreads);
 
     void floodProbe(ImgIdx startingPixel, const Pixel *img, double a, double r, int listsize, ImgIdx imgSize,
                     ImgIdx nredges, ImgIdx dimgSize, _uint64 numLevels, const ImgIdx *dhist, const double *dimg,
                     _uint8 *edgeStatus, const _uint8 *isAvailable) const;
-    void floodMain(ImgIdx startingPixel, const Pixel *img, double a, double r, int listsize, ImgIdx imgSize,
-                   ImgIdx nredges, ImgIdx dimgSize, _uint64 numLevels, const ImgIdx *dhist, const double *dimg,
-                   _uint8 *edgeStatus, const _uint8 *isAvailable);
+    void runFloodHHPQ(ImgIdx startingPixel, const Pixel *img, double a, double r, int listsize, ImgIdx imgSize,
+                      ImgIdx nredges, ImgIdx dimgSize, _uint64 numLevels, const ImgIdx *dhist, const double *dimg,
+                      _uint8 *edgeStatus, const _uint8 *isAvailable);
 
     void sortAlphaNodes();
     void markRedundant(ImgIdx imgIdx, ImgIdx eIdx, _uint8 *edgeStatus, ImgIdx *queuedEdges,
@@ -210,7 +214,6 @@ template <class Pixel> class AlphaTree {
     _uint8 push_neighbor(HierarQueue *queue, _uint8 *isVisited, _uint16 *dimg, ImgIdx p);
     _uint8 push_neighbor(HierarQueue *queue, _uint8 *isVisited, _uint32 *dimg, ImgIdx p);
     _uint8 push_neighbor(HierarQueue *queue, _uint8 *isVisited, _uint64 *dimg, ImgIdx p);
-    void FloodHierarQueueHypergraph(const Pixel *img);
     void canonicalize(ImgIdx nidx);
     ImgIdx merge_subtrees(Pixel *dimg, _int64 blksz_x, _int64 blksz_y, ImgIdx npartition_x, ImgIdx npartition_y,
                           ImgIdx *subtree_cur, int tse, ImgIdx *nrbnode = NULL);
@@ -268,14 +271,11 @@ template <class Pixel> class AlphaTree {
     void compute_difference_and_sort(RankItem<double> *&rankitem, const Pixel *img, ImgIdx nredges);
     void compute_difference_and_sort(ImgIdx *rank, RankItem<double> *&rankitem, const Pixel *img, ImgIdx nredges,
                                      _int32 *&rank2rankitem);
-    void HybridParallel(const Pixel *img, int numthreads);
     ImgIdx NewAlphaNode(ImgIdx &size, ImgIdx &maxsize);
     ImgIdx NewAlphaNode(AlphaNode<Pixel> *tree, ImgIdx &size, ImgIdx &maxsize, Pixel level, AlphaNode<Pixel> *pCopy);
     void remove_redundant_node(AlphaNode<Pixel> *tree, ImgIdx &size, ImgIdx &prev_top, ImgIdx &stack_top);
     void connectPix2Node(AlphaNode<Pixel> *tree, ImgIdx pidx, Pixel pix_val, ImgIdx iNode, ImgIdx *pAry);
     ImgIdx find_root1(ImgIdx p, ImgIdx qlevel);
-    void FloodTrieNoCache(const Pixel *img);
-    void FloodTrie(const Pixel *img);
     ImgIdx get_level_root(ImgIdx p, ImgIdx nodeidx);
     ImgIdx get_level_root(ImgIdx p);
     ImgIdx get_level_root(ImgIdx p, Pixel alpha);
