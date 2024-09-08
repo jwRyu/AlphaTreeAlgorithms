@@ -1,10 +1,10 @@
 #pragma once
-#include "HeapQueue.h"
-#include "HierarQueue.h"
-#include "Trie.h"
-#include "allocator.h"
-#include "defines.h"
-#include "walltime.h" //tmp
+#include <HeapQueue.hpp>
+#include <HierarQueue.hpp>
+#include <Trie.hpp>
+#include <allocator.hpp>
+#include <defines.hpp>
+#include <walltime.hpp>
 
 #define LISTSIZE_DEFAULT 12
 #define HEAPSIZE_DEFAULT 128

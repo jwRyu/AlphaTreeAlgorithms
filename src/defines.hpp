@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <cassert>
 #include <cfloat>
 #include <cmath>
@@ -12,25 +13,26 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include <map>
 #include <omp.h>
+#include <optional>
+#include <random>
+#include <sstream>
 #include <stdio.h>
 #include <string.h>
+#include <string>
+#include <sys/time.h>
 #include <sys/types.h>
+#include <time.h>
+#include <unordered_map>
 #include <vector>
+#include <walltime.hpp>
 
 #define DELAYED_NODE_ALLOC 1
 #define HQUEUE_COST_AMORTIZE 1
 
 #define NULL_LEVELROOT 0xffffffff
 #define NODE_CANDIDATE 0xfffffffe
-//
-// #define dimg_idx_v(pidx) ((pidx)<<1)
-// #define dimg_idx_h(pidx) ((pidx)<<1)+1
-//
-// #define LEFT_AVAIL(pidx,width)			(((pidx) % (width)) != 0)
-// #define RIGHT_AVAIL(pidx,width)			(((pidx) % (width)) != ((width) - 1))
-// #define UP_AVAIL(pidx,width)				((pidx) > ((width) - 1))
-// #define DOWN_AVAIL(pidx,width,imgsz)		((pidx) < (imgsz) - (width))
 
 #define HIERARCHICAL_QUEUE 0
 #define HIERARCHICAL_L1IDX_QUEUE 1

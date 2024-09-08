@@ -1,5 +1,5 @@
-#include "HeapQueue.h"
-#include "allocator.h"
+#include <HeapQueue.hpp>
+#include <allocator.hpp>
 
 #if PROFILE
 #include <fstream>

@@ -1,4 +1,4 @@
-#include "PNGcodec.hpp"
+#include <PNGcodec.hpp>
 
 cv::Mat PNGCodec::toCVMat(const std::vector<uint16_t> &image, int width, int height, int channels) {
     if (channels == 1) {

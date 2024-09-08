@@ -1,7 +1,5 @@
 #include <QuadHeapQueue.hpp>
-#include <allocator.h>
-#include <cfloat>
-
+#include <allocator.hpp>
 QuadHeapQueue::QuadHeapQueue(ImgIdx maxsize_in) : cursize(0), maxsize(maxsize_in) {
     arr = (QItem *)Malloc(sizeof(QItem) * (maxsize + 2));
     arr[1].alpha = DBL_MAX;

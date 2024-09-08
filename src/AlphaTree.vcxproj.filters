@@ -15,25 +15,25 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="allocator.h">
+    <ClInclude Include="allocator.hpp">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="defines.h">
+    <ClInclude Include="defines.hpp">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="HybridQueue.h">
+    <ClInclude Include="HybridQueue.hpp">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="AlphaTree.h">
+    <ClInclude Include="AlphaTree.hpp">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Trie.h">
+    <ClInclude Include="Trie.hpp">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="HierarQueue.h">
+    <ClInclude Include="HierarQueue.hpp">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="HeapQueue.h">
+    <ClInclude Include="HeapQueue.hpp">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

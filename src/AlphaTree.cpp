@@ -1,4 +1,4 @@
-#include <AlphaTree.h>
+#include <AlphaTree.hpp>
 #include <HHPQ.hpp>
 #include <cmath>
 

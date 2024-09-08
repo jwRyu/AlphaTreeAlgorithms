@@ -1,4 +1,4 @@
-#include "HybridQueue.h"
+#include "HybridQueue.hpp"
 
 #if PROFILE
 #include <fstream>

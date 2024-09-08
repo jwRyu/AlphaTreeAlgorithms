@@ -1,6 +1,6 @@
 #pragma once
 
-#include <allocator.h>
+#include <allocator.hpp>
 
 #define TRIE_DEBUG 0
 

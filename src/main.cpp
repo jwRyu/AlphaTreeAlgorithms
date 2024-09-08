@@ -1,10 +1,9 @@
-#include "PNGcodec.hpp"
+#include <PNGcodec.hpp>
+#include <defines.hpp>
 
-#include "AlphaTree.h"
-#include "AlphaTreeConfig.h"
-#include "RandGenImage.hpp"
-#include "defines.h"
-#include "walltime.h"
+#include <AlphaTree.hpp>
+#include <AlphaTreeConfig.hpp>
+#include <RandGenImage.hpp>
 
 // args: Filename, nchannels, numthreads, testimgsize, algorithmcode, bitdepth, tseflag
 int main(int argc, char **argv) {

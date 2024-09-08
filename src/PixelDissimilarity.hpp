@@ -1,6 +1,6 @@
 #pragma once
 
-#include <defines.h>
+#include <defines.hpp>
 
 template <class Pixel> class PixelDissimilarity {
   public:

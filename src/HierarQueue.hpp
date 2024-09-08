@@ -1,7 +1,7 @@
 #pragma once
 
-#include "allocator.h"
-#include "defines.h"
+#include <allocator.hpp>
+#include <defines.hpp>
 
 // Do not use beyond 20-bit image
 class HierarQueue {

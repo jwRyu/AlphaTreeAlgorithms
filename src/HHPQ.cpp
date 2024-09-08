@@ -1,5 +1,5 @@
 #include <HHPQ.hpp>
-#include <allocator.h>
+#include <allocator.hpp>
 #include <cmath>
 #include <cstring>
 

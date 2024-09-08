@@ -1,4 +1,4 @@
-#include "HierarQueue.h"
+#include "HierarQueue.hpp"
 
 void HierarQueue::print() {
     for (int32_t i = min_level; i < numlevel; i++) {

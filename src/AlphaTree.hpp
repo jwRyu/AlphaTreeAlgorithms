@@ -1,15 +1,15 @@
 #pragma once
-#include "AlphaTreeConfig.h"
-#include "HeapQueue.h"
-#include "HierarQueue.h"
-#include "HybridQueue.h"
-#include "LadderQueue.hpp"
-#include "Trie.h"
-#include "defines.h"
-#include "radixsort_teeninga/sort/radix_sort_parallel.h"
-#include "radixsort_teeninga/sort/sort_item.h"
-#include "walltime.h"
+#include <AlphaTreeConfig.hpp>
+#include <HeapQueue.hpp>
+#include <HierarQueue.hpp>
+#include <HybridQueue.hpp>
+#include <LadderQueue.hpp>
 #include <PixelDissimilarity.hpp>
+#include <Trie.hpp>
+#include <defines.hpp>
+#include <radixsort_teeninga/sort/radix_sort_parallel.h>
+#include <radixsort_teeninga/sort/sort_item.h>
+#include <walltime.hpp>
 
 using namespace pmt;
 

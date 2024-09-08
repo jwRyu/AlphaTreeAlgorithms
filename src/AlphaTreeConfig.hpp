@@ -4,10 +4,7 @@
 
 #define CONFIGFILENAME "config.txt"
 
-#include <map>
-#include <optional>
-#include <string>
-#include <unordered_map>
+#include <defines.hpp>
 
 class AlphaTreeConfig {
   public:
