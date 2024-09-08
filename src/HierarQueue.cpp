@@ -1,7 +1,7 @@
 #include "HierarQueue.h"
 
 void HierarQueue::print() {
-    for (_int32 i = min_level; i < numlevel; i++) {
+    for (int32_t i = min_level; i < numlevel; i++) {
         if (cur[i] == bottom[i])
             continue;
         printf("Level %d(%d-%d): ", i, (int)bottom[i], (int)cur[i] - 1);
@@ -12,7 +12,7 @@ void HierarQueue::print() {
     }
 }
 
-HierarQueue::HierarQueue(_uint64 qsize_in, _int32 numlevels) {
+HierarQueue::HierarQueue(uint64_t qsize_in, int32_t numlevels) {
     queue = (ImgIdx *)Malloc((size_t)qsize_in * sizeof(ImgIdx));
     bottom = (ImgIdx *)Malloc((size_t)(numlevels + 1) * sizeof(ImgIdx));
     cur = (ImgIdx *)Malloc((size_t)(numlevels + 1) * sizeof(ImgIdx));
@@ -27,8 +27,8 @@ HierarQueue::HierarQueue(_uint64 qsize_in, _int32 numlevels) {
     cur[numlevels] = 1;
 }
 
-HierarQueue::HierarQueue(_uint64 qsize_in) {
-    _int32 numlevels = (_int32)1 << 20;
+HierarQueue::HierarQueue(uint64_t qsize_in) {
+    int32_t numlevels = (int32_t)1 << 20;
     queue = (ImgIdx *)Malloc((size_t)qsize_in * sizeof(ImgIdx));
     bottom = (ImgIdx *)Malloc(((size_t)numlevels + 1) * sizeof(ImgIdx));
     cur = (ImgIdx *)Malloc(((size_t)numlevels + 1) * sizeof(ImgIdx));
@@ -44,14 +44,14 @@ HierarQueue::HierarQueue(_uint64 qsize_in) {
 }
 
 void HierarQueue::reset_queue() {
-    for (_int32 i = 0; i < numlevel; i++)
+    for (int32_t i = 0; i < numlevel; i++)
         cur[i] = bottom[i];
     min_level = numlevel;
 }
 
 ImgIdx HierarQueue::set_queue(ImgIdx *dhist) {
     ImgIdx sum_hist = 0;
-    for (_int32 i = 0; i < numlevel; i++) {
+    for (int32_t i = 0; i < numlevel; i++) {
         bottom[i] = cur[i] = sum_hist;
 
         if (dhist[i]) {
@@ -62,9 +62,9 @@ ImgIdx HierarQueue::set_queue(ImgIdx *dhist) {
     return sum_hist;
 }
 
-ImgIdx HierarQueue::set_queue(ImgIdx *dhist, _int32 maxpix) {
+ImgIdx HierarQueue::set_queue(ImgIdx *dhist, int32_t maxpix) {
     ImgIdx sum_hist = 0;
-    _int32 numlevels = (_int32)1 << 20;
+    int32_t numlevels = (int32_t)1 << 20;
 
     for (int i = 0; i < numlevels; i++)
         bottom[i] = cur[i] = 0;
@@ -72,7 +72,7 @@ ImgIdx HierarQueue::set_queue(ImgIdx *dhist, _int32 maxpix) {
         queue[i] = 0;
 
     max_level = 0;
-    for (_int32 i = 0; i <= maxpix; i++) {
+    for (int32_t i = 0; i <= maxpix; i++) {
         bottom[i] = cur[i] = sum_hist;
         if (dhist[i]) {
             max_level = i;
@@ -87,7 +87,7 @@ ImgIdx HierarQueue::set_queue(ImgIdx *dhist, _int32 maxpix) {
     return sum_hist;
 }
 
-HierarQueue::HierarQueue(_uint64 qsize_in, ImgIdx *dhist, _int32 numlevels) {
+HierarQueue::HierarQueue(uint64_t qsize_in, ImgIdx *dhist, int32_t numlevels) {
     queue = (ImgIdx *)Malloc((size_t)qsize_in * sizeof(ImgIdx));
     bottom = (ImgIdx *)Malloc((size_t)(numlevels + 1) * sizeof(ImgIdx));
     cur = (ImgIdx *)Malloc((size_t)(numlevels + 1) * sizeof(ImgIdx));
@@ -99,7 +99,7 @@ HierarQueue::HierarQueue(_uint64 qsize_in, ImgIdx *dhist, _int32 numlevels) {
     min_level = numlevels - 1;
 
     ImgIdx sum_hist = 0;
-    for (_int32 i = 0; i < numlevels; i++) {
+    for (int32_t i = 0; i < numlevels; i++) {
         bottom[i] = cur[i] = sum_hist;
         if (dhist[i]) {
             max_level = i;
@@ -111,8 +111,8 @@ HierarQueue::HierarQueue(_uint64 qsize_in, ImgIdx *dhist, _int32 numlevels) {
     cur[numlevels] = 1;
 }
 
-HierarQueue::HierarQueue(ImgIdx *dhist, _int32 numlevels) {
-    _uint64 dsum = 0;
+HierarQueue::HierarQueue(ImgIdx *dhist, int32_t numlevels) {
+    uint64_t dsum = 0;
     max_level = 0;
     for (int i = 0; i < numlevels; i++) {
         if (dhist[i]) {
@@ -131,7 +131,7 @@ HierarQueue::HierarQueue(ImgIdx *dhist, _int32 numlevels) {
     min_level = numlevels - 1;
 
     ImgIdx sum_hist = 0;
-    for (_int32 i = 0; i < numlevels; i++) {
+    for (int32_t i = 0; i < numlevels; i++) {
         bottom[i] = cur[i] = sum_hist;
         sum_hist += dhist[i];
     }
@@ -139,7 +139,7 @@ HierarQueue::HierarQueue(ImgIdx *dhist, _int32 numlevels) {
     cur[numlevels] = 1;
 }
 
-HierarQueue::HierarQueue(_int32 numlevels, ImgIdx binsize) {
+HierarQueue::HierarQueue(int32_t numlevels, ImgIdx binsize) {
     qsize = numlevels * binsize;
     // tmp
     queue = (ImgIdx *)Malloc((size_t)qsize * sizeof(ImgIdx));
@@ -149,7 +149,7 @@ HierarQueue::HierarQueue(_int32 numlevels, ImgIdx binsize) {
     this->numlevel = numlevels;
 
     ImgIdx sum_hist = 0;
-    for (_int32 i = 0; i < numlevels; i++) {
+    for (int32_t i = 0; i < numlevels; i++) {
         bottom[i] = cur[i] = sum_hist;
         sum_hist += binsize;
     }
@@ -163,7 +163,7 @@ HierarQueue::~HierarQueue() {
     Free(cur);
 }
 
-_int8 HierarQueue::push(ImgIdx pidx, _int64 level) {
+int8_t HierarQueue::push(ImgIdx pidx, int64_t level) {
     queue[cur[level]++] = pidx;
 
     if (level < min_level) {
@@ -178,25 +178,25 @@ void HierarQueue::find_minlev() {
         min_level++;
 }
 
-HQueue_l1idx::HQueue_l1idx(_uint64 qsize_in, ImgIdx *dhist, _int32 numlevels) {
+HQueue_l1idx::HQueue_l1idx(uint64_t qsize_in, ImgIdx *dhist, int32_t numlevels) {
     // tmp
     queue = (ImgIdx *)Malloc((size_t)qsize_in * sizeof(ImgIdx));
     bottom = (ImgIdx *)Malloc((size_t)(numlevels + 1) * sizeof(ImgIdx));
     cur = (ImgIdx *)Malloc((size_t)(numlevels + 1) * sizeof(ImgIdx));
     seekersize = (numlevels + 1 + 63) >> 6;
-    seeker = (_uint64 *)Malloc((size_t)(seekersize) * sizeof(_uint64));
+    seeker = (uint64_t *)Malloc((size_t)(seekersize) * sizeof(uint64_t));
 
     qsize = qsize_in;
     min_level = numlevels - 1;
 
     ImgIdx sum_hist = 0;
-    for (_int32 i = 0; i < numlevels; i++) {
+    for (int32_t i = 0; i < numlevels; i++) {
         bottom[i] = cur[i] = sum_hist;
         sum_hist += dhist[i];
     }
-    for (_int64 i = 0; i < seekersize; i++)
+    for (int64_t i = 0; i < seekersize; i++)
         seeker[i] = 0;
-    seeker[numlevels >> 6] |= (_uint64)1 << (numlevels & 63);
+    seeker[numlevels >> 6] |= (uint64_t)1 << (numlevels & 63);
     bottom[numlevels] = 0;
     cur[numlevels] = 1;
 }
@@ -208,10 +208,10 @@ HQueue_l1idx::~HQueue_l1idx() {
     Free(seeker);
 }
 
-int HQueue_l1idx::push(ImgIdx pidx, _int32 level) {
-    _int64 qidx = cur[level]++;
+int HQueue_l1idx::push(ImgIdx pidx, int32_t level) {
+    int64_t qidx = cur[level]++;
     queue[qidx] = pidx;
-    seeker[level >> 6] |= (_uint64)1 << (level & 63);
+    seeker[level >> 6] |= (uint64_t)1 << (level & 63);
     if (level <= min_level) {
         min_level = level;
         return 1;
@@ -223,13 +223,13 @@ ImgIdx HQueue_l1idx::pop() {
     ImgIdx popidx = --cur[min_level];
 
     if (bottom[min_level] == cur[min_level])
-        seeker[min_level >> 6] &= ~((_uint64)1 << (min_level & 63));
+        seeker[min_level >> 6] &= ~((uint64_t)1 << (min_level & 63));
     return queue[popidx];
 }
 
 void HQueue_l1idx::find_minlev() {
     ImgIdx qidx, widx;
-    _uint64 w;
+    uint64_t w;
 
     for (qidx = min_level >> 6; !seeker[qidx]; qidx++)
         ;
@@ -243,7 +243,7 @@ void HQueue_l1idx::find_minlev() {
         w >>= 32;
     }
 
-    while (!(w & (_uint64)1)) {
+    while (!(w & (uint64_t)1)) {
         w >>= 1;
         widx++;
     }
@@ -251,8 +251,8 @@ void HQueue_l1idx::find_minlev() {
     min_level = ((qidx << 6) + widx);
 }
 
-HQueue_l2idx::HQueue_l2idx(_uint64 qsize_in, ImgIdx *dhist, _int32 numlevels) {
-    _int64 seekersize, seeker2size;
+HQueue_l2idx::HQueue_l2idx(uint64_t qsize_in, ImgIdx *dhist, int32_t numlevels) {
+    int64_t seekersize, seeker2size;
     // tmp
     queue = (ImgIdx *)Malloc((size_t)qsize_in * sizeof(ImgIdx));
     bottom = (ImgIdx *)Malloc((size_t)(numlevels + 1) * sizeof(ImgIdx));
@@ -261,23 +261,23 @@ HQueue_l2idx::HQueue_l2idx(_uint64 qsize_in, ImgIdx *dhist, _int32 numlevels) {
     seekersize = (numlevels + 1 + 63) >> 6;
     seeker2size = (seekersize + 63) >> 6;
 
-    seeker = (_uint64 *)Malloc((size_t)(seekersize) * sizeof(_uint64));
-    seeker2 = (_uint64 *)Malloc((size_t)(seeker2size) * sizeof(_uint64));
+    seeker = (uint64_t *)Malloc((size_t)(seekersize) * sizeof(uint64_t));
+    seeker2 = (uint64_t *)Malloc((size_t)(seeker2size) * sizeof(uint64_t));
 
     qsize = qsize_in;
     min_level = numlevels - 1;
 
     ImgIdx sum_hist = 0;
-    for (_int32 i = 0; i < numlevels; i++) {
+    for (int32_t i = 0; i < numlevels; i++) {
         bottom[i] = cur[i] = sum_hist;
         sum_hist += dhist[i];
     }
-    for (_int64 i = 0; i < seekersize; i++)
+    for (int64_t i = 0; i < seekersize; i++)
         seeker[i] = 0;
-    seeker[numlevels >> 6] |= (_uint64)1 << (numlevels & 63);
-    for (_int64 i = 0; i < seeker2size; i++)
+    seeker[numlevels >> 6] |= (uint64_t)1 << (numlevels & 63);
+    for (int64_t i = 0; i < seeker2size; i++)
         seeker2[i] = 0;
-    seeker2[numlevels >> 12] |= (_uint64)1 << ((numlevels >> 6) & 63);
+    seeker2[numlevels >> 12] |= (uint64_t)1 << ((numlevels >> 6) & 63);
     bottom[numlevels] = 0;
     cur[numlevels] = 1;
 }
@@ -290,11 +290,11 @@ HQueue_l2idx::~HQueue_l2idx() {
     Free(seeker2);
 }
 
-void HQueue_l2idx::push(ImgIdx pidx, _int64 level) {
-    _int64 qidx = cur[level]++;
+void HQueue_l2idx::push(ImgIdx pidx, int64_t level) {
+    int64_t qidx = cur[level]++;
     queue[qidx] = pidx;
-    seeker[level >> 6] |= (_uint64)1 << (level & 63);
-    seeker2[level >> 12] |= (_uint64)1 << ((level >> 6) & 63);
+    seeker[level >> 6] |= (uint64_t)1 << (level & 63);
+    seeker2[level >> 12] |= (uint64_t)1 << ((level >> 6) & 63);
     if (level < min_level) {
         min_level = level;
     }
@@ -304,16 +304,16 @@ ImgIdx HQueue_l2idx::pop() {
     ImgIdx popidx = --cur[min_level];
 
     if (bottom[min_level] == cur[min_level]) {
-        seeker[min_level >> 6] &= ~((_uint64)1 << (min_level & 63));
+        seeker[min_level >> 6] &= ~((uint64_t)1 << (min_level & 63));
         if (!seeker[min_level >> 6])
-            seeker2[min_level >> 12] &= ~((_uint64)1 << ((min_level >> 6) & 63));
+            seeker2[min_level >> 12] &= ~((uint64_t)1 << ((min_level >> 6) & 63));
     }
     return queue[popidx];
 }
 
 void HQueue_l2idx::find_minlev() {
     ImgIdx qidx, widx;
-    _uint64 w;
+    uint64_t w;
 
     for (qidx = min_level >> 12; !seeker2[qidx]; qidx++)
         ;
@@ -326,7 +326,7 @@ void HQueue_l2idx::find_minlev() {
         w >>= 32;
     }
 
-    while (!(w & (_uint64)1)) {
+    while (!(w & (uint64_t)1)) {
         w >>= 1;
         widx++;
     }
@@ -341,7 +341,7 @@ void HQueue_l2idx::find_minlev() {
         w >>= 32;
     }
 
-    while (!(w & (_uint64)1)) {
+    while (!(w & (uint64_t)1)) {
         w >>= 1;
         widx++;
     }
@@ -349,7 +349,7 @@ void HQueue_l2idx::find_minlev() {
     min_level = ((qidx << 6) + widx);
 }
 
-HQueue_l1idx_rank::HQueue_l1idx_rank(_int64 qsize_in) {
+HQueue_l1idx_rank::HQueue_l1idx_rank(int64_t qsize_in) {
     qsize = (qsize_in + (1 << 12)) >> 12;
     queue = (hqueue_word *)Calloc((size_t)qsize * sizeof(hqueue_word));
 
@@ -359,24 +359,24 @@ HQueue_l1idx_rank::HQueue_l1idx_rank(_int64 qsize_in) {
 HQueue_l1idx_rank::~HQueue_l1idx_rank() { Free(queue); }
 
 void HQueue_l1idx_rank::push(ImgIdx pidx) {
-    _int64 qidx = pidx >> 12;
-    _int64 widx = (pidx >> 6) & 63;
-    _int64 bitpos = pidx & 63;
+    int64_t qidx = pidx >> 12;
+    int64_t widx = (pidx >> 6) & 63;
+    int64_t bitpos = pidx & 63;
 
-    queue[qidx].qword[widx] |= (_int64)1 << (bitpos);
-    queue[qidx].seeker |= (_int64)1 << (widx);
+    queue[qidx].qword[widx] |= (int64_t)1 << (bitpos);
+    queue[qidx].seeker |= (int64_t)1 << (widx);
     min_level = min_level < pidx ? min_level : pidx;
 }
 
 void HQueue_l1idx_rank::pop() {
-    _int64 qidx = min_level >> 12;
-    _int64 widx = (min_level >> 6) & 63;
-    _int64 bitpos = min_level & 63;
-    _int64 w, skr;
+    int64_t qidx = min_level >> 12;
+    int64_t widx = (min_level >> 6) & 63;
+    int64_t bitpos = min_level & 63;
+    int64_t w, skr;
 
-    queue[qidx].qword[widx] &= ~((_int64)1 << (bitpos));
+    queue[qidx].qword[widx] &= ~((int64_t)1 << (bitpos));
     if (!queue[qidx].qword[widx])
-        queue[qidx].seeker &= ~((_int64)1 << (widx));
+        queue[qidx].seeker &= ~((int64_t)1 << (widx));
 
     for (qidx = min_level >> 12; !queue[qidx].seeker; qidx++)
         ;
@@ -401,7 +401,7 @@ void HQueue_l1idx_rank::pop() {
 }
 
 void HQueue_l1idx_rank::find_minlev() {
-    _int64 qidx, widx, bitpos, w, skr;
+    int64_t qidx, widx, bitpos, w, skr;
 
     for (qidx = min_level >> 12; !queue[qidx].seeker; qidx++)
         ;

@@ -3,7 +3,6 @@
 #include <HeapQueue.h>
 #include <QItem.hpp>
 #include <QuadHeapQueue.hpp>
-#include <cstdio>
 #include <defines.h>
 
 class HHPQ {
@@ -19,11 +18,11 @@ class HHPQ {
     double _a = 0.0;
     ImgIdx _lowestNonemptyLevel = -1;
 
-    _int16 _curSizeCache = -1;
-    const _int16 _maxSizeCache = -1;
+    int16_t _curSizeCache = -1;
+    const int16_t _maxSizeCache = -1;
     int _emptyTop = 0;
 
-    const _uint8 *_isVisited = nullptr;
+    const uint8_t *_isVisited = nullptr;
 
     ImgIdx _size = 0;
 
@@ -51,7 +50,7 @@ class HHPQ {
     /// @param cacheSize Size of the cache. Cache size Bigger than 20 may decrease speed
     /// @param r Percentile of the number of sorted levels in the initial HHPQ setup. Should correlate to the ratio of
     /// redundant edges, but this parameter does not terribly affect the performace. Using default value is recommended.
-    HHPQ(const ImgIdx *dhist, ImgIdx numLevels_, ImgIdx size, const _uint8 *isVisited_, double a_ = 15.0,
+    HHPQ(const ImgIdx *dhist, ImgIdx numLevels_, ImgIdx size, const uint8_t *isVisited_, double a_ = 15.0,
          int cacheSize = 15, double r = 0.2);
     ~HHPQ();
 

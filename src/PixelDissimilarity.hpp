@@ -1,9 +1,6 @@
 #pragma once
 
-#include <cmath>
 #include <defines.h>
-#include <iostream>
-#include <limits>
 
 template <class Pixel> class PixelDissimilarity {
   public:
@@ -12,7 +9,7 @@ template <class Pixel> class PixelDissimilarity {
 
     // // Constructor that accepts a function pointer
     PixelDissimilarity() = default;
-    PixelDissimilarity(const Pixel *image_, ImgIdx imageSize_, _uint8 channels_, DissimilarityFunc func)
+    PixelDissimilarity(const Pixel *image_, ImgIdx imageSize_, uint8_t channels_, DissimilarityFunc func)
         : _image(image_), _imageSize(imageSize_), _channels(channels_), dissimilarityFunc(func) {}
 
     // Function to compute dissimilarity using the selected method
@@ -31,6 +28,6 @@ template <class Pixel> class PixelDissimilarity {
   private:
     const Pixel *_image = nullptr;
     ImgIdx _imageSize = 0;
-    _uint8 _channels = 0;
+    uint8_t _channels = 0;
     DissimilarityFunc dissimilarityFunc;
 };

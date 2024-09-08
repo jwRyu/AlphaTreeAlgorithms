@@ -1,6 +1,7 @@
 #pragma once
 #include "defines.h"
 #include <cfloat>
+#include <cstdint>
 #define PROFILE 0
 #define HEAPQUEUE_DEBUG 1
 
@@ -34,17 +35,17 @@ class HeapQueue {
     Pixel pop_level;
     Pixel max_level;
     HQentry<Pixel> pushlist[7]; // Connectivity - 1
-    _uint8 flags[7];
-    _int8 pushlistidx;
+    uint8_t flags[7];
+    int8_t pushlistidx;
 
 #if PROFILE
-    std::vector<_uint64> num_memmove_push;
-    std::vector<_uint64> num_memmove_pop;
-    std::vector<_uint64> num_items_push;
-    std::vector<_uint64> num_items_pop;
+    std::vector<uint64_t> num_memmove_push;
+    std::vector<uint64_t> num_memmove_pop;
+    std::vector<uint64_t> num_items_push;
+    std::vector<uint64_t> num_items_pop;
 
-    _uint64 num_memmove_push_i;
-    _uint64 num_memmove_pop_i;
+    uint64_t num_memmove_push_i;
+    uint64_t num_memmove_pop_i;
 #endif
 
   public:
@@ -70,13 +71,13 @@ template <class Pixel> class HeapQueue_naive {
     Pixel pop_level;
 
 #if PROFILE
-    std::vector<_uint64> num_memmove_push;
-    std::vector<_uint64> num_memmove_pop;
-    std::vector<_uint64> num_items_push;
-    std::vector<_uint64> num_items_pop;
+    std::vector<uint64_t> num_memmove_push;
+    std::vector<uint64_t> num_memmove_pop;
+    std::vector<uint64_t> num_items_push;
+    std::vector<uint64_t> num_items_pop;
 
-    _uint64 num_memmove_push_i;
-    _uint64 num_memmove_pop_i;
+    uint64_t num_memmove_push_i;
+    uint64_t num_memmove_pop_i;
 #endif
 
   public:
@@ -104,8 +105,8 @@ template <class Pixel> class HeapQueue_naive_quad {
     ~HeapQueue_naive_quad();
 
 #if PROFILE
-    _uint64 pop();
-    _uint64 push(ImgIdx pidx, Pixel alpha);
+    uint64_t pop();
+    uint64_t push(ImgIdx pidx, Pixel alpha);
 #else
     ImgIdx pop();
     void push(ImgIdx pidx, Pixel alpha);

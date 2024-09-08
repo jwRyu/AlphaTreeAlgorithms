@@ -4,15 +4,7 @@
 #include "AlphaTreeConfig.h"
 #include "RandGenImage.hpp"
 #include "defines.h"
-#include "pgmio.h"
 #include "walltime.h"
-#include <cstdlib>
-#include <cstring>
-#include <ctime>
-#include <fstream>
-#include <iostream>
-#include <stdio.h>
-#include <string.h>
 
 // args: Filename, nchannels, numthreads, testimgsize, algorithmcode, bitdepth, tseflag
 int main(int argc, char **argv) {
@@ -61,36 +53,36 @@ int main(int argc, char **argv) {
         double tStart = 0, tEnd = INFINITY;
         if (params.UseRandomlyGeneratedImages == true) {
             if (bitdepth > 32 && bitdepth <= 64) {
-                _uint64 *image = (_uint64 *)Malloc(width * height * sizeof(_uint64));
+                uint64_t *image = (uint64_t *)Malloc(width * height * sizeof(uint64_t));
                 RandGenImage::randomize64(image, width, height, bitdepth);
-                AlphaTree<_uint64> tree;
+                AlphaTree<uint64_t> tree;
                 tStart = get_wall_time();
                 tree.BuildAlphaTree(image, height, width, nch, dMetric, conn, algCode, nthr, tse, fparam1, fparam2,
                                     iparam1);
                 tEnd = get_wall_time();
                 Free(image);
             } else if (bitdepth > 16) {
-                _uint32 *image = (_uint32 *)Malloc(width * height * sizeof(_uint32));
+                uint32_t *image = (uint32_t *)Malloc(width * height * sizeof(uint32_t));
                 RandGenImage::randomize32(image, width, height, bitdepth);
-                AlphaTree<_uint32> tree;
+                AlphaTree<uint32_t> tree;
                 tStart = get_wall_time();
                 tree.BuildAlphaTree(image, height, width, nch, dMetric, conn, algCode, nthr, tse, fparam1, fparam2,
                                     iparam1);
                 tEnd = get_wall_time();
                 Free(image);
             } else if (bitdepth > 8) {
-                _uint16 *image = (_uint16 *)Malloc(width * height * nch * sizeof(_uint16));
+                uint16_t *image = (uint16_t *)Malloc(width * height * nch * sizeof(uint16_t));
                 RandGenImage::randomize16(image, width, height, bitdepth, nch);
-                AlphaTree<_uint16> tree;
+                AlphaTree<uint16_t> tree;
                 tStart = get_wall_time();
                 tree.BuildAlphaTree(image, height, width, nch, dMetric, conn, algCode, nthr, tse, fparam1, fparam2,
                                     iparam1);
                 tEnd = get_wall_time();
                 Free(image);
             } else if (bitdepth > 0) {
-                _uint8 *image = (_uint8 *)Malloc(width * height * nch * sizeof(_uint8));
+                uint8_t *image = (uint8_t *)Malloc(width * height * nch * sizeof(uint8_t));
                 RandGenImage::randomize8(image, width, height, bitdepth, nch);
-                AlphaTree<_uint8> tree;
+                AlphaTree<uint8_t> tree;
                 tStart = get_wall_time();
                 tree.BuildAlphaTree(image, height, width, nch, dMetric, conn, algCode, nthr, tse, fparam1, fparam2,
                                     iparam1);

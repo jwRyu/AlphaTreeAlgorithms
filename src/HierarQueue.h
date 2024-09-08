@@ -2,87 +2,86 @@
 
 #include "allocator.h"
 #include "defines.h"
-#include <cstdio>
 
 // Do not use beyond 20-bit image
 class HierarQueue {
   public:
     ImgIdx *queue;
     ImgIdx *bottom, *cur;
-    _int32 numlevel;
-    _int64 qsize;
-    _int64 min_level, max_level;
+    int32_t numlevel;
+    int64_t qsize;
+    int64_t min_level, max_level;
 
     void print();
-    HierarQueue(_uint64 qsize_in, _int32 numlevels);
-    HierarQueue(_uint64 qsize_in);
+    HierarQueue(uint64_t qsize_in, int32_t numlevels);
+    HierarQueue(uint64_t qsize_in);
     void reset_queue();
     ImgIdx set_queue(ImgIdx *dhist);
-    ImgIdx set_queue(ImgIdx *dhist, _int32 maxpix);
+    ImgIdx set_queue(ImgIdx *dhist, int32_t maxpix);
 
-    HierarQueue(_uint64 qsize_in, ImgIdx *dhist, _int32 numlevels);
-    HierarQueue(ImgIdx *dhist, _int32 numlevels);
-    HierarQueue(_int32 numlevels, ImgIdx binsize);
+    HierarQueue(uint64_t qsize_in, ImgIdx *dhist, int32_t numlevels);
+    HierarQueue(ImgIdx *dhist, int32_t numlevels);
+    HierarQueue(int32_t numlevels, ImgIdx binsize);
     ~HierarQueue();
 
-    _int8 push(ImgIdx pidx, _int64 level);
+    int8_t push(ImgIdx pidx, int64_t level);
     void find_minlev();
 
     inline ImgIdx pop() { return queue[bottom[min_level]++]; }
     inline ImgIdx top() { return queue[bottom[min_level]]; }
-    inline _int64 get_minlev() { return min_level; }
+    inline int64_t get_minlev() { return min_level; }
 };
 
 class HQueue_l1idx {
   public:
     ImgIdx *queue;
     ImgIdx *bottom, *cur;
-    _uint64 *seeker;
+    uint64_t *seeker;
 
-    _int64 qsize, seekersize;
-    _int32 min_level;
-    HQueue_l1idx(_uint64 qsize_in, ImgIdx *dhist, _int32 numlevels);
+    int64_t qsize, seekersize;
+    int32_t min_level;
+    HQueue_l1idx(uint64_t qsize_in, ImgIdx *dhist, int32_t numlevels);
     ~HQueue_l1idx();
 
-    int push(ImgIdx pidx, _int32 level);
+    int push(ImgIdx pidx, int32_t level);
     ImgIdx pop();
     void find_minlev();
 
     inline ImgIdx top() { return queue[cur[min_level] - 1]; }
-    inline _int32 get_minlev() { return min_level; }
+    inline int32_t get_minlev() { return min_level; }
 };
 
 class HQueue_l2idx {
     ImgIdx *queue;
     ImgIdx *bottom, *cur;
-    _uint64 *seeker, *seeker2;
+    uint64_t *seeker, *seeker2;
 
   public:
-    _int64 qsize;
-    _int64 min_level;
-    HQueue_l2idx(_uint64 qsize_in, ImgIdx *dhist, _int32 numlevels);
+    int64_t qsize;
+    int64_t min_level;
+    HQueue_l2idx(uint64_t qsize_in, ImgIdx *dhist, int32_t numlevels);
     ~HQueue_l2idx();
 
-    void push(ImgIdx pidx, _int64 level);
+    void push(ImgIdx pidx, int64_t level);
     ImgIdx pop();
     void find_minlev();
 
     inline ImgIdx top() { return queue[cur[min_level] - 1]; }
-    inline _int64 get_minlev() { return min_level; }
+    inline int64_t get_minlev() { return min_level; }
 };
 
 class HQueue_l1idx_rank {
     struct hqueue_word {
-        _int64 qword[64];
-        _int64 seeker;
+        int64_t qword[64];
+        int64_t seeker;
     };
 
     hqueue_word *queue;
 
   public:
-    _int64 qsize, seekersize;
-    _int64 min_level;
-    HQueue_l1idx_rank(_int64 qsize_in);
+    int64_t qsize, seekersize;
+    int64_t min_level;
+    HQueue_l1idx_rank(int64_t qsize_in);
     ~HQueue_l1idx_rank();
 
     void push(ImgIdx pidx);
@@ -90,5 +89,5 @@ class HQueue_l1idx_rank {
     void find_minlev();
 
     inline ImgIdx top() { return min_level; }
-    inline _int64 get_minlev() { return min_level; }
+    inline int64_t get_minlev() { return min_level; }
 };

@@ -9,7 +9,7 @@ ImgIdx HHPQ::alphaToLevel(const double &alpha) const {
     return std::min<ImgIdx>((ImgIdx)(_a * log2(1.0 + alpha)), _numLevels - 1);
 }
 
-HHPQ::HHPQ(const ImgIdx *dhist, ImgIdx numLevels_, ImgIdx size, const _uint8 *isVisited_, double a_, int cacheSize,
+HHPQ::HHPQ(const ImgIdx *dhist, ImgIdx numLevels_, ImgIdx size, const uint8_t *isVisited_, double a_, int cacheSize,
            double r)
     : _numLevels(numLevels_), _a(a_), _lowestNonemptyLevel(numLevels_), _curSizeCache(0), _maxSizeCache(cacheSize),
       _isVisited(isVisited_), _size(0) {

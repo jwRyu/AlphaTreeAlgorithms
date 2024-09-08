@@ -141,10 +141,10 @@ template <class Pixel> void HeapQueue<Pixel>::push_run(ImgIdx pidx, Pixel alpha)
 #endif
 }
 
-template class HeapQueue<_uint8>;
-template class HeapQueue<_uint16>;
-template class HeapQueue<_uint32>;
-template class HeapQueue<_uint64>;
+template class HeapQueue<uint8_t>;
+template class HeapQueue<uint16_t>;
+template class HeapQueue<uint32_t>;
+template class HeapQueue<uint64_t>;
 template class HeapQueue<float>;
 template class HeapQueue<double>;
 
@@ -252,10 +252,10 @@ template <class Pixel> void HeapQueue_naive<Pixel>::push(ImgIdx pidx, Pixel alph
 #endif
 }
 
-template class HeapQueue_naive<_uint8>;
-template class HeapQueue_naive<_uint16>;
-template class HeapQueue_naive<_uint32>;
-template class HeapQueue_naive<_uint64>;
+template class HeapQueue_naive<uint8_t>;
+template class HeapQueue_naive<uint16_t>;
+template class HeapQueue_naive<uint32_t>;
+template class HeapQueue_naive<uint64_t>;
 template class HeapQueue_naive<float>;
 template class HeapQueue_naive<double>;
 
@@ -279,13 +279,13 @@ template <class Pixel> HeapQueue_naive_quad<Pixel>::~HeapQueue_naive_quad() { Fr
 
 template <class Pixel>
 #if PROFILE
-_uint64 HeapQueue_naive_quad<Pixel>::pop()
+uint64_t HeapQueue_naive_quad<Pixel>::pop()
 #else
 ImgIdx HeapQueue_naive_quad<Pixel>::pop()
 #endif
 {
 #if PROFILE
-    _uint64 nummove = 0;
+    uint64_t nummove = 0;
 #else
     ImgIdx outval = arr[1].pidx;
 #endif
@@ -345,13 +345,13 @@ ImgIdx HeapQueue_naive_quad<Pixel>::pop()
 
 template <class Pixel>
 #if PROFILE
-_uint64 HeapQueue_naive_quad<Pixel>::push(ImgIdx pidx, Pixel alpha)
+uint64_t HeapQueue_naive_quad<Pixel>::push(ImgIdx pidx, Pixel alpha)
 #else
 void HeapQueue_naive_quad<Pixel>::push(ImgIdx pidx, Pixel alpha)
 #endif
 {
 #if PROFILE
-    _uint64 nummove = 0;
+    uint64_t nummove = 0;
 #endif
     ImgIdx current, next;
     cursize++;
@@ -375,10 +375,10 @@ void HeapQueue_naive_quad<Pixel>::push(ImgIdx pidx, Pixel alpha)
 #endif
 }
 
-template class HeapQueue_naive_quad<_uint8>;
-template class HeapQueue_naive_quad<_uint16>;
-template class HeapQueue_naive_quad<_uint32>;
-template class HeapQueue_naive_quad<_uint64>;
+template class HeapQueue_naive_quad<uint8_t>;
+template class HeapQueue_naive_quad<uint16_t>;
+template class HeapQueue_naive_quad<uint32_t>;
+template class HeapQueue_naive_quad<uint64_t>;
 template class HeapQueue_naive_quad<float>;
 template class HeapQueue_naive_quad<double>;
 

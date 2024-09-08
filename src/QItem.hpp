@@ -1,9 +1,7 @@
 #pragma once
 
 #include <QItem.hpp>
-#include <cstdio>
 #include <defines.h>
-#include <limits>
 
 struct QItem {
     ImgIdx index = -1;
@@ -15,10 +13,10 @@ struct QItem {
     // bool operator<=(const QItem &other) const { return alpha <= other.alpha; }
     void print() { printf("(%d, %.2f) ", (int)index, (double)alpha); }
 
-    static constexpr _uint8 EDGE_STANDBY = 0;
-    static constexpr _uint8 EDGE_ENQUEUED = 1;
-    static constexpr _uint8 EDGE_DEQUEUED = 2;
-    static constexpr _uint8 EDGE_CONNECTED = 3;
-    static constexpr _uint8 EDGE_REDUNDANT = 4;
-    static constexpr _uint8 EDGE_ESSENTIAL = 5;
+    static constexpr uint8_t EDGE_STANDBY = 0;
+    static constexpr uint8_t EDGE_ENQUEUED = 1;
+    static constexpr uint8_t EDGE_DEQUEUED = 2;
+    static constexpr uint8_t EDGE_CONNECTED = 3;
+    static constexpr uint8_t EDGE_REDUNDANT = 4;
+    static constexpr uint8_t EDGE_ESSENTIAL = 5;
 };

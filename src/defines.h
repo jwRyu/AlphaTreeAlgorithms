@@ -1,5 +1,22 @@
 #pragma once
+#include <cassert>
+#include <cfloat>
+#include <cmath>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
+#include <deque>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <limits>
+#include <omp.h>
+#include <stdio.h>
+#include <string.h>
 #include <sys/types.h>
+#include <vector>
 
 #define DELAYED_NODE_ALLOC 1
 #define HQUEUE_COST_AMORTIZE 1
@@ -27,14 +44,5 @@
 #define _min(a, b) (((a) > (b)) ? (b) : (a))
 #define _clip(x, a, b) _min(_max(x, a), b)
 
-typedef u_int8_t _uint8;
-typedef u_int16_t _uint16;
-typedef u_int32_t _uint32;
-typedef u_int64_t _uint64;
-typedef int8_t _int8;
-typedef int16_t _int16;
-typedef int32_t _int32;
-typedef int64_t _int64;
-
 typedef int32_t ImgIdx;
-typedef _int64 TrieIdx;
+typedef int64_t TrieIdx;

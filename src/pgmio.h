@@ -1,1 +1,0 @@
-void read_pgm(std::string fname, int &height, int &width, int &gmax, unsigned short **gval);
