@@ -150,7 +150,7 @@ template <class Pixel> class AlphaTree {
     void FloodHierarQueueHypergraph(const Pixel *img);
     void FloodTrieNoCache(const Pixel *img);
     void FloodTrie(const Pixel *img);
-    void Flood_Hierarqueue_par(const Pixel *img, int numthreads);
+    void FloodHierQueueParallel(const Pixel *img, int numthreads);
     void HybridParallel(const Pixel *img, int numthreads);
 
     void runFloodHHPQ(ImgIdx startingPixel, const Pixel *img, double a, double r, int listsize, ImgIdx imgSize,

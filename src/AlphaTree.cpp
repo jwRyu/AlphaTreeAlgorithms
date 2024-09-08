@@ -165,6 +165,8 @@ void AlphaTree<Pixel>::BuildAlphaTree(const Pixel *img, int height_in, int width
         FloodLadderQueue(img, iparam1);
     else if (algorithm == alphatreeConfig.getAlphaTreeAlgorithmCode("HybridParallel"))
         HybridParallel(img, numthreads);
+    else if (algorithm == alphatreeConfig.getAlphaTreeAlgorithmCode("FloodHierQueueParallel"))
+        FloodHierQueueParallel(img, numthreads);
     else {
         std::cerr << "[AlphaTree::BuildAlphaTree]"
                   << " Unknown algorithm code (" << algorithm << std::endl;
@@ -3023,11 +3025,12 @@ void AlphaTree<Pixel>::runFloodHHPQ(ImgIdx startingPixel, const Pixel *img, doub
             queue->pop();
             if (isVisited[p]) {
 
+#if RUN_FANCY_VIS_FOR_DEBUG
                 // printVisit(p, currentLevel);
-                // printTree();
                 // queue->print();
-                // printAll(isVisited, edgeStatus, img);
+                // printAll(isVisited, dimg);
                 // std::getchar();
+#endif
 
                 continue;
             }
@@ -4029,7 +4032,7 @@ ImgIdx AlphaTree<Pixel>::merge_subtrees(Pixel *dimg, _int64 blksz_x, _int64 blks
 
                     dimgidx = p << 1;
                     r = dimg[dimgidx];
-                    nrbnode[bidx]++;
+                    // nrbnode[bidx]++;
 
                     if (tse)
                         connect(_parentAry[p], _parentAry[p + _width], (ImgIdx)subtree_cur[bidx]++, (Pixel)r);
@@ -4065,7 +4068,7 @@ ImgIdx AlphaTree<Pixel>::merge_subtrees(Pixel *dimg, _int64 blksz_x, _int64 blks
 
                     dimgidx = (p << 1) + 1;
                     r = dimg[dimgidx];
-                    nrbnode[bidx]++;
+                    // nrbnode[bidx]++;
 
                     if (tse)
                         connect(_parentAry[p], _parentAry[p + 1], (ImgIdx)subtree_cur[bidx]++, (Pixel)r);
@@ -4415,7 +4418,7 @@ void AlphaTree<Pixel>::set_isAvailable_par(_uint8 *isAvailable, _int16 npartitio
     }
 }
 
-template <class Pixel> void AlphaTree<Pixel>::Flood_Hierarqueue_par(const Pixel *img, int numthreads) {
+template <class Pixel> void AlphaTree<Pixel>::FloodHierQueueParallel(const Pixel *img, int numthreads) {
     if (sizeof(Pixel) > 2 || _channel > 1) {
         printf("Error: Hierarchical queues do not work on >16 bits images or multispectral images\n");
         printf("Try Unionfind (algorithm code %d), flooding using Heapqueue (%d), trie queue (%d) or cached trie queue "
@@ -4424,16 +4427,11 @@ template <class Pixel> void AlphaTree<Pixel>::Flood_Hierarqueue_par(const Pixel 
         return;
     }
 
-    ImgIdx imgSize, dimgSize;
-    _int64 numlevels;
-    Pixel *dimg;
-    _uint8 *isVisited, *isAvailable;
-    ImgIdx p, q;
-    imgSize = _width * _height;
-    dimgSize = (_connectivity >> 1) * _width * _height;
-    numlevels = (sizeof(Pixel) == 1) ? 256 : 65536;
+    const ImgIdx imgSize = _width * _height;
+    const ImgIdx dimgSize = (_connectivity >> 1) * _width * _height;
+    const ImgIdx numlevels = (sizeof(Pixel) == 1) ? 256 : 65536;
 
-    dimg = (Pixel *)Calloc((size_t)dimgSize * sizeof(Pixel));
+    Pixel *dimg = (Pixel *)Calloc((size_t)dimgSize * sizeof(Pixel));
 
     _int16 npartition_x, npartition_y;
     {
@@ -4453,8 +4451,8 @@ template <class Pixel> void AlphaTree<Pixel>::Flood_Hierarqueue_par(const Pixel 
         npartition_y = (_int16)numthreads / npartition_x;
     }
 
-    isVisited = (_uint8 *)Calloc((size_t)((imgSize)));
-    isAvailable = (_uint8 *)Malloc((size_t)(imgSize));
+    _uint8 *isVisited = (_uint8 *)Calloc((size_t)((imgSize)));
+    _uint8 *isAvailable = (_uint8 *)Malloc((size_t)(imgSize));
     set_isAvailable_par(isAvailable, npartition_x, npartition_y);
 
     _int64 blksz_x = _width / npartition_x;
@@ -4463,7 +4461,6 @@ template <class Pixel> void AlphaTree<Pixel>::Flood_Hierarqueue_par(const Pixel 
     _int64 blksz_yn = blksz_y + (_height % npartition_y);
     _int64 numpartitions = (_int64)npartition_x * (_int64)npartition_y;
 
-    p = q = 0;
     ImgIdx *startpidx = (ImgIdx *)Malloc(numpartitions * sizeof(ImgIdx));
     ImgIdx *blocksize = (ImgIdx *)Malloc(numpartitions * sizeof(ImgIdx));
     ImgIdx *subtree_start = (ImgIdx *)Malloc((numpartitions + 1) * sizeof(ImgIdx));
@@ -4471,19 +4468,21 @@ template <class Pixel> void AlphaTree<Pixel>::Flood_Hierarqueue_par(const Pixel 
     ImgIdx *blkws = (ImgIdx *)Malloc(numpartitions * sizeof(ImgIdx));
     ImgIdx *blkhs = (ImgIdx *)Malloc(numpartitions * sizeof(ImgIdx));
     ImgIdx *dhist = (ImgIdx *)Calloc((size_t)numlevels * (size_t)numpartitions * sizeof(ImgIdx));
-
-    for (_int16 y = 0; y < npartition_y; y++) {
-        q = y * _width * (ImgIdx)blksz_y;
-        bool lastrow = (y == npartition_y - 1);
-        ImgIdx blkh = lastrow ? blksz_yn : blksz_y;
-        for (_int16 x = 0; x < npartition_x; x++) {
-            startpidx[p] = q + (ImgIdx)x * (ImgIdx)blksz_x;
-            bool lastcol = (x == npartition_x - 1);
-            ImgIdx blkw = lastcol ? blksz_xn : blksz_x;
-            blocksize[p] = blkh * blkw * 2 - (ImgIdx)lastrow * blkw - (ImgIdx)lastcol * blkh;
-            blkws[p] = blkw;
-            blkhs[p] = blkh;
-            p++;
+    {
+        ImgIdx p = 0;
+        for (_int16 y = 0; y < npartition_y; y++) {
+            const ImgIdx q = y * _width * (ImgIdx)blksz_y;
+            bool lastrow = (y == npartition_y - 1);
+            ImgIdx blkh = lastrow ? blksz_yn : blksz_y;
+            for (_int16 x = 0; x < npartition_x; x++) {
+                startpidx[p] = q + (ImgIdx)x * (ImgIdx)blksz_x;
+                bool lastcol = (x == npartition_x - 1);
+                ImgIdx blkw = lastcol ? blksz_xn : blksz_x;
+                blocksize[p] = blkh * blkw * 2 - (ImgIdx)lastrow * blkw - (ImgIdx)lastcol * blkh;
+                blkws[p] = blkw;
+                blkhs[p] = blkh;
+                p++;
+            }
         }
     }
 
@@ -4503,11 +4502,11 @@ template <class Pixel> void AlphaTree<Pixel>::Flood_Hierarqueue_par(const Pixel 
     _node = (AlphaNode<Pixel> *)Calloc((size_t)(imgSize + dimgSize + numpartitions) * sizeof(AlphaNode<Pixel>));
     _nodeIn = _node + imgSize;
 
-#pragma omp parallel for private(p, q) schedule(dynamic, 1)
+#pragma omp parallel for schedule(dynamic, 1)
     for (int blk = 0; blk < numpartitions; blk++) {
-        ImgIdx bwidth = blkws[blk];
-        ImgIdx bheight = blkhs[blk];
-        ImgIdx bareasum = bwidth * bheight;
+        const ImgIdx bwidth = blkws[blk];
+        const ImgIdx bheight = blkhs[blk];
+        const ImgIdx bareasum = bwidth * bheight;
         ImgIdx *bhist = dhist + numlevels * blk;
         HierarQueue *queue = queues[blk];
         ImgIdx spidx = startpidx[blk];
@@ -4517,10 +4516,10 @@ template <class Pixel> void AlphaTree<Pixel>::Flood_Hierarqueue_par(const Pixel 
 
         for (ImgIdx i = 0; i < bheight; i++) {
             Pixel diff;
-            p = spidx + i * _width;
+            ImgIdx p = spidx + i * _width;
             bool notlastrow = i < bheight - 1;
             for (ImgIdx j = 0; j < bwidth - 1; j++) {
-                q = p << 1;
+                ImgIdx q = p << 1;
                 _node[p].set(1, 0, (double)img[p], img[p], img[p]);
                 _node[p].parentIdx = _node[p]._rootIdx = ROOTIDX;
 
@@ -4536,7 +4535,7 @@ template <class Pixel> void AlphaTree<Pixel>::Flood_Hierarqueue_par(const Pixel 
                 maxdiff = _max(maxdiff, diff);
                 p++;
             }
-            q = p << 1;
+            ImgIdx q = p << 1;
             _node[p].set(1, 0, (double)img[p], img[p], img[p]);
             _node[p].parentIdx = _node[p]._rootIdx = ROOTIDX;
             if (notlastrow) {
@@ -4557,11 +4556,11 @@ template <class Pixel> void AlphaTree<Pixel>::Flood_Hierarqueue_par(const Pixel 
         pNode->parentIdx = ROOTIDX;
         Pixel currentLevel = maxdiff;
         queue->push(startpidx[blk], currentLevel);
-        while (1) // flooding
+        while (true) // flooding
         {
             while ((_int64)queue->min_level <= (_int64)currentLevel) // flood all levels below currentLevel
             {
-                p = queue->pop();
+                const ImgIdx p = queue->pop();
                 if (is_visited(isVisited, p)) {
                     queue->find_minlev();
                     continue;
@@ -4571,7 +4570,7 @@ template <class Pixel> void AlphaTree<Pixel>::Flood_Hierarqueue_par(const Pixel 
                 _uint8 isAv = isAvailable[p];
 
                 if (_connectivity == 4) {
-                    q = p << 1;
+                    ImgIdx q = p << 1;
                     (is_available(isAv, 0) && !isVisited[p + _width]) ? (void)queue->push(p + _width, dimg[q])
                                                                       : (void)0;
                     (is_available(isAv, 1) && !isVisited[p + 1]) ? (void)queue->push(p + 1, dimg[q + 1]) : (void)0;
