@@ -147,6 +147,9 @@ template <class Pixel> class AlphaTree {
     void FloodHierQueueParallel(const Pixel *img, int numthreads);
     void HybridParallel(const Pixel *img, int numthreads);
 
+    void floodPartition(const Pixel *img, const Pixel *dimg, ImgIdx startPixelIndex, int blockIndex, ImgIdx blockArea,
+                        Pixel maxdiff, HierarQueue *queue, const ImgIdx *subtree_start, ImgIdx *subtree_cur,
+                        uint8_t *isVisited, const uint8_t *isAvailable);
     Pixel computePartitionDifferences(const Pixel *img, Pixel *dimg, ImgIdx startPixelIndex, ImgIdx blockWidth,
                                       ImgIdx blockHeight, ImgIdx *blockDiffHist);
     std::pair<ImgIdx, ImgIdx> computePartitionSize(int numthreads);
