@@ -208,8 +208,9 @@ template <class Pixel> void AlphaTree<Pixel>::AreaFilter(double *outimg, double 
 }
 
 template <class Pixel> void AlphaTree<Pixel>::printTree() const {
-    for (int i = 0; i < _curSize; i++)
-        _node[i].print(_node);
+    for (int i = 0; i < _maxSize; i++)
+        if (_node[i].area > 0)
+            _node[i].print(_node);
 }
 
 template <class Pixel>
@@ -376,12 +377,12 @@ template <class Pixel> void AlphaTree<Pixel>::printParentAry() const {
     }
 }
 
-template <class Pixel>
-void AlphaTree<Pixel>::printAll(const uint8_t *isVisited, const bool *isRedundant, const Pixel *img) const {
-    // printTree();
-    printParentAry();
-    printGraph(isVisited, isRedundant, img);
-}
+// template <class Pixel>
+// void AlphaTree<Pixel>::printAll(const uint8_t *isVisited, const bool *isRedundant, const Pixel *img) const {
+//     // printTree();
+//     printParentAry();
+//     printGraph(isVisited, isRedundant, img);
+// }
 
 template <class Pixel>
 void AlphaTree<Pixel>::printAll(const uint8_t *isVisited, const uint8_t *edge, const Pixel *img) const {
@@ -3993,17 +3994,10 @@ template <class Pixel> void AlphaTree<Pixel>::canonicalize(ImgIdx nidx) {
     }
 }
 
-template <class Pixel>
-ImgIdx AlphaTree<Pixel>::merge_subtrees(Pixel *dimg, int64_t blksz_x, int64_t blksz_y, ImgIdx npartition_x,
-                                        ImgIdx npartition_y, ImgIdx *subtree_cur, ImgIdx *subtree_start,
-                                        ImgIdx *blockHeights, ImgIdx *blockWidths) {
-    return merge_subtrees(dimg, blksz_x, blksz_y, npartition_x, npartition_y, subtree_cur, 0);
-}
-
 // returns root _node index
 template <class Pixel>
-ImgIdx AlphaTree<Pixel>::merge_subtrees(Pixel *dimg, int64_t blksz_x, int64_t blksz_y, ImgIdx npartition_x,
-                                        ImgIdx npartition_y, ImgIdx *subtree_cur, int tse, ImgIdx *nrbnode) {
+ImgIdx AlphaTree<Pixel>::mergePartition(Pixel *dimg, int64_t blksz_x, int64_t blksz_y, ImgIdx npartition_x,
+                                        ImgIdx npartition_y, ImgIdx *subtree_cur) {
     ImgIdx numblk;
     int64_t blksz_x0 = blksz_x;
     int64_t blksz_y0 = blksz_y;
@@ -4018,27 +4012,17 @@ ImgIdx AlphaTree<Pixel>::merge_subtrees(Pixel *dimg, int64_t blksz_x, int64_t bl
 
 #pragma omp parallel for schedule(dynamic, 1)
             for (int blk = 0; blk < numblk; blk++) {
-                ImgIdx x, y, r, p, p0, pn, dimgidx, bx, by, bidx;
-                // Pixel qminlev;
-                y = (1 + 2 * (blk / (int)npartition_x)) * blksz_y;
-                x = (blk % (int)npartition_x) * blksz_x;
+                const ImgIdx y = (1 + 2 * (blk / (int)npartition_x)) * blksz_y;
+                const ImgIdx x = (blk % (int)npartition_x) * blksz_x;
+                const ImgIdx p0 = (y - 1) * _width + x;
+                const ImgIdx pn = (((blk % (int)npartition_x) == npartition_x - 1) ? y * _width : p0 + blksz_x);
 
-                p0 = (y - 1) * _width + x;
-                pn = (((blk % (int)npartition_x) == npartition_x - 1) ? y * _width : p0 + blksz_x);
+                const ImgIdx by = _min((p0 / blkrow), npartition_y0 - 1);
+                for (ImgIdx p = p0; p < pn; p++) {
+                    const ImgIdx bx = _min(((p % _width) / blksz_x0), npartition_x0 - 1);
+                    const ImgIdx bidx = by * npartition_x0 + bx;
 
-                by = _min((p0 / blkrow), npartition_y0 - 1);
-                for (p = p0; p < pn; p++) {
-                    bx = _min(((p % _width) / blksz_x0), npartition_x0 - 1);
-                    bidx = by * npartition_x0 + bx;
-
-                    dimgidx = p << 1;
-                    r = dimg[dimgidx];
-                    // nrbnode[bidx]++;
-
-                    if (tse)
-                        connect(_parentAry[p], _parentAry[p + _width], (ImgIdx)subtree_cur[bidx]++, (Pixel)r);
-                    else
-                        connect(p, p + _width, (ImgIdx)subtree_cur[bidx]++, (Pixel)r);
+                    connect(p, p + _width, (ImgIdx)subtree_cur[bidx]++, (Pixel)dimg[p << 1]);
                 }
             }
             npartition_y = (npartition_y + 1) / 2;
@@ -4054,27 +4038,17 @@ ImgIdx AlphaTree<Pixel>::merge_subtrees(Pixel *dimg, int64_t blksz_x, int64_t bl
 
 #pragma omp parallel for schedule(dynamic, 1)
             for (int blk = 0; blk < numblk; blk++) {
-                ImgIdx x, y, r, p, p0, pn, dimgidx, bx, by, bidx;
-                ;
-                x = (1 + 2 * (blk / npartition_y)) * blksz_x;
-                y = (blk % (int)npartition_y) * blksz_y;
+                const ImgIdx x = (1 + 2 * (blk / npartition_y)) * blksz_x;
+                const ImgIdx y = (blk % (int)npartition_y) * blksz_y;
+                const ImgIdx p0 = y * _width + x - 1;
+                const ImgIdx pn =
+                    ((blk % (int)npartition_y) == npartition_y - 1) ? _height * _width : p0 + _width * blksz_y;
+                const ImgIdx bx = _min(((p0 % _width) / blksz_x0), npartition_x0 - 1);
+                for (ImgIdx p = p0; p < pn; p += _width) {
+                    const ImgIdx by = _min((p / blkrow), npartition_y0 - 1);
+                    const ImgIdx bidx = by * npartition_x0 + bx;
 
-                p0 = y * _width + x - 1;
-                pn = ((blk % (int)npartition_y) == npartition_y - 1) ? _height * _width : p0 + _width * blksz_y;
-
-                bx = _min(((p0 % _width) / blksz_x0), npartition_x0 - 1);
-                for (p = p0; p < pn; p += _width) {
-                    by = _min((p / blkrow), npartition_y0 - 1);
-                    bidx = by * npartition_x0 + bx;
-
-                    dimgidx = (p << 1) + 1;
-                    r = dimg[dimgidx];
-                    // nrbnode[bidx]++;
-
-                    if (tse)
-                        connect(_parentAry[p], _parentAry[p + 1], (ImgIdx)subtree_cur[bidx]++, (Pixel)r);
-                    else
-                        connect(p, p + 1, (ImgIdx)subtree_cur[bidx]++, (Pixel)r);
+                    connect(p, p + 1, (ImgIdx)subtree_cur[bidx]++, (Pixel)dimg[(p << 1) + 1]);
                 }
             }
             npartition_x = (npartition_x + 1) / 2;
@@ -4087,10 +4061,8 @@ ImgIdx AlphaTree<Pixel>::merge_subtrees(Pixel *dimg, int64_t blksz_x, int64_t bl
     }
 
     ImgIdx p;
-    if (tse)
-        p = _parentAry[0];
-    else
-        p = 0;
+
+    p = 0;
     while (_node[p].parentIdx != ROOTIDX)
         p = _node[p].parentIdx;
 
@@ -4535,6 +4507,9 @@ void AlphaTree<Pixel>::floodPartition(const Pixel *img, const Pixel *dimg, ImgId
                 continue;
             }
 
+            printf("Visiting %d at %d, size = %d\n", p, (int)currentLevel,
+                   (int)(nodeIndex - subtree_start[blockIndex]));
+
             isVisited[p] = 1;
             uint8_t isAv = isAvailable[p];
 
@@ -4652,10 +4627,13 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierQueueParallel(const Pixel
 
     // singletons + inners + dummies
     _node = (AlphaNode<Pixel> *)Calloc((size_t)(imgSize + dimgSize + numpartitions) * sizeof(AlphaNode<Pixel>));
+    _maxSize = imgSize + dimgSize + numpartitions;
+    _curSize = imgSize + dimgSize + numpartitions;
     _nodeIn = _node + imgSize;
 
-#pragma omp parallel for schedule(dynamic, 1)
+    // #pragma omp parallel for
     for (int blockIndex = 0; blockIndex < numpartitions; blockIndex++) {
+        printf("blockIndex = %d/%d\n", blockIndex, numpartitions);
         const ImgIdx blockWidth = blockWidths[blockIndex];
         const ImgIdx blockHeight = blockHeights[blockIndex];
         const ImgIdx blockArea = blockWidth * blockHeight;
@@ -4670,7 +4648,10 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierQueueParallel(const Pixel
                        isVisited, isAvailable);
     }
 
-    merge_subtrees(dimg, blksz_x, blksz_y, npartition_x, npartition_y, subtree_cur);
+    mergePartition(dimg, blksz_x, blksz_y, npartition_x, npartition_y, subtree_cur);
+
+    printTree();
+    // printAll(isVisited, nullptr, img);
 
     Free(isVisited);
     Free(isAvailable);

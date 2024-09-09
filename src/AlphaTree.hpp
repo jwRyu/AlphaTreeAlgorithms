@@ -123,7 +123,7 @@ template <class Pixel> class AlphaTree {
     void printGraph(const uint8_t *isVisited, const bool *isRedundant, const Pixel *img) const;
     void printGraph(const uint8_t *isVisited, const uint8_t *edge, const Pixel *img) const;
     void printParentAry() const;
-    void printAll(const uint8_t *isVisited, const bool *isRedundant, const Pixel *img) const;
+    // void printAll(const uint8_t *isVisited, const bool *isRedundant, const Pixel *img) const;
     void printAll(const uint8_t *isVisited, const uint8_t *edge, const Pixel *img) const;
     void printVisit(ImgIdx p, double q) const;
 
@@ -147,6 +147,8 @@ template <class Pixel> class AlphaTree {
     void FloodHierQueueParallel(const Pixel *img, int numthreads);
     void HybridParallel(const Pixel *img, int numthreads);
 
+    ImgIdx mergePartition(Pixel *dimg, int64_t blksz_x, int64_t blksz_y, ImgIdx npartition_x, ImgIdx npartition_y,
+                          ImgIdx *subtree_cur);
     void floodPartition(const Pixel *img, const Pixel *dimg, ImgIdx startPixelIndex, int blockIndex, ImgIdx blockArea,
                         Pixel maxdiff, HierarQueue *queue, const ImgIdx *subtree_start, ImgIdx *subtree_cur,
                         uint8_t *isVisited, const uint8_t *isAvailable);
@@ -214,11 +216,6 @@ template <class Pixel> class AlphaTree {
     uint8_t push_neighbor(HierarQueue *queue, uint8_t *isVisited, uint32_t *dimg, ImgIdx p);
     uint8_t push_neighbor(HierarQueue *queue, uint8_t *isVisited, uint64_t *dimg, ImgIdx p);
     void canonicalize(ImgIdx nidx);
-    ImgIdx merge_subtrees(Pixel *dimg, int64_t blksz_x, int64_t blksz_y, ImgIdx npartition_x, ImgIdx npartition_y,
-                          ImgIdx *subtree_cur, int tse, ImgIdx *nrbnode = NULL);
-    ImgIdx merge_subtrees(Pixel *dimg, int64_t blksz_x, int64_t blksz_y, ImgIdx npartition_x, ImgIdx npartition_y,
-                          ImgIdx *subtree_cur, ImgIdx *subtree_start = NULL, ImgIdx *blkhs = NULL,
-                          ImgIdx *blkws = NULL);
     ImgIdx merge_subtrees(uint8_t *dimg, int64_t blksz_x, int64_t blksz_y, int16_t npartition_x, int16_t npartition_y,
                           ImgIdx *subtree_cur, int tse);
     ImgIdx merge_subtrees1(uint8_t *dimg, int64_t blksz_x, int64_t blksz_y, int16_t npartition_x, int16_t npartition_y,
