@@ -126,6 +126,8 @@ template <class Pixel> class AlphaTree {
     // void printAll(const uint8_t *isVisited, const bool *isRedundant, const Pixel *img) const;
     void printAll(const uint8_t *isVisited, const uint8_t *edge, const Pixel *img) const;
     void printVisit(ImgIdx p, double q) const;
+    void printIsAvailable(const uint8_t *isAvailable) const;
+    static void printBinary(uint8_t num);
 
   private:
     PixelDissimilarity<Pixel> _pixelDissim;

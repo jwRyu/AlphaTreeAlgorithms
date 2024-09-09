@@ -3998,17 +3998,17 @@ template <class Pixel> void AlphaTree<Pixel>::canonicalize(ImgIdx nidx) {
 template <class Pixel>
 ImgIdx AlphaTree<Pixel>::mergePartition(Pixel *dimg, int64_t blksz_x, int64_t blksz_y, ImgIdx npartition_x,
                                         ImgIdx npartition_y, ImgIdx *subtree_cur) {
-    ImgIdx numblk;
-    int64_t blksz_x0 = blksz_x;
-    int64_t blksz_y0 = blksz_y;
-
-    ImgIdx npartition_x0 = npartition_x;
-    ImgIdx npartition_y0 = npartition_y;
-    ImgIdx blkrow = _width * blksz_y0;
+    const int64_t blksz_x0 = blksz_x;
+    const int64_t blksz_y0 = blksz_y;
+    const ImgIdx npartition_x0 = npartition_x;
+    const ImgIdx npartition_y0 = npartition_y;
+    const ImgIdx blkrow = _width * blksz_y0;
+    const int shamt = _connectivity / 4;
+    const ImgIdx width4 = _width << 2;
     while (npartition_x > 1 || npartition_y > 1) {
         // merge horizontal borders
         if ((npartition_x == 1 || blksz_x >= blksz_y) && npartition_y > 1) {
-            numblk = npartition_x * (npartition_y / 2);
+            const ImgIdx numblk = npartition_x * (npartition_y / 2);
 
 #pragma omp parallel for schedule(dynamic, 1)
             for (int blk = 0; blk < numblk; blk++) {
@@ -4021,8 +4021,17 @@ ImgIdx AlphaTree<Pixel>::mergePartition(Pixel *dimg, int64_t blksz_x, int64_t bl
                 for (ImgIdx p = p0; p < pn; p++) {
                     const ImgIdx bx = _min(((p % _width) / blksz_x0), npartition_x0 - 1);
                     const ImgIdx bidx = by * npartition_x0 + bx;
+                    const ImgIdx q = p << shamt;
 
-                    connect(p, p + _width, (ImgIdx)subtree_cur[bidx]++, (Pixel)dimg[p << 1]);
+                    if (_connectivity == 4) {
+                        connect(p, p + _width, (ImgIdx)subtree_cur[bidx]++, (Pixel)dimg[q]);
+                    } else if (_connectivity == 8) {
+                        if (p > p0)
+                            connect(p, p + _width - 1, (ImgIdx)subtree_cur[bidx]++, (Pixel)dimg[q + width4 - 1]);
+                        connect(p, p + _width, (ImgIdx)subtree_cur[bidx]++, (Pixel)dimg[q]);
+                        if (p < pn - 1)
+                            connect(p, p + _width + 1, (ImgIdx)subtree_cur[bidx]++, (Pixel)dimg[q + 1]);
+                    }
                 }
             }
             npartition_y = (npartition_y + 1) / 2;
@@ -4034,7 +4043,7 @@ ImgIdx AlphaTree<Pixel>::mergePartition(Pixel *dimg, int64_t blksz_x, int64_t bl
         }
 
         if ((npartition_y == 1 || blksz_x <= blksz_y) && npartition_x > 1) {
-            numblk = npartition_y * (npartition_x / 2);
+            const ImgIdx numblk = npartition_y * (npartition_x / 2);
 
 #pragma omp parallel for schedule(dynamic, 1)
             for (int blk = 0; blk < numblk; blk++) {
@@ -4047,8 +4056,17 @@ ImgIdx AlphaTree<Pixel>::mergePartition(Pixel *dimg, int64_t blksz_x, int64_t bl
                 for (ImgIdx p = p0; p < pn; p += _width) {
                     const ImgIdx by = _min((p / blkrow), npartition_y0 - 1);
                     const ImgIdx bidx = by * npartition_x0 + bx;
+                    const ImgIdx q = p << shamt;
 
-                    connect(p, p + 1, (ImgIdx)subtree_cur[bidx]++, (Pixel)dimg[(p << 1) + 1]);
+                    if (_connectivity == 4) {
+                        connect(p, p + 1, (ImgIdx)subtree_cur[bidx]++, (Pixel)dimg[q + 1]);
+                    } else if (_connectivity == 8) {
+                        if (p > p0)
+                            connect(p, p - _width + 1, (ImgIdx)subtree_cur[bidx]++, (Pixel)dimg[q + 3]);
+                        connect(p, p + 1, (ImgIdx)subtree_cur[bidx]++, (Pixel)dimg[q + 2]);
+                        if (p < pn - _width)
+                            connect(p, p + _width + 1, (ImgIdx)subtree_cur[bidx]++, (Pixel)dimg[q + 1]);
+                    }
                 }
             }
             npartition_x = (npartition_x + 1) / 2;
@@ -4319,23 +4337,59 @@ ImgIdx AlphaTree<Pixel>::parflood_node_alloc(ImgIdx *subtree_size, ImgIdx *subtr
     return _maxSize;
 }
 
+template <class Pixel> void AlphaTree<Pixel>::printBinary(uint8_t num) {
+    // Loop through each bit (starting from the most significant bit)
+    for (int i = sizeof(num) * 8 - 1; i >= 0; i--) {
+        // Use bitwise AND and right shift to extract the bit at position i
+        unsigned int bit = (num >> i) & 1;
+        printf("%u", bit);
+    }
+}
+
+template <class Pixel> void AlphaTree<Pixel>::printIsAvailable(const uint8_t *isAvailable) const {
+    printf("AlphaTree<Pixel>::printIsAvailable\n");
+    for (int i = 0; i < _height; i++) {
+        for (int j = 0; j < _width; j++) {
+            printBinary(isAvailable[i * _width + j]);
+            printf(" ");
+        }
+        printf("\n");
+    }
+    printf("\n");
+}
+
 template <class Pixel>
 void AlphaTree<Pixel>::set_isAvailable_par(uint8_t *isAvailable, int16_t npartition_x, int16_t npartition_y) {
     int32_t i, j, k;
-    ImgIdx imgSize = _width * _height;
-    ImgIdx wstride = _width / npartition_x;
-    ImgIdx hstride = _height / npartition_y;
+    const ImgIdx imgSize = _width * _height;
+    const ImgIdx wstride = _width / npartition_x;
+    const ImgIdx hstride = _height / npartition_y;
 
     set_isAvailable(isAvailable);
 
     if (_connectivity == 4) {
+        //		    Neighbour Index
+        // 			       3
+        // 			2    pixel    1
+        // 			       0
+        //
+        //			Neighbour indices to bit field
+        //			x x x x 3 2 1 0
+        //         MSB			 LSB
+        //			0: Neighbour pixel not available (corner of Image, or partition in later implementation)
+        //			1: available
+        const uint8_t maskBottom = 0b00001110;
+        const uint8_t maskTop = 0b00000111;
+        const uint8_t maskLeft = 0b00001011;
+        const uint8_t maskRight = 0b00001101;
+
         // hor partitions
         j = (hstride - 1) * _width;
         for (i = 0; i < npartition_y - 1; i++) {
             k = j + _width;
             for (; j < k; j++) {
-                isAvailable[j] &= 0xe;
-                isAvailable[j + _width] &= 0x7;
+                isAvailable[j] &= maskBottom;
+                isAvailable[j + _width] &= maskTop;
             }
             j += (hstride - 1) * _width;
         }
@@ -4344,48 +4398,45 @@ void AlphaTree<Pixel>::set_isAvailable_par(uint8_t *isAvailable, int16_t npartit
         for (i = 0; i < npartition_x - 1; i++) {
             j = (i + 1) * wstride - 1;
             for (; j < imgSize; j += _width) {
-                isAvailable[j] &= 0xd;
-                isAvailable[j + 1] &= 0xb;
+                isAvailable[j] &= maskRight;
+                isAvailable[j + 1] &= maskLeft;
             }
         }
     } else {
         //		    Neighbour Index
-        // 			6      5      4
-        // 			7    pixel    3
-        // 			0      1      2
+        // 			5      4      3
+        // 			6    pixel    2
+        // 			7      0      1
         //
         //			Neighbour indices to bit field
         //			7 6 5 4 3 2 1 0
-        //         MSB			 LSB
+        //      MSB   			 LSB
         //			0: Neighbour pixel not available (corner of Image, or partition in later implementation)
         //			1: available
 
-        // initialize to all available
-        for (i = 0; i < imgSize; i++)
-            isAvailable[i] = 0xff;
+        const uint8_t maskBottom = 0b01111100;
+        const uint8_t maskTop = 0b11000111;
+        const uint8_t maskLeft = 0b00011111;
+        const uint8_t maskRight = 0b11110001;
 
-        // four corners
-        isAvailable[0] = 0x0e;
-        isAvailable[_width - 1] = 0x83;
-        isAvailable[_width * (_height - 1)] = 0x38;
-        isAvailable[_width * _height - 1] = 0xe0;
-
-        // top and bottom row
-        j = _width * (_height - 1) + 1;
-        for (i = 1; i < _width - 1; i++) {
-            isAvailable[i] = 0x8f;
-            isAvailable[j] = 0xf8;
-            j++;
+        // hor partitions
+        j = (hstride - 1) * _width;
+        for (i = 0; i < npartition_y - 1; i++) {
+            k = j + _width;
+            for (; j < k; j++) {
+                isAvailable[j] &= maskBottom;
+                isAvailable[j + _width] &= maskTop;
+            }
+            j += (hstride - 1) * _width;
         }
 
-        // leftest and rightest column
-        j = _width;
-        k = (_width << 1) - 1;
-        for (i = 1; i < _height - 1; i++) {
-            isAvailable[j] = 0x3e;
-            isAvailable[k] = 0xe3;
-            j += _width;
-            k += _width;
+        // ver partitions
+        for (i = 0; i < npartition_x - 1; i++) {
+            j = (i + 1) * wstride - 1;
+            for (; j < imgSize; j += _width) {
+                isAvailable[j] &= maskRight;
+                isAvailable[j + 1] &= maskLeft;
+            }
         }
     }
 }
@@ -4418,16 +4469,18 @@ void AlphaTree<Pixel>::setBlockDimensions(ImgIdx npartition_x, ImgIdx npartition
     const ImgIdx blksz_yn = blksz_y + (_height % npartition_y);
     const ImgIdx numpartitions = npartition_x * npartition_y;
     const ImgIdx imgSize = _width * _height;
+    const ImgIdx numNeighbors = _connectivity / 2;
     ImgIdx p = 0;
     for (ImgIdx y = 0; y < npartition_y; y++) {
         const ImgIdx q = y * _width * (ImgIdx)blksz_y;
-        bool lastrow = (y == npartition_y - 1);
-        ImgIdx blockHeight = lastrow ? blksz_yn : blksz_y;
+        const bool lastrow = (y == npartition_y - 1);
+        const ImgIdx blockHeight = lastrow ? blksz_yn : blksz_y;
         for (ImgIdx x = 0; x < npartition_x; x++) {
             startpidx[p] = q + (ImgIdx)x * (ImgIdx)blksz_x;
-            bool lastcol = (x == npartition_x - 1);
-            ImgIdx blockWidth = lastcol ? blksz_xn : blksz_x;
-            blocksize[p] = blockHeight * blockWidth * 2 - (ImgIdx)lastrow * blockWidth - (ImgIdx)lastcol * blockHeight;
+            const bool lastcol = (x == npartition_x - 1);
+            const ImgIdx blockWidth = lastcol ? blksz_xn : blksz_x;
+            blocksize[p] =
+                blockHeight * blockWidth * numNeighbors - (ImgIdx)lastrow * blockWidth - (ImgIdx)lastcol * blockHeight;
             blockWidths[p] = blockWidth;
             blockHeights[p] = blockHeight;
             p++;
@@ -4436,10 +4489,10 @@ void AlphaTree<Pixel>::setBlockDimensions(ImgIdx npartition_x, ImgIdx npartition
 
     subtree_start[0] = startpidx[0] + imgSize;
     for (int blk = 1; blk < numpartitions; blk++) {
-        subtree_start[blk] = subtree_start[blk - 1] + (blockWidths[blk - 1] * blockHeights[blk - 1] * 2);
+        subtree_start[blk] = subtree_start[blk - 1] + (blockWidths[blk - 1] * blockHeights[blk - 1] * numNeighbors);
     }
-    subtree_start[numpartitions] =
-        subtree_start[numpartitions - 1] + (blockWidths[numpartitions - 1] * blockHeights[numpartitions - 1] * 2);
+    subtree_start[numpartitions] = subtree_start[numpartitions - 1] +
+                                   (blockWidths[numpartitions - 1] * blockHeights[numpartitions - 1] * numNeighbors);
 }
 
 template <class Pixel>
@@ -4530,6 +4583,8 @@ void AlphaTree<Pixel>::floodPartition(const Pixel *img, const Pixel *dimg, ImgId
 
             // printf("Visiting %d at %d, size = %d\n", p, (int)currentLevel,
             //        (int)(nodeIndex - subtree_start[blockIndex]));
+            // printGraph(isVisited, (uint8_t *)nullptr, img);
+            // std::getchar();
 
             isVisited[p] = 1;
             uint8_t isAv = isAvailable[p];
@@ -4622,9 +4677,10 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierQueueParallel(const Pixel
 
     const auto [npartition_x, npartition_y] = computePartitionSize(numthreads);
 
-    uint8_t *isVisited = (uint8_t *)Calloc((size_t)((imgSize)));
+    uint8_t *isVisited = (uint8_t *)Calloc((size_t)(imgSize));
     uint8_t *isAvailable = (uint8_t *)Malloc((size_t)(imgSize));
     set_isAvailable_par(isAvailable, npartition_x, npartition_y);
+    // printIsAvailable(isAvailable);
 
     const ImgIdx blksz_x = _width / npartition_x;
     const ImgIdx blksz_y = _height / npartition_y;
@@ -4654,7 +4710,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierQueueParallel(const Pixel
 
 #pragma omp parallel for
     for (int blockIndex = 0; blockIndex < numpartitions; blockIndex++) {
-        printf("blockIndex = %d/%d\n", blockIndex, numpartitions);
+        // printf("blockIndex = %d/%d\n", blockIndex, numpartitions);
         const ImgIdx blockWidth = blockWidths[blockIndex];
         const ImgIdx blockHeight = blockHeights[blockIndex];
         const ImgIdx blockArea = blockWidth * blockHeight;
