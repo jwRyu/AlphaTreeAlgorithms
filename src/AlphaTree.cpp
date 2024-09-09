@@ -4471,6 +4471,45 @@ void AlphaTree<Pixel>::setBlockDimensions(ImgIdx npartition_x, ImgIdx npartition
         subtree_start[numpartitions - 1] + (blockWidths[numpartitions - 1] * blockHeights[numpartitions - 1] * 2);
 }
 
+template <class Pixel>
+Pixel AlphaTree<Pixel>::computePartitionDifferences(const Pixel *img, Pixel *dimg, ImgIdx startPixelIndex,
+                                                    ImgIdx blockWidth, ImgIdx blockHeight, ImgIdx *blockDiffHist) {
+    Pixel maxdiff = std::numeric_limits<Pixel>::min();
+    for (ImgIdx i = 0; i < blockHeight; i++) {
+        Pixel diff;
+        ImgIdx p = startPixelIndex + i * _width;
+        bool notlastrow = i < blockHeight - 1;
+        for (ImgIdx j = 0; j < blockWidth - 1; j++) {
+            ImgIdx q = p << 1;
+            _node[p].set(1, 0, (double)img[p], img[p], img[p]);
+            _node[p].parentIdx = _node[p]._rootIdx = ROOTIDX;
+
+            if (notlastrow) {
+                diff = abs_diff(img[p], img[p + _width]);
+                dimg[q] = diff;
+                blockDiffHist[diff]++;
+                maxdiff = _max(maxdiff, diff);
+            }
+            diff = abs_diff(img[p], img[p + 1]);
+            dimg[q + 1] = diff;
+            blockDiffHist[diff]++;
+            maxdiff = _max(maxdiff, diff);
+            p++;
+        }
+        ImgIdx q = p << 1;
+        _node[p].set(1, 0, (double)img[p], img[p], img[p]);
+        _node[p].parentIdx = _node[p]._rootIdx = ROOTIDX;
+        if (notlastrow) {
+            diff = abs_diff(img[p], img[p + _width]);
+            dimg[q] = diff;
+            blockDiffHist[diff]++;
+            maxdiff = _max(maxdiff, diff);
+        }
+    }
+    blockDiffHist[maxdiff]++;
+    return maxdiff;
+}
+
 template <class Pixel> void AlphaTree<Pixel>::FloodHierQueueParallel(const Pixel *img, int numthreads) {
     if (sizeof(Pixel) > 2 || _channel > 1) {
         printf("Error: Hierarchical queues do not work on >16 bits images or multispectral images\n");
@@ -4518,50 +4557,17 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierQueueParallel(const Pixel
 
 #pragma omp parallel for schedule(dynamic, 1)
     for (int blk = 0; blk < numpartitions; blk++) {
-        const ImgIdx bwidth = blockWidths[blk];
-        const ImgIdx bheight = blockHeights[blk];
-        const ImgIdx bareasum = bwidth * bheight;
-        ImgIdx *bhist = dhist + numlevels * blk;
+        const ImgIdx blockWidth = blockWidths[blk];
+        const ImgIdx blockHeight = blockHeights[blk];
+        const ImgIdx blockArea = blockWidth * blockHeight;
+        ImgIdx *blockDiffHist = dhist + numlevels * blk;
         HierarQueue *queue = queues[blk];
-        ImgIdx spidx = startpidx[blk];
+        // ImgIdx startPixelIndex = startpidx[blk];
         ImgIdx nidx = subtree_start[blk];
         ImgIdx iNode;
-        Pixel maxdiff = 0;
+        Pixel maxdiff = computePartitionDifferences(img, dimg, startpidx[blk], blockWidth, blockHeight, blockDiffHist);
 
-        for (ImgIdx i = 0; i < bheight; i++) {
-            Pixel diff;
-            ImgIdx p = spidx + i * _width;
-            bool notlastrow = i < bheight - 1;
-            for (ImgIdx j = 0; j < bwidth - 1; j++) {
-                ImgIdx q = p << 1;
-                _node[p].set(1, 0, (double)img[p], img[p], img[p]);
-                _node[p].parentIdx = _node[p]._rootIdx = ROOTIDX;
-
-                if (notlastrow) {
-                    diff = abs_diff(img[p], img[p + _width]);
-                    dimg[q] = diff;
-                    bhist[diff]++;
-                    maxdiff = _max(maxdiff, diff);
-                }
-                diff = abs_diff(img[p], img[p + 1]);
-                dimg[q + 1] = diff;
-                bhist[diff]++;
-                maxdiff = _max(maxdiff, diff);
-                p++;
-            }
-            ImgIdx q = p << 1;
-            _node[p].set(1, 0, (double)img[p], img[p], img[p]);
-            _node[p].parentIdx = _node[p]._rootIdx = ROOTIDX;
-            if (notlastrow) {
-                diff = abs_diff(img[p], img[p + _width]);
-                dimg[q] = diff;
-                bhist[diff]++;
-                maxdiff = _max(maxdiff, diff);
-            }
-        }
-        bhist[maxdiff]++;
-
-        queue->set_queue(bhist, maxdiff);
+        queue->set_queue(blockDiffHist, maxdiff);
 
         ImgIdx stackTop = imgSize + dimgSize + blk;
         ImgIdx prevTop = stackTop;
@@ -4637,19 +4643,19 @@ template <class Pixel> void AlphaTree<Pixel>::FloodHierQueueParallel(const Pixel
                 _node[stackTop].parentIdx = iNode;
             } else // go to existing _node
             {
-                if (_node[iNode].area == bareasum)
+                if (_node[iNode].area == blockArea)
                     break;
                 _node[iNode].add(_node + stackTop);
             }
 
-            if (_node[iNode].area == bareasum)
+            if (_node[iNode].area == blockArea)
                 break;
 
             prevTop = stackTop;
             stackTop = iNode;
             currentLevel = _node[stackTop].alpha;
         }
-        stackTop = (_node[stackTop].area == bareasum) ? stackTop : iNode; // remove redundant root
+        stackTop = (_node[stackTop].area == blockArea) ? stackTop : iNode; // remove redundant root
         _node[stackTop].parentIdx = ROOTIDX;
 
         subtree_cur[blk] = nidx;
@@ -4811,15 +4817,15 @@ void AlphaTree<Pixel>::blockwise_tse(ImgIdx *subtree_size, ImgIdx *subtree_nbord
 
     for (int blk = 0; blk < numpartitions; blk++) {
         maxdiff = subtree_max[blk];
-        ImgIdx *bhist = dhist + numbins * blk;
+        ImgIdx *blockDiffHist = dhist + numbins * blk;
         ImgIdx bhistsum = 0;
-        ImgIdx bwidth = blockWidths[blk];
-        ImgIdx bheight = blockHeights[blk];
+        ImgIdx blockWidth = blockWidths[blk];
+        ImgIdx blockHeight = blockHeights[blk];
         // bool lastcol = (blk % npartition_x) == (npartition_x - 1);
         // bool lastrow = (blk / npartition_x) == (npartition_y - 1);
 
         for (int ii = 0; ii <= (int)maxdiff; ii++)
-            bhistsum += bhist[ii];
+            bhistsum += blockDiffHist[ii];
 
         double nrmsd_blk = 0;
         for (int ii = 0; ii < (int)(maxdiff + 1); ii++)
@@ -4828,13 +4834,14 @@ void AlphaTree<Pixel>::blockwise_tse(ImgIdx *subtree_size, ImgIdx *subtree_nbord
         nrmsd_blk = ((TSE_A * exp(TSE_SIGMA * nrmsd_blk) + TSE_B) + TSE_M);
         nrmsds[blk] = nrmsd_blk;
 
-        // ImgIdx nrboderedges = (lastcol ? 0 : bheight) + (lastrow ? 0 : bwidth);
-        ImgIdx nrboderedges = 2 * (bheight + bwidth);
+        // ImgIdx nrboderedges = (lastcol ? 0 : blockHeight) + (lastrow ? 0 : blockWidth);
+        ImgIdx nrboderedges = 2 * (blockHeight + blockWidth);
         subtree_nborderedges[blk] = nrboderedges;
-        subtree_size[blk] = TreeSizeEstimation(bhist, maxdiff + 1, bwidth * bheight, bhistsum, 0.5) + nrboderedges;
-        // subtree_size[blk] = TreeSizeEstimation(bhist, maxdiff + 1, bwidth * bheight, bhistsum, 0.5); //no need to add
-        // room for borders (already computed in quantization) printf("Subblock %d: bhist sum = %d, size estimate:
-        // %d\n", (int)blk, (int)bhistsum, (int)subtree_size[blk]);
+        subtree_size[blk] =
+            TreeSizeEstimation(blockDiffHist, maxdiff + 1, blockWidth * blockHeight, bhistsum, 0.5) + nrboderedges;
+        // subtree_size[blk] = TreeSizeEstimation(blockDiffHist, maxdiff + 1, blockWidth * blockHeight, bhistsum, 0.5);
+        // //no need to add room for borders (already computed in quantization) printf("Subblock %d: blockDiffHist sum =
+        // %d, size estimate: %d\n", (int)blk, (int)bhistsum, (int)subtree_size[blk]);
     }
 }
 
@@ -4849,43 +4856,43 @@ void AlphaTree<Pixel>::quantize_ranks_compute_histogram(uint8_t *qrank, ImgIdx *
 #pragma omp parallel for
     for (int blk = 0; blk < numpartitions; blk++) {
         ImgIdx p, q;
-        ImgIdx bwidth = blockWidths[blk];
-        ImgIdx bheight = blockHeights[blk];
-        ImgIdx *bhist = dhist + numbins * blk;
+        ImgIdx blockWidth = blockWidths[blk];
+        ImgIdx blockHeight = blockHeights[blk];
+        ImgIdx *blockDiffHist = dhist + numbins * blk;
         bool lastcol = (blk % npartition_x) == (npartition_x - 1);
         bool lastrow = (blk / npartition_x) == (npartition_y - 1);
-        ImgIdx spidx = startpidx[blk];
+        ImgIdx startPixelIndex = startpidx[blk];
         Pixel maxdiff = 0;
 
-        for (ImgIdx i = 0; i < bheight; i++) {
+        for (ImgIdx i = 0; i < blockHeight; i++) {
             ImgIdx r;
             uint8_t qr;
-            p = spidx + i * _width;
-            bool blklastrow = (i == bheight - 1);
-            for (ImgIdx j = 0; j < bwidth - 1; j++) {
+            p = startPixelIndex + i * _width;
+            bool blklastrow = (i == blockHeight - 1);
+            for (ImgIdx j = 0; j < blockWidth - 1; j++) {
                 q = p << 1;
-                if (i < bheight - 1 || !lastrow) {
+                if (i < blockHeight - 1 || !lastrow) {
                     r = rank[q];
                     qr = QUANTIZE_RANK(r, binsize);
                     qrank[q] = qr;
-                    bhist[qr]++;
+                    blockDiffHist[qr]++;
                     if (!blklastrow)
                         maxdiff = _max(maxdiff, qr);
                 }
                 r = rank[q + 1];
                 qr = QUANTIZE_RANK(r, binsize);
                 qrank[q + 1] = qr;
-                bhist[qr]++;
+                blockDiffHist[qr]++;
                 maxdiff = _max(maxdiff, qr);
                 p++;
             }
 
             q = p << 1;
-            if (i < bheight - 1 || !lastrow) {
+            if (i < blockHeight - 1 || !lastrow) {
                 r = rank[q];
                 qr = QUANTIZE_RANK(r, binsize);
                 qrank[q] = qr;
-                bhist[qr]++;
+                blockDiffHist[qr]++;
                 if (!blklastrow)
                     maxdiff = _max(maxdiff, qr);
             }
@@ -4893,10 +4900,10 @@ void AlphaTree<Pixel>::quantize_ranks_compute_histogram(uint8_t *qrank, ImgIdx *
                 r = rank[q + 1];
                 qr = QUANTIZE_RANK(r, binsize);
                 qrank[q + 1] = qr;
-                bhist[qr]++;
+                blockDiffHist[qr]++;
             }
         }
-        bhist[maxdiff]++; // dummy for subroot
+        blockDiffHist[maxdiff]++; // dummy for subroot
         subtree_max[blk] = maxdiff;
     }
 }
@@ -5816,15 +5823,15 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(const Pixel *img, i
 
             uint8_t connected_neighbor; // marks neighbors that are already visited
             ImgIdx lsbclearmask = ~1;   // mask for clearing 1st bit
-            ImgIdx bwidth = blockWidths[blk];
-            ImgIdx bheight = blockHeights[blk];
+            ImgIdx blockWidth = blockWidths[blk];
+            ImgIdx blockHeight = blockHeights[blk];
             // ImgIdx blksize = blocksize[blk];
-            ImgIdx bareasum = bwidth * bheight;
-            ImgIdx *bhist = dhist + numlevels * blk;
+            ImgIdx blockArea = blockWidth * blockHeight;
+            ImgIdx *blockDiffHist = dhist + numlevels * blk;
             HierarQueue *queue = queues[blk];
             // bool lastcol = (blk % npartition_x) == (npartition_x - 1);
             // bool lastrow = (blk / npartition_x) == (npartition_y - 1);
-            // ImgIdx spidx = startpidx[blk];
+            // ImgIdx startPixelIndex = startpidx[blk];
             ImgIdx nidx = subtree_start[blk];
             ImgIdx blkts = 0;
             int nidxblk = blk;
@@ -5838,8 +5845,8 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(const Pixel *img, i
                 plr[p] = 0;
 
             // printf("th%d: subtree for blk %d: setting queue\n", omp_get_thread_num(), (int)blk);
-            queue->set_queue(bhist);
-            // queue->set_queue(bhist, maxdiff);
+            queue->set_queue(blockDiffHist);
+            // queue->set_queue(blockDiffHist, maxdiff);
 
             ImgIdx stackTop = nidx++; // imgSize + dimgSize + blk;
             // printf("blk%d - Dummy %d\n", (int)blk, (int)(stackTop));
@@ -6068,7 +6075,7 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(const Pixel *img, i
                     // _curSize--;
                 }
 
-                if (_node[stackTop].area == bareasum) // root _node found...done
+                if (_node[stackTop].area == blockArea) // root _node found...done
                     break;
 
                 // go to higher level
@@ -6091,12 +6098,12 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(const Pixel *img, i
                     _node[stackTop].parentIdx = iNode;
                 } else // go to existing _node
                 {
-                    if (_node[iNode].area == bareasum) // root _node found...done
+                    if (_node[iNode].area == blockArea) // root _node found...done
                         break;
                     _node[iNode].add(_node + stackTop);
                 }
 
-                if (_node[iNode].area == bareasum) // root _node found...done
+                if (_node[iNode].area == blockArea) // root _node found...done
                     break;
 
                 prevTop = stackTop;
@@ -6105,7 +6112,7 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(const Pixel *img, i
             }
 
             if (!outofmemory) {
-                stackTop = (_node[stackTop].area == bareasum) ? stackTop : iNode; // remove redundant root
+                stackTop = (_node[stackTop].area == blockArea) ? stackTop : iNode; // remove redundant root
                 _node[stackTop].parentIdx = ROOTIDX;
 
                 subtree_cur[nidxblk] = nidx;
