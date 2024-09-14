@@ -20,3 +20,16 @@ struct QItem {
     static constexpr uint8_t EDGE_REDUNDANT = 4;
     static constexpr uint8_t EDGE_ESSENTIAL = 5;
 };
+
+template <class Pixel> class RankItem {
+  public:
+    ImgIdx dimgidx;
+    Pixel alpha;
+
+    ImgIdx get_pidx0(ImgIdx _connectivity = 4);
+    ImgIdx get_pidx1(ImgIdx _width, ImgIdx _connectivity = 4);
+
+    RankItem(ImgIdx dimgidx_, Pixel alpha_) : dimgidx(dimgidx_), alpha(alpha_) {}
+    bool operator<(const RankItem &other) const { return alpha < other.alpha; }
+    void print() { printf("(%d, %.2f) ", (int)dimgidx, (double)alpha); }
+};

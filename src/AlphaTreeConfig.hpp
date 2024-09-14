@@ -2,7 +2,7 @@
 #ifndef ALPHATREECONFIG_H
 #define ALPHATREECONFIG_H
 
-#define CONFIGFILENAME "config.txt"
+#define CONFIGFILENAME "/home/jiwoo/AlphaTreeAlgorithms/config.txt"
 
 #include <defines.hpp>
 

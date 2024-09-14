@@ -4,7 +4,9 @@
 #include <HierarQueue.hpp>
 #include <HybridQueue.hpp>
 #include <LadderQueue.hpp>
+#include <LogBucket.hpp>
 #include <PixelDissimilarity.hpp>
+#include <QItem.hpp>
 #include <Trie.hpp>
 #include <defines.hpp>
 #include <radixsort_teeninga/sort/radix_sort_parallel.h>
@@ -82,16 +84,6 @@ template <class Pixel> class AlphaNode {
     bool operator<(const AlphaNode &other) const { return alpha < other.alpha; }
 };
 
-template <class Pixel> class RankItem {
-  public:
-    Pixel alpha;
-    ImgIdx dimgidx;
-
-    void operator=(const RankItem &item);
-    ImgIdx get_pidx0(ImgIdx _connectivity = 4);
-    ImgIdx get_pidx1(ImgIdx _width, ImgIdx _connectivity = 4);
-};
-
 template <class Pixel> class AlphaTree {
   public:
     ImgIdx _maxSize = 0;
@@ -107,6 +99,8 @@ template <class Pixel> class AlphaTree {
     ImgIdx num_node_in = 0;
     ImgIdx _rootIdx = ROOTIDX;
     double nrmsd = 0.0;
+
+    void EdgeSortingTest(const Pixel *img, int numthreads);
 
     AlphaTree() : _maxSize(0), _curSize(0), _node(0), _parentAry(0) {}
     ~AlphaTree();
@@ -148,6 +142,10 @@ template <class Pixel> class AlphaTree {
     void FloodTrie(const Pixel *img);
     void FloodHierQueueParallel(const Pixel *img, int numthreads);
     void HybridParallel(const Pixel *img, int numthreads);
+    void HybridParallelOld(const Pixel *img, int numthreads);
+
+    void computePartitionDiffLogBucket(const Pixel *img, double *dimg, LogBucket &lb, ImgIdx startPixelIndex,
+                                       ImgIdx blockWidth, ImgIdx blockHeight);
 
     ImgIdx mergePartition(Pixel *dimg, int64_t blksz_x, int64_t blksz_y, ImgIdx npartition_x, ImgIdx npartition_y,
                           ImgIdx *subtree_cur);
@@ -202,10 +200,10 @@ template <class Pixel> class AlphaTree {
     int get_bitdepth(uint64_t num);
     ImgIdx initialize_node(const Pixel *img, Pixel *dimg, Pixel maxpixval);
     void initialize_node1(const Pixel *img, RankItem<double> *rankitem, Pixel maxpixval);
-    void initialize_node1(const Pixel *img, RankItem<double> *rankitem, Pixel maxpixval, int32_t *rank2rankitem);
+    void initialize_node1(const Pixel *img, RankItem<double> *rankitem, Pixel maxpixval, int32_t *rankToIndex);
     void initialize_node(const Pixel *img, RankItem<Pixel> *rankitem, Pixel maxpixval);
     void initialize_node_par(const Pixel *img, RankItem<Pixel> *rankitem, Pixel maxpixval);
-    void initialize_node_par1(const Pixel *img, RankItem<double> *rankitem, Pixel maxpixval, int32_t *rank2rankitem);
+    void initialize_node_par1(const Pixel *img, RankItem<double> *rankitem, Pixel maxpixval, int32_t *rankToIndex);
     void init_hypergraph_nodes(Pixel *dimg);
     void init_hypergraph_nodes(ImgIdx *rank);
     void set_isAvailable_hypergraph(uint8_t *isAvailable);
@@ -241,7 +239,7 @@ template <class Pixel> class AlphaTree {
     ImgIdx find_root(AlphaNode<Pixel> *pilottree, ImgIdx p, Pixel below_this_qlevel);
     ImgIdx descendroots(ImgIdx q, int64_t qlevel, AlphaNode<Pixel> *pilottree);
     void unionfind_refine_qlevel(int64_t qlevel, int64_t binsize, ImgIdx nredges, AlphaNode<Pixel> *pilottree,
-                                 RankItem<double> *rankitem, int8_t *redundant_edge, int32_t *rank2rankitem);
+                                 RankItem<double> *rankitem, int8_t *redundant_edge, int32_t *rankToIndex);
     void compute_dhist_par(uint8_t *qrank, ImgIdx *dhist, ImgIdx *startpidx, int32_t numbins, int8_t npartition_x,
                            int8_t npartition_y, int64_t blksz_x, int64_t blksz_y, int64_t blksz_xn, int64_t blksz_yn);
     void compute_dhist_par_hypergraph(uint8_t *qrank, ImgIdx *dhist, ImgIdx *startpidx, int32_t numbins,
@@ -266,10 +264,10 @@ template <class Pixel> class AlphaTree {
                                  int64_t blksz_xn, int64_t blksz_yn);
     void memalloc_queues(HierarQueue ***queues, int64_t numpartitions, ImgIdx *blocksize, ImgIdx *subtree_max);
     void compute_dimg_and_rank2index(RankItem<double> *&rankitem, const Pixel *img, ImgIdx nredges,
-                                     int32_t *rank2rankitem);
+                                     int32_t *rankToIndex);
     void compute_difference_and_sort(RankItem<double> *&rankitem, const Pixel *img, ImgIdx nredges);
     void compute_difference_and_sort(ImgIdx *rank, RankItem<double> *&rankitem, const Pixel *img, ImgIdx nredges,
-                                     int32_t *&rank2rankitem);
+                                     int32_t *&rankToIndex);
     ImgIdx NewAlphaNode(ImgIdx &size, ImgIdx &maxsize);
     ImgIdx NewAlphaNode(AlphaNode<Pixel> *tree, ImgIdx &size, ImgIdx &maxsize, Pixel level, AlphaNode<Pixel> *pCopy);
     void remove_redundant_node(AlphaNode<Pixel> *tree, ImgIdx &size, ImgIdx &prev_top, ImgIdx &stack_top);

@@ -44,7 +44,7 @@
 
 #define _max(a, b) (((a) > (b)) ? (a) : (b))
 #define _min(a, b) (((a) > (b)) ? (b) : (a))
-#define _clip(x, a, b) _min(_max(x, a), b)
+#define CLIP(x, a, b) _min(_max(x, a), b)
 
 typedef int32_t ImgIdx;
 typedef int64_t TrieIdx;
