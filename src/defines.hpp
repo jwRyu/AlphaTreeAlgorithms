@@ -1,5 +1,6 @@
 #pragma once
 #include <algorithm>
+#include <allocator.hpp>
 #include <cassert>
 #include <cfloat>
 #include <cmath>
