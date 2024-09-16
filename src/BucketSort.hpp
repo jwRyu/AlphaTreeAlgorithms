@@ -14,6 +14,9 @@ class Bucket {
     void push_back(const QItem &newItem) { _bucket[_size++] = QItem(newItem); }
     void emplace_back(const ImgIdx &index, const double &alpha) { _bucket[_size++] = QItem(index, alpha); }
     void sort() { std::sort(_bucket, _bucket + _size); }
+    void print() const;
+
+    ~Bucket();
 
   private:
     QItem *_bucket = nullptr;
@@ -24,13 +27,20 @@ class Bucket {
 class BucketSort {
   public:
     BucketSort(ImgIdx *levelSizes, ImgIdx numLevels, ImgIdx totalSize);
+    ~BucketSort();
 
     void push(const ImgIdx &level, const ImgIdx &index, const double &alpha);
     void push(const RankItem<double> &rankItem);
 
     void sort(ImgIdx *indexToRank, int32_t *rankToIndex);
 
+    void print() const;
+    void printPDF() const;
+
+    ImgIdx size() const { return _size; }
+
   private:
+    ImgIdx _size = 0;
     const ImgIdx _numLevels = 0;
     const ImgIdx _totalSize = 0;
 

@@ -6,7 +6,12 @@
 void Bucket::alloc(ImgIdx size) {
     _maxSize = size;
     _size = 0;
-    _bucket = (QItem *)Calloc((size_t)_maxSize * sizeof(QItem));
+    _bucket = _maxSize > 0 ? (QItem *)Calloc((size_t)_maxSize * sizeof(QItem)) : nullptr;
+}
+
+Bucket::~Bucket() {
+    if (_bucket)
+        Free(_bucket);
 }
 
 // void Bucket::push_back(const QItem &newItem) {
@@ -29,6 +34,12 @@ void Bucket::alloc(ImgIdx size) {
 //     _bucket[_size++] = QItem(index, alpha);
 // }
 
+void Bucket::print() const {
+    for (int i = 0; i < _size; i++)
+        _bucket[i].print();
+    printf("\n");
+}
+
 BucketSort::BucketSort(ImgIdx *levelSizes, ImgIdx numLevels, ImgIdx totalSize)
     : _numLevels(numLevels), _totalSize(totalSize) {
     ImgIdx sizeCheck = 0;
@@ -42,11 +53,43 @@ BucketSort::BucketSort(ImgIdx *levelSizes, ImgIdx numLevels, ImgIdx totalSize)
     }
 }
 
+BucketSort::~BucketSort() {
+    if (_buckets)
+        Free(_buckets);
+}
+
+void BucketSort::print() const {
+    printf("---------BucketSort::print()---------\n");
+    printf("numBuckets = %d, sizeTotal = %d\n", _numLevels, _totalSize);
+    for (int level = 0; level < _numLevels; level++) {
+        const auto &bucket = _buckets[level];
+        if (bucket.empty())
+            continue;
+        printf("bucket[%d].size() = %d: ", level, bucket.size());
+        bucket.print();
+    }
+    printf("======================================\n");
+}
+
+void BucketSort::printPDF() const {
+    printf("---------BucketSort::printPDF()---------\n");
+    printf("numBuckets = %d, sizeTotal = %d\n", _numLevels, _totalSize);
+    for (int level = 0; level < _numLevels; level++) {
+        const auto &bucket = _buckets[level];
+        if (bucket.empty())
+            continue;
+        printf("bucket[%d].size() = %d\n", level, bucket.size());
+    }
+    printf("=========================================\n");
+}
+
 void BucketSort::push(const RankItem<double> &rankItem) {
+    _size++;
     _buckets[rankItem.bucketIndex].emplace_back(rankItem.dimgidx, rankItem.alpha);
 }
 
 void BucketSort::push(const ImgIdx &level, const ImgIdx &index, const double &alpha) {
+    _size++;
     _buckets[level].emplace_back(index, alpha);
 }
 
@@ -59,7 +102,7 @@ void BucketSort::sort(ImgIdx *indexToRank, int32_t *rankToIndex) {
     }
 
 #if DEBUG
-    assert(_totalSize == startIndices[_numLevels - 1]);
+    assert(_totalSize == startIndices[_numLevels - 1] + _buckets[_numLevels - 1].size());
 #endif
 
     ImgIdx rank = 0;

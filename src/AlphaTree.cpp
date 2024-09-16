@@ -5782,7 +5782,7 @@ template <class Pixel>
 void AlphaTree<Pixel>::runBucketSort(ImgIdx *indexTorank, int32_t *rankToIndex, ImgIdx *bucketHist, ImgIdx numBuckets,
                                      const RankItem<double> *rankItems) {
     // const ImgIdx imgSize = _width * _height;
-    const int shamt = _connectivity / 4;
+    // const int shamt = _connectivity / 4;
     // const ImgIdx dimgSize = (_width * _height) << shamt;
     const ImgIdx nredges = _width * (_height - 1) + (_width - 1) * _height +
                            ((_connectivity == 8) ? ((_width - 1) * (_height - 1) * 2) : 0);
@@ -5791,16 +5791,17 @@ void AlphaTree<Pixel>::runBucketSort(ImgIdx *indexTorank, int32_t *rankToIndex, 
     BucketSort bs(bucketHist, numBuckets, nredges);
 
     if (_connectivity == 4) {
+        ImgIdx rankItemsIndex = 0;
         for (ImgIdx i = 0; i < _height; i++) {
             const bool bottom = i < _height - 1;
             for (ImgIdx j = 0; j < _width; j++) {
                 const bool right = j < _width - 1;
-                const ImgIdx p = i * _width + j;
-                const ImgIdx q = p << shamt;
+                // const ImgIdx p = i * _width + j;
+                // const ImgIdx q = p << shamt;
                 if (bottom)
-                    bs.push(rankItems[q]);
+                    bs.push(rankItems[rankItemsIndex++]);
                 if (right)
-                    bs.push(rankItems[q + 1]);
+                    bs.push(rankItems[rankItemsIndex++]);
             }
         }
     } else if (_connectivity == 8) {
@@ -5836,7 +5837,14 @@ void AlphaTree<Pixel>::runBucketSort(ImgIdx *indexTorank, int32_t *rankToIndex, 
         //     }
         // }
     }
+
+    // printf("-- PRESORT -- \n");
+    // bs.printPDF();
+    // printf("bs.size() = %d\n", bs.size());
     bs.sort(indexTorank, rankToIndex);
+
+    // printf("-- POSTSORT -- \n");
+    // bs.print();
 }
 
 template <class Pixel>
@@ -5847,9 +5855,9 @@ void AlphaTree<Pixel>::computeDiffHybridParallel(const Pixel *img, double a, Img
     const int shamt = _connectivity / 4;
 
     const ImgIdx dimgSize = (_width * _height) << shamt;
-
     // Pixel maxdiff = std::numeric_limits<Pixel>::max();
     if (_connectivity == 4) {
+        ImgIdx rankItemsIndex = 0;
         for (ImgIdx i = 0; i < _height; i++) {
             const bool bottom = i < _height - 1;
             for (ImgIdx j = 0; j < _width; j++) {
@@ -5858,37 +5866,39 @@ void AlphaTree<Pixel>::computeDiffHybridParallel(const Pixel *img, double a, Img
                 const ImgIdx q = p << shamt;
                 if (bottom) {
                     const double diff = _pixelDissim.computeDissimilarity(p, p + _width);
-                    if (DEBUG && (q < 0 || q >= dimgSize)) {
-                        printf("computeDiffHybridParallel(): rankItems[q] = diff (q = %d) index out of bounds\n",
-                               (int)q);
-                        std::getchar();
-                    }
+                    // if (DEBUG && (q < 0 || q >= dimgSize)) {
+                    //     printf("computeDiffHybridParallel(): rankItems[q] = diff (q = %d) index out of bounds\n",
+                    //            (int)q);
+                    //     std::getchar();
+                    // }
                     const ImgIdx bucketIndex = HHPQ::alphaToLevel(diff, a);
-                    if (DEBUG && (bucketIndex < 0 || bucketIndex >= numBuckets)) {
-                        printf("computeDiffHybridParallel(): bucketHist[bucketIndex] = diff (bucketIndex = %d) "
-                               "index out of bounds\n",
-                               (int)q);
-                        std::getchar();
-                    }
+                    // if (DEBUG && (bucketIndex < 0 || bucketIndex >= numBuckets)) {
+                    //     printf("computeDiffHybridParallel(): bucketHist[bucketIndex] = diff (bucketIndex = %d) "
+                    //            "index out of bounds\n",
+                    //            (int)q);
+                    //     std::getchar();
+                    // }
                     bucketHist[bucketIndex]++;
-                    rankItems[q] = RankItem<double>(q, diff, bucketIndex);
+                    rankItems[rankItemsIndex] = RankItem<double>(rankItemsIndex, diff, bucketIndex);
+                    rankItemsIndex++;
                 }
                 if (right) {
                     const Pixel diff = abs_diff(img[p], img[p + 1]);
-                    if (DEBUG && (q < 0 || q >= dimgSize)) {
-                        printf("computeDiffHybridParallel(): rankItems[q] = diff (q = %d) index out of bounds\n",
-                               (int)q);
-                        std::getchar();
-                    }
+                    // if (DEBUG && (q < 0 || q >= dimgSize)) {
+                    //     printf("computeDiffHybridParallel(): rankItems[q] = diff (q = %d) index out of bounds\n",
+                    //            (int)q);
+                    //     std::getchar();
+                    // }
                     const ImgIdx bucketIndex = HHPQ::alphaToLevel(diff, a);
-                    if (DEBUG && (bucketIndex < 0 || bucketIndex >= numBuckets)) {
-                        printf("computeDiffHybridParallel(): bucketHist[bucketIndex] = diff (bucketIndex = %d) "
-                               "index out of bounds\n",
-                               (int)q);
-                        std::getchar();
-                    }
+                    // if (DEBUG && (bucketIndex < 0 || bucketIndex >= numBuckets)) {
+                    //     printf("computeDiffHybridParallel(): bucketHist[bucketIndex] = diff (bucketIndex = %d) "
+                    //            "index out of bounds\n",
+                    //            (int)q);
+                    //     std::getchar();
+                    // }
                     bucketHist[bucketIndex]++;
-                    rankItems[q + 1] = RankItem<double>(q + 1, diff, bucketIndex);
+                    rankItems[rankItemsIndex] = RankItem<double>(rankItemsIndex, diff, bucketIndex);
+                    rankItemsIndex++;
                 }
             }
         }
@@ -5956,7 +5966,6 @@ template <class Pixel> void AlphaTree<Pixel>::EdgeSortingTest(const Pixel *img, 
     printf("nredges = %d\n", nredges);
     rankitem = (RankItem<double> *)Malloc(nredges * sizeof(RankItem<double>));
 
-    ImgIdx *indexToRank = (ImgIdx *)Calloc((size_t)dimgSize * sizeof(ImgIdx));
     // uint8_t *qrank = (uint8_t *)Malloc((size_t)dimgSize);
     _parentAry = (ImgIdx *)Calloc((size_t)imgSize * sizeof(ImgIdx));
 
@@ -6021,37 +6030,39 @@ template <class Pixel> void AlphaTree<Pixel>::EdgeSortingTest(const Pixel *img, 
     omp_set_num_threads(_min(numthreads, omp_get_num_procs()));
 
     int32_t *rankToIndex = (int32_t *)Calloc(nredges * sizeof(int32_t));
-
-    double t0 = get_wall_time();
+    ImgIdx *indexToRank = (ImgIdx *)Calloc((size_t)dimgSize * sizeof(ImgIdx));
 
     // hphp
 
-    const double a = 15; // TODO find opt. param
-    ImgIdx numBuckets = HHPQ::alphaToLevel(_pixelDissim.maximumDissmilarity(), a) + 1;
+    const double a = 1; // TODO find opt. param
+    const auto maxLevel = HHPQ::alphaToLevel(_pixelDissim.maximumDissmilarity(), a);
+    ImgIdx numBuckets = (ImgIdx)maxLevel + 1;
     ImgIdx *bucketHist = (ImgIdx *)Calloc(numBuckets * sizeof(ImgIdx));
 
     // comput diff and sort using logBucketSort
-
+    double t0 = get_wall_time();
     computeDiffHybridParallel(img, a, bucketHist, numBuckets, rankitem);
-    // runBucketSort(indexToRank, img, nredges, rankToIndex);
+    double t1 = get_wall_time();
+    runBucketSort(indexToRank, rankToIndex, bucketHist, numBuckets, rankitem);
+    double t2 = get_wall_time();
 
     // compute_difference_and_sort(indexToRank, rankitem, img, nredges, rankToIndex);
 
-    double t1 = get_wall_time();
-
-    printf("compute_difference_and_sort = %f\n", t1 - t0);
+    printf("computeDiffHybridParallel = %f\n", t1 - t0);
+    printf("runBucketSort = %f\n", t2 - t1);
     printf("nredges = %d\n", nredges);
 
-    uint8_t *isVisited;
-    isVisited = (uint8_t *)Calloc((size_t)((imgSize)));
-    printGraph(isVisited, (uint8_t *)nullptr, img);
+    // uint8_t *isVisited;
+    // isVisited = (uint8_t *)Calloc((size_t)((imgSize)));
+    // printGraph(isVisited, (uint8_t *)nullptr, img);
+    // Free(isVisited);
 
-    for (int i = 0; i < dimgSize; i++) {
-        rankitem[i].print();
-        printf("\n");
-    }
+    // for (int rank = 0; rank < nredges; rank++) {
+    //     printf("rankToIndex[%d] = %d: ", rank, rankToIndex[rank]);
+    //     rankitem[rankToIndex[rank]].print();
+    //     printf("\n");
+    // }
 
-    Free(isVisited);
     Free(rankToIndex);
     Free(indexToRank);
     Free(rankitem);

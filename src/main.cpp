@@ -7,7 +7,7 @@
 
 // args: Filename, nchannels, numthreads, testimgsize, algorithmcode, bitdepth, tseflag
 int main(int argc, char **argv) {
-    srand(time(NULL));
+    // srand(time(NULL));
 
     auto config = alphatreeConfig.load(argc, argv);
 
