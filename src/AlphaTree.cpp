@@ -386,41 +386,41 @@ template <class Pixel> uint8_t AlphaTree<Pixel>::compute_incidedge_queue(Pixel d
 
 template <class Pixel>
 void AlphaTree<Pixel>::compute_dimg_par4(RankItem<double> *&rankitem, const Pixel *img, SortValue<double> *&vals) {
-    ImgIdx contidx, dimgidx, imgidx, i, j;
+    ImgIdx contidx, dimgidx, imgidx;
 
     contidx = imgidx = dimgidx = 0;
     if (_connectivity == 4) {
         if (_channel == 1) {
-#pragma omp parallel for schedule(guided, 1) private(imgidx, dimgidx, contidx, i, j)
-            for (i = 0; i < _height; i++) {
+#pragma omp parallel for schedule(guided, 1) private(imgidx, dimgidx, contidx)
+            for (ImgIdx i = 0; i < _height; i++) {
                 double d;
                 imgidx = i * _width;
                 dimgidx = imgidx << (_connectivity >> 2);
                 contidx = dimgidx - i;
                 if (i < _height - 1) {
-                    for (j = 0; j < _width - 1; j++) {
+                    for (ImgIdx j = 0; j < _width - 1; j++) {
                         // caclulate histogram here
-                        vals[contidx].val_ = abs_diff(img[imgidx + _width], img[imgidx]);
+                        vals[contidx].val_ = _pixelDissim.computeDissimilarity(imgidx, imgidx + _width);
                         d = (double)(vals[contidx].val_);
                         rankitem[contidx].alpha = d;
                         rankitem[contidx++].dimgidx = dimgidx++;
 
-                        vals[contidx].val_ = abs_diff(img[imgidx + 1], img[imgidx]);
+                        vals[contidx].val_ = _pixelDissim.computeDissimilarity(imgidx, imgidx + 1);
                         d = (double)(vals[contidx].val_);
                         rankitem[contidx].alpha = d;
                         rankitem[contidx++].dimgidx = dimgidx++;
                         imgidx++;
                     }
-                    vals[contidx].val_ = abs_diff(img[imgidx + _width], img[imgidx]);
+                    vals[contidx].val_ = _pixelDissim.computeDissimilarity(imgidx, imgidx + _width);
                     d = (double)(vals[contidx].val_);
                     rankitem[contidx].alpha = d;
                     rankitem[contidx++].dimgidx = dimgidx;
                     dimgidx += 2;
                     imgidx++;
                 } else {
-                    for (j = 0; j < _width - 1; j++) {
+                    for (ImgIdx j = 0; j < _width - 1; j++) {
                         dimgidx++;
-                        vals[contidx].val_ = abs_diff(img[imgidx + 1], img[imgidx]);
+                        vals[contidx].val_ = _pixelDissim.computeDissimilarity(imgidx, imgidx + 1);
                         d = (double)(vals[contidx].val_);
                         rankitem[contidx].alpha = d;
                         rankitem[contidx++].dimgidx = dimgidx++;
@@ -435,16 +435,16 @@ void AlphaTree<Pixel>::compute_dimg_par4(RankItem<double> *&rankitem, const Pixe
             double *dimg_3ch = (double *)Calloc(_channel * dimgSize * sizeof(double));
             ImgIdx linestride = _width * (_connectivity >> 1) - (_connectivity >> 2);
 
-#pragma omp parallel for schedule(guided, 1) private(imgidx, dimgidx, i, j)
+#pragma omp parallel for schedule(guided, 1) private(imgidx, dimgidx)
             for (int hch = 0; hch < _channel * _height; hch++) {
                 double d;
                 int ch = hch / _height;
-                i = hch % _height;
+                ImgIdx i = hch % _height;
                 const Pixel *pimg = img + ch * imgSize + i * _width;
                 double *pdimg = dimg_3ch + ch + i * _width * (_connectivity >> 1) * _channel;
                 imgidx = dimgidx = 0;
                 if (i < _height - 1) {
-                    for (j = 0; j < _width - 1; j++) {
+                    for (ImgIdx j = 0; j < _width - 1; j++) {
                         d = (double)pimg[imgidx + _width] - (double)pimg[imgidx];
                         pdimg[dimgidx] = d * d;
                         dimgidx += chstride;
@@ -458,7 +458,7 @@ void AlphaTree<Pixel>::compute_dimg_par4(RankItem<double> *&rankitem, const Pixe
                     dimgidx += chstride2;
                     imgidx++;
                 } else {
-                    for (j = 0; j < _width - 1; j++) {
+                    for (ImgIdx j = 0; j < _width - 1; j++) {
                         dimgidx += chstride;
                         d = (double)pimg[imgidx + 1] - (double)pimg[imgidx];
                         pdimg[dimgidx] = d * d;
@@ -468,8 +468,8 @@ void AlphaTree<Pixel>::compute_dimg_par4(RankItem<double> *&rankitem, const Pixe
                 }
             }
 
-#pragma omp parallel for schedule(guided, 1) private(imgidx, dimgidx, contidx, i, j)
-            for (i = 0; i < _height; i++) {
+#pragma omp parallel for schedule(guided, 1) private(imgidx, dimgidx, contidx)
+            for (ImgIdx i = 0; i < _height; i++) {
                 double d;
                 double *pdimg = dimg_3ch + i * _width * (_connectivity >> 1) * _channel;
                 contidx = i * linestride;
@@ -477,7 +477,7 @@ void AlphaTree<Pixel>::compute_dimg_par4(RankItem<double> *&rankitem, const Pixe
                 ImgIdx dimgidx_3 = 0;
                 dimgidx = i * _width * (_connectivity >> 1);
                 if (i < _height - 1) {
-                    for (j = 0; j < _width - 1; j++) {
+                    for (ImgIdx j = 0; j < _width - 1; j++) {
                         d = pdimg[dimgidx_3] + pdimg[dimgidx_3 + 1] + pdimg[dimgidx_3 + 2]; // only for 3-ch
                         rankitem[contidx].alpha = vals[contidx].val_ = sqrt(d / (double)_channel);
                         rankitem[contidx].dimgidx = dimgidx;
@@ -505,7 +505,7 @@ void AlphaTree<Pixel>::compute_dimg_par4(RankItem<double> *&rankitem, const Pixe
                     dimgidx_3 += chstride2;
                     imgidx++;
                 } else {
-                    for (j = 0; j < _width - 1; j++) {
+                    for (ImgIdx j = 0; j < _width - 1; j++) {
                         dimgidx++;
                         dimgidx_3 += chstride;
 
@@ -525,8 +525,8 @@ void AlphaTree<Pixel>::compute_dimg_par4(RankItem<double> *&rankitem, const Pixe
     } else if (_connectivity == 8) // not implemented yet
     {
         if (_channel == 1) {
-#pragma omp parallel for schedule(guided, 1) private(imgidx, dimgidx, contidx, i, j)
-            for (i = 0; i < _height; i++) {
+#pragma omp parallel for schedule(guided, 1) private(imgidx, dimgidx, contidx)
+            for (ImgIdx i = 0; i < _height; i++) {
                 double d;
                 imgidx = i * _width;
                 dimgidx = imgidx << (_connectivity >> 2);
@@ -535,7 +535,7 @@ void AlphaTree<Pixel>::compute_dimg_par4(RankItem<double> *&rankitem, const Pixe
                     contidx -= _width - 1;
 
                 if (i < _height - 1) {
-                    for (j = 0; j < _width - 1; j++) {
+                    for (ImgIdx j = 0; j < _width - 1; j++) {
                         // caclulate histogram here
                         vals[contidx].val_ = abs_diff(img[imgidx + _width], img[imgidx]);
                         d = (double)(vals[contidx].val_);
@@ -570,7 +570,7 @@ void AlphaTree<Pixel>::compute_dimg_par4(RankItem<double> *&rankitem, const Pixe
                     dimgidx += 4;
                     imgidx++;
                 } else {
-                    for (j = 0; j < _width - 1; j++) {
+                    for (ImgIdx j = 0; j < _width - 1; j++) {
                         dimgidx += 2;
                         vals[contidx].val_ = abs_diff(img[imgidx + 1], img[imgidx]);
                         d = (double)(vals[contidx].val_);
@@ -3565,7 +3565,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodTrieHypergraph(const Pixel *i
 
     omp_set_num_threads(1);
     int32_t *rankToIndex = (int32_t *)Calloc(nredges * sizeof(int32_t));
-    compute_difference_and_sort(rank, rankitem, img, nredges, rankToIndex);
+    computeDifferenceAndSort(rank, rankitem, img, nredges, rankToIndex);
     initialize_node1(img, rankitem, maxpixval, rankToIndex);
 
     init_hypergraph_nodes(rank);
@@ -5726,8 +5726,8 @@ void AlphaTree<Pixel>::memalloc_queues(HierarQueue ***queues, int64_t numpartiti
 }
 
 template <class Pixel>
-void AlphaTree<Pixel>::compute_dimg_and_rank2index(RankItem<double> *&rankitem, const Pixel *img, ImgIdx nredges,
-                                                   int32_t *rankToIndex) {
+void AlphaTree<Pixel>::computeDimgAndRankToIndex(RankItem<double> *&rankitem, const Pixel *img, ImgIdx nredges,
+                                                 int32_t *rankToIndex) {
     if (_channel == 1) {
         SortValue<Pixel> *vals; // = new pmt::SortValue<Value>[N];
         vals = (SortValue<Pixel> *)Malloc(nredges * sizeof(SortValue<Pixel>));
@@ -5761,7 +5761,7 @@ template <class Pixel>
 void AlphaTree<Pixel>::compute_difference_and_sort(RankItem<double> *&rankitem, const Pixel *img, ImgIdx nredges) {
     int32_t *rankToIndex = (int32_t *)Calloc(nredges * sizeof(int32_t));
 
-    compute_dimg_and_rank2index(rankitem, img, nredges, rankToIndex);
+    computeDimgAndRankToIndex(rankitem, img, nredges, rankToIndex);
 
     RankItem<double> *sorteditem = (RankItem<double> *)Malloc(nredges * sizeof(RankItem<double>)), *tmp;
 #pragma omp parallel for schedule(guided, 1)
@@ -5775,9 +5775,9 @@ void AlphaTree<Pixel>::compute_difference_and_sort(RankItem<double> *&rankitem, 
     Free(rankToIndex);
 }
 template <class Pixel>
-void AlphaTree<Pixel>::compute_difference_and_sort(ImgIdx *rank, RankItem<double> *&rankitem, const Pixel *img,
-                                                   ImgIdx nredges, int32_t *&rankToIndex) {
-    compute_dimg_and_rank2index(rankitem, img, nredges, rankToIndex);
+void AlphaTree<Pixel>::computeDifferenceAndSort(ImgIdx *rank, RankItem<double> *&rankitem, const Pixel *img,
+                                                ImgIdx nredges, int32_t *&rankToIndex) {
+    computeDimgAndRankToIndex(rankitem, img, nredges, rankToIndex);
 
 #pragma omp parallel for schedule(guided, 1)
     for (ImgIdx i = 0; i < nredges; i++) {
@@ -5875,10 +5875,10 @@ template <class Pixel> void AlphaTree<Pixel>::EdgeSortingTest(const Pixel *img, 
     // comput diff and sort using logBucketSort
     double t0 = get_wall_time();
     // computeDiffHybridParallel(img, a, bucketHist, numBuckets, rankitem);
-    compute_difference_and_sort(indexToRank, rankitem, img, nredges, rankToIndex);
+    computeDifferenceAndSort(indexToRank, rankitem, img, nredges, rankToIndex);
     double t1 = get_wall_time();
     // runBucketSort(indexToRank, rankToIndex, bucketHist, numBuckets, rankitem);
-    double t2 = get_wall_time();
+    // double t2 = get_wall_time();
 
     printf("computeDiffHybridParallel = %f\n", t1 - t0);
     // printf("runBucketSort = %f\n", t2 - t1);
@@ -6011,11 +6011,11 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(const Pixel *img, i
 
     // comput diff and sort using logBucketSort
 
-    compute_difference_and_sort(indexToRank, rankitem, img, nredges, rankToIndex);
+    computeDifferenceAndSort(indexToRank, rankitem, img, nredges, rankToIndex);
 
     double t1 = get_wall_time();
 
-    printf("compute_difference_and_sort = %f\n", t1 - t0);
+    printf("computeDifferenceAndSort = %f\n", t1 - t0);
 
     set_subblock_properties(startpidx, blockWidths, blockHeights, blocksize, npartition_x, npartition_y, blksz_x,
                             blksz_y, blksz_xn, blksz_yn);
@@ -6560,7 +6560,7 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallelOld(const Pixel *img
 
     int32_t *rankToIndex = (int32_t *)Calloc(nredges * sizeof(int32_t));
 
-    compute_difference_and_sort(rank, rankitem, img, nredges, rankToIndex);
+    computeDifferenceAndSort(rank, rankitem, img, nredges, rankToIndex);
 
     // printGraph(isVisited, (uint8_t *)nullptr, img);
     // for (int r = 0; r < nredges; r++) {
@@ -7141,7 +7141,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodTrie(const Pixel *img) {
 
     omp_set_num_threads(1);
     int32_t *rankToIndex = (int32_t *)Calloc(nredges * sizeof(int32_t));
-    compute_difference_and_sort(rank, rankitem, img, nredges, rankToIndex);
+    computeDifferenceAndSort(rank, rankitem, img, nredges, rankToIndex);
 
     initialize_node1(img, rankitem, maxpixval, rankToIndex);
 
@@ -7275,7 +7275,7 @@ template <class Pixel> void AlphaTree<Pixel>::FloodTrieNoCache(const Pixel *img)
 
     omp_set_num_threads(1);
     int32_t *rankToIndex = (int32_t *)Calloc(nredges * sizeof(int32_t));
-    compute_difference_and_sort(rank, rankitem, img, nredges, rankToIndex);
+    computeDifferenceAndSort(rank, rankitem, img, nredges, rankToIndex);
 
     initialize_node1(img, rankitem, maxpixval, rankToIndex);
 

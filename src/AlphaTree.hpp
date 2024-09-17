@@ -267,11 +267,10 @@ template <class Pixel> class AlphaTree {
                                  int8_t npartition_x, int8_t npartition_y, int64_t blksz_x, int64_t blksz_y,
                                  int64_t blksz_xn, int64_t blksz_yn);
     void memalloc_queues(HierarQueue ***queues, int64_t numpartitions, ImgIdx *blocksize, ImgIdx *subtree_max);
-    void compute_dimg_and_rank2index(RankItem<double> *&rankitem, const Pixel *img, ImgIdx nredges,
-                                     int32_t *rankToIndex);
+    void computeDimgAndRankToIndex(RankItem<double> *&rankitem, const Pixel *img, ImgIdx nredges, int32_t *rankToIndex);
     void compute_difference_and_sort(RankItem<double> *&rankitem, const Pixel *img, ImgIdx nredges);
-    void compute_difference_and_sort(ImgIdx *rank, RankItem<double> *&rankitem, const Pixel *img, ImgIdx nredges,
-                                     int32_t *&rankToIndex);
+    void computeDifferenceAndSort(ImgIdx *rank, RankItem<double> *&rankitem, const Pixel *img, ImgIdx nredges,
+                                  int32_t *&rankToIndex);
     ImgIdx NewAlphaNode(ImgIdx &size, ImgIdx &maxsize);
     ImgIdx NewAlphaNode(AlphaNode<Pixel> *tree, ImgIdx &size, ImgIdx &maxsize, Pixel level, AlphaNode<Pixel> *pCopy);
     void remove_redundant_node(AlphaNode<Pixel> *tree, ImgIdx &size, ImgIdx &prev_top, ImgIdx &stack_top);
