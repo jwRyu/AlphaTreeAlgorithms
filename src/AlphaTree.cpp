@@ -109,10 +109,10 @@ void AlphaTree<Pixel>::BuildAlphaTree(const Pixel *img, int height_in, int width
         _pixelDissim = PixelDissimilarity<Pixel>(img, _height * _width, _channel, &PixelDissimilarity<Pixel>::L2);
 
     // TEMP
-    EdgeSortingTest(img, numthreads);
+    // EdgeSortingTest(img, numthreads);
     // TEMP
-    printf("BuildAlphaTree(): Temporary EdgeSortingTest Finished\n");
-    return;
+    // printf("BuildAlphaTree(): Temporary EdgeSortingTest Finished\n");
+    // return;
 
     // switch
     if (algorithm == alphatreeConfig.getAlphaTreeAlgorithmCode("UnionFind"))
@@ -144,7 +144,7 @@ void AlphaTree<Pixel>::BuildAlphaTree(const Pixel *img, int height_in, int width
     else if (algorithm == alphatreeConfig.getAlphaTreeAlgorithmCode("FloodLadderQueue"))
         FloodLadderQueue(img, iparam1);
     else if (algorithm == alphatreeConfig.getAlphaTreeAlgorithmCode("HybridParallel"))
-        HybridParallelOld(img, numthreads);
+        HybridParallel(img, numthreads);
     else if (algorithm == alphatreeConfig.getAlphaTreeAlgorithmCode("FloodHierQueueParallel"))
         FloodHierQueueParallel(img, numthreads);
     else {
@@ -6034,7 +6034,7 @@ template <class Pixel> void AlphaTree<Pixel>::EdgeSortingTest(const Pixel *img, 
 
     // hphp
 
-    const double a = 1; // TODO find opt. param
+    const double a = 30; // TODO find opt. param
     const auto maxLevel = HHPQ::alphaToLevel(_pixelDissim.maximumDissmilarity(), a);
     ImgIdx numBuckets = (ImgIdx)maxLevel + 1;
     ImgIdx *bucketHist = (ImgIdx *)Calloc(numBuckets * sizeof(ImgIdx));

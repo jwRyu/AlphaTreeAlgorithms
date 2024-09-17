@@ -95,21 +95,21 @@ void BucketSort::push(const ImgIdx &level, const ImgIdx &index, const double &al
 
 // implement logbucket sort and replace teeninga sort
 void BucketSort::sort(ImgIdx *indexToRank, int32_t *rankToIndex) {
-    ImgIdx *startIndices = (ImgIdx *)Calloc(_numLevels * sizeof(ImgIdx));
+    ImgIdx *startIndices = (ImgIdx *)Calloc((_numLevels + 1) * sizeof(ImgIdx));
     startIndices[0] = 0;
-    for (ImgIdx level = 0; level < _numLevels - 1; level++) {
+    for (ImgIdx level = 0; level < _numLevels; level++)
         startIndices[level + 1] = startIndices[level] + _buckets[level].size();
-    }
 
 #if DEBUG
-    assert(_totalSize == startIndices[_numLevels - 1] + _buckets[_numLevels - 1].size());
+    assert(_totalSize == startIndices[_numLevels]);
 #endif
 
-    ImgIdx rank = 0;
+#pragma omp parallel for
     for (ImgIdx level = 0; level < _numLevels; level++) {
         auto &bucket = _buckets[level];
         if (bucket.empty())
             continue;
+        ImgIdx rank = startIndices[level];
         // const auto startIndex = startIndices[level];
         bucket.sort();
         for (int i = 0; i < (int)bucket.size(); i++, rank++) {
