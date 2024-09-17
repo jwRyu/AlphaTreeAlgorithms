@@ -1,12 +1,12 @@
 #pragma once
 #include <AlphaTreeConfig.hpp>
-#include <BucketSort.hpp>
 #include <HeapQueue.hpp>
 #include <HierarQueue.hpp>
 #include <HybridQueue.hpp>
 #include <LadderQueue.hpp>
 #include <PixelDissimilarity.hpp>
 #include <QItem.hpp>
+#include <RankItem.hpp>
 #include <Trie.hpp>
 #include <defines.hpp>
 #include <radixsort_teeninga/sort/radix_sort_parallel.h>
@@ -146,8 +146,8 @@ template <class Pixel> class AlphaTree {
 
     // void computePartitionDiffLogBucket(const Pixel *img, double *dimg, BucketSort &lb, ImgIdx startPixelIndex,
     //                                    ImgIdx blockWidth, ImgIdx blockHeight);
-    void runBucketSort(ImgIdx *indexTorank, int32_t *rankToIndex, ImgIdx *bucketHist, ImgIdx numBuckets,
-                       const RankItem<double> *rankItems);
+    // void runBucketSort(ImgIdx *indexTorank, int32_t *rankToIndex, ImgIdx *bucketHist, ImgIdx numBuckets,
+    //                    const RankItem<double> *rankItems);
     void computeDiffHybridParallel(const Pixel *img, double a, ImgIdx *bucketHist, ImgIdx numBuckets,
                                    RankItem<double> *rankItems);
 
