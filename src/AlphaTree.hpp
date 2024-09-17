@@ -174,7 +174,7 @@ template <class Pixel> class AlphaTree {
     void compute_dimg_hhpq_par(double *dimg, ImgIdx *dhist, const Pixel *img, double a);
     Pixel abs_diff(Pixel p, Pixel q);
     uint8_t compute_incidedge_queue(Pixel d0, Pixel d1);
-    void compute_dimg_par4(RankItem<double> *&rankitem, const Pixel *img, SortValue<double> *&vals);
+    void computeDimgRadixf(RankItem<double> *&rankitem, const Pixel *img, SortValue<float> *&vals);
     void compute_dimg_par4(RankItem<double> *&rankitem, const Pixel *img, SortValue<Pixel> *&vals);
     Pixel compute_dimg(double *dimg, const Pixel *img);
     Pixel compute_dimg1(Pixel *dimg, ImgIdx *dhist, const Pixel *img);
