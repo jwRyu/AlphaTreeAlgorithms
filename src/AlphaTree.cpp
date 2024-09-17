@@ -386,205 +386,41 @@ template <class Pixel> uint8_t AlphaTree<Pixel>::compute_incidedge_queue(Pixel d
 
 template <class Pixel>
 void AlphaTree<Pixel>::computeDimgRadixf(RankItem<double> *&rankitem, const Pixel *img, SortValue<float> *&vals) {
-    ImgIdx contidx, dimgidx, imgidx;
-
-    contidx = imgidx = dimgidx = 0;
     if (_connectivity == 4) {
-        {
-#pragma omp parallel for schedule(guided, 1) private(imgidx, dimgidx, contidx)
-            for (ImgIdx i = 0; i < _height; i++) {
-                double d;
-                imgidx = i * _width;
-                dimgidx = imgidx << (_connectivity >> 2);
-                contidx = dimgidx - i;
-                if (i < _height - 1) {
-                    for (ImgIdx j = 0; j < _width - 1; j++) {
-                        // caclulate histogram here
-                        vals[contidx].val_ = (float)_pixelDissim.computeDissimilarity(imgidx, imgidx + _width);
-                        d = (double)(vals[contidx].val_);
-                        rankitem[contidx].alpha = d;
-                        rankitem[contidx++].dimgidx = dimgidx++;
-
-                        vals[contidx].val_ = (float)_pixelDissim.computeDissimilarity(imgidx, imgidx + 1);
-                        d = (double)(vals[contidx].val_);
-                        rankitem[contidx].alpha = d;
-                        rankitem[contidx++].dimgidx = dimgidx++;
-                        imgidx++;
-                    }
+#pragma omp parallel for schedule(guided, 1)
+        for (ImgIdx i = 0; i < _height; i++) {
+            double d;
+            ImgIdx imgidx = i * _width;
+            ImgIdx dimgidx = imgidx << (_connectivity >> 2);
+            ImgIdx contidx = dimgidx - i;
+            if (i < _height - 1) {
+                for (ImgIdx j = 0; j < _width - 1; j++) {
+                    // caclulate histogram here
                     vals[contidx].val_ = (float)_pixelDissim.computeDissimilarity(imgidx, imgidx + _width);
                     d = (double)(vals[contidx].val_);
                     rankitem[contidx].alpha = d;
-                    rankitem[contidx++].dimgidx = dimgidx;
-                    dimgidx += 2;
-                    imgidx++;
-                } else {
-                    for (ImgIdx j = 0; j < _width - 1; j++) {
-                        dimgidx++;
-                        vals[contidx].val_ = (float)_pixelDissim.computeDissimilarity(imgidx, imgidx + 1);
-                        d = (double)(vals[contidx].val_);
-                        rankitem[contidx].alpha = d;
-                        rankitem[contidx++].dimgidx = dimgidx++;
-                        imgidx++;
-                    }
-                }
-            }
-        }
-        if (0) {
-            ImgIdx chstride = _channel, chstride2 = _channel * 2;
-            ImgIdx imgSize = _height * _width;
-            ImgIdx dimgSize = _height * _width * (_connectivity >> 1);
-            double *dimg_3ch = (double *)Calloc(_channel * dimgSize * sizeof(double));
-            ImgIdx linestride = _width * (_connectivity >> 1) - (_connectivity >> 2);
+                    rankitem[contidx++].dimgidx = dimgidx++;
 
-#pragma omp parallel for schedule(guided, 1) private(imgidx, dimgidx)
-            for (int hch = 0; hch < _channel * _height; hch++) {
-                double d;
-                int ch = hch / _height;
-                ImgIdx i = hch % _height;
-                const Pixel *pimg = img + ch * imgSize + i * _width;
-                double *pdimg = dimg_3ch + ch + i * _width * (_connectivity >> 1) * _channel;
-                imgidx = dimgidx = 0;
-                if (i < _height - 1) {
-                    for (ImgIdx j = 0; j < _width - 1; j++) {
-                        d = (double)pimg[imgidx + _width] - (double)pimg[imgidx];
-                        pdimg[dimgidx] = d * d;
-                        dimgidx += chstride;
-                        d = (double)pimg[imgidx + 1] - (double)pimg[imgidx];
-                        pdimg[dimgidx] = d * d;
-                        dimgidx += chstride;
-                        imgidx++;
-                    }
-                    d = (double)pimg[imgidx + _width] - (double)pimg[imgidx];
-                    pdimg[dimgidx] = d * d;
-                    dimgidx += chstride2;
-                    imgidx++;
-                } else {
-                    for (ImgIdx j = 0; j < _width - 1; j++) {
-                        dimgidx += chstride;
-                        d = (double)pimg[imgidx + 1] - (double)pimg[imgidx];
-                        pdimg[dimgidx] = d * d;
-                        dimgidx += chstride;
-                        imgidx++;
-                    }
-                }
-            }
-
-#pragma omp parallel for schedule(guided, 1) private(imgidx, dimgidx, contidx)
-            for (ImgIdx i = 0; i < _height; i++) {
-                double d;
-                double *pdimg = dimg_3ch + i * _width * (_connectivity >> 1) * _channel;
-                contidx = i * linestride;
-                imgidx = i * _width;
-                ImgIdx dimgidx_3 = 0;
-                dimgidx = i * _width * (_connectivity >> 1);
-                if (i < _height - 1) {
-                    for (ImgIdx j = 0; j < _width - 1; j++) {
-                        d = pdimg[dimgidx_3] + pdimg[dimgidx_3 + 1] + pdimg[dimgidx_3 + 2]; // only for 3-ch
-                        rankitem[contidx].alpha = vals[contidx].val_ = sqrt(d / (double)_channel);
-                        rankitem[contidx].dimgidx = dimgidx;
-                        contidx++;
-
-                        dimgidx_3 += chstride;
-                        dimgidx++;
-
-                        d = pdimg[dimgidx_3] + pdimg[dimgidx_3 + 1] + pdimg[dimgidx_3 + 2]; // only for 3-ch
-                        rankitem[contidx].alpha = vals[contidx].val_ = sqrt(d / (double)_channel);
-                        rankitem[contidx].dimgidx = dimgidx;
-                        contidx++;
-
-                        dimgidx_3 += chstride;
-                        dimgidx++;
-
-                        imgidx++;
-                    }
-                    d = pdimg[dimgidx_3] + pdimg[dimgidx_3 + 1] + pdimg[dimgidx_3 + 2]; // only for 3-ch
-                    rankitem[contidx].alpha = vals[contidx].val_ = sqrt(d / (double)_channel);
-                    rankitem[contidx].dimgidx = dimgidx;
-                    contidx++;
-                    dimgidx++;
-
-                    dimgidx_3 += chstride2;
-                    imgidx++;
-                } else {
-                    for (ImgIdx j = 0; j < _width - 1; j++) {
-                        dimgidx++;
-                        dimgidx_3 += chstride;
-
-                        d = pdimg[dimgidx_3] + pdimg[dimgidx_3 + 1] + pdimg[dimgidx_3 + 2]; // only for 3-ch
-                        rankitem[contidx].alpha = vals[contidx].val_ = sqrt(d / (double)_channel);
-                        rankitem[contidx].dimgidx = dimgidx;
-                        contidx++;
-
-                        dimgidx_3 += chstride;
-                        dimgidx++;
-                        imgidx++;
-                    }
-                }
-            }
-            Free(dimg_3ch);
-        }
-    } else if (_connectivity == 8) // not implemented yet
-    {
-        if (_channel == 1) {
-#pragma omp parallel for schedule(guided, 1) private(imgidx, dimgidx, contidx)
-            for (ImgIdx i = 0; i < _height; i++) {
-                double d;
-                imgidx = i * _width;
-                dimgidx = imgidx << (_connectivity >> 2);
-                contidx = dimgidx - ((_connectivity == 4) ? (i) : (3 * i));
-                if (_connectivity == 8 && i > 0)
-                    contidx -= _width - 1;
-
-                if (i < _height - 1) {
-                    for (ImgIdx j = 0; j < _width - 1; j++) {
-                        // caclulate histogram here
-                        vals[contidx].val_ = abs_diff(img[imgidx + _width], img[imgidx]);
-                        d = (double)(vals[contidx].val_);
-                        rankitem[contidx].alpha = d;
-                        rankitem[contidx++].dimgidx = dimgidx++;
-
-                        vals[contidx].val_ = abs_diff(img[imgidx + _width + 1], img[imgidx]);
-                        d = (double)(vals[contidx].val_);
-                        rankitem[contidx].alpha = d;
-                        rankitem[contidx++].dimgidx = dimgidx++;
-
-                        vals[contidx].val_ = abs_diff(img[imgidx + 1], img[imgidx]);
-                        d = (double)(vals[contidx].val_);
-                        rankitem[contidx].alpha = d;
-                        rankitem[contidx++].dimgidx = dimgidx++;
-
-                        if (i > 0) {
-                            vals[contidx].val_ = abs_diff(img[imgidx - _width + 1], img[imgidx]);
-                            d = (double)(vals[contidx].val_);
-                            rankitem[contidx].alpha = d;
-                            rankitem[contidx++].dimgidx = dimgidx;
-                        }
-                        dimgidx++;
-
-                        imgidx++;
-                    }
-
-                    vals[contidx].val_ = abs_diff(img[imgidx + _width], img[imgidx]);
+                    vals[contidx].val_ = (float)_pixelDissim.computeDissimilarity(imgidx, imgidx + 1);
                     d = (double)(vals[contidx].val_);
                     rankitem[contidx].alpha = d;
-                    rankitem[contidx++].dimgidx = dimgidx;
-                    dimgidx += 4;
+                    rankitem[contidx++].dimgidx = dimgidx++;
                     imgidx++;
-                } else {
-                    for (ImgIdx j = 0; j < _width - 1; j++) {
-                        dimgidx += 2;
-                        vals[contidx].val_ = abs_diff(img[imgidx + 1], img[imgidx]);
-                        d = (double)(vals[contidx].val_);
-                        rankitem[contidx].alpha = d;
-                        rankitem[contidx++].dimgidx = dimgidx++;
-
-                        vals[contidx].val_ = abs_diff(img[imgidx - _width + 1], img[imgidx]);
-                        d = (double)(vals[contidx].val_);
-                        rankitem[contidx].alpha = d;
-                        rankitem[contidx++].dimgidx = dimgidx++;
-
-                        imgidx++;
-                    }
+                }
+                vals[contidx].val_ = (float)_pixelDissim.computeDissimilarity(imgidx, imgidx + _width);
+                d = (double)(vals[contidx].val_);
+                rankitem[contidx].alpha = d;
+                rankitem[contidx++].dimgidx = dimgidx;
+                dimgidx += 2;
+                imgidx++;
+            } else {
+                for (ImgIdx j = 0; j < _width - 1; j++) {
+                    dimgidx++;
+                    vals[contidx].val_ = (float)_pixelDissim.computeDissimilarity(imgidx, imgidx + 1);
+                    d = (double)(vals[contidx].val_);
+                    rankitem[contidx].alpha = d;
+                    rankitem[contidx++].dimgidx = dimgidx++;
+                    imgidx++;
                 }
             }
         }
@@ -5729,33 +5565,18 @@ void AlphaTree<Pixel>::memalloc_queues(HierarQueue ***queues, int64_t numpartiti
 template <class Pixel>
 void AlphaTree<Pixel>::computeDimgAndRankToIndex(RankItem<double> *&rankitem, const Pixel *img, ImgIdx nredges,
                                                  int32_t *rankToIndex) {
-    if (_channel == 1) {
-        SortValue<Pixel> *vals; // = new pmt::SortValue<Value>[N];
-        vals = (SortValue<Pixel> *)Malloc(nredges * sizeof(SortValue<Pixel>));
-        compute_dimg_par4(rankitem, img, vals);
+    SortValue<float> *vals; // = new pmt::SortValue<Value>[N];
+    vals = (SortValue<float> *)Malloc(nredges * sizeof(SortValue<float>));
+    computeDimgRadixf(rankitem, img, vals);
 
-        SortPair<Pixel, ImgIdx> *sort_space =
-            (SortPair<Pixel, ImgIdx> *)Calloc(2 * nredges * sizeof(SortPair<Pixel, ImgIdx>)); // new SortPair[2 * N];
+    SortPair<uint32_t, ImgIdx> *sort_space =
+        (SortPair<uint32_t, ImgIdx> *)Calloc(2 * nredges * sizeof(SortPair<uint32_t, ImgIdx>)); // new SortPair[2 * N];
 
-        rank_to_index((SortValue<Pixel> *)vals, (ImgIdx)nredges, rankToIndex, 0U, (uint_fast8_t)(sizeof(Pixel) << 3),
-                      sort_space, omp_get_max_threads());
+    rank_to_index((SortValue<uint32_t> *)vals, (ImgIdx)nredges, rankToIndex, 0U, (uint_fast8_t)(sizeof(float) << 3),
+                  sort_space, omp_get_max_threads());
 
-        Free(vals);
-        Free(sort_space);
-    } else {
-        SortValue<float> *vals; // = new pmt::SortValue<Value>[N];
-        vals = (SortValue<float> *)Malloc(nredges * sizeof(SortValue<float>));
-        computeDimgRadixf(rankitem, img, vals);
-
-        SortPair<ImgIdx, ImgIdx> *sort_space =
-            (SortPair<ImgIdx, ImgIdx> *)Calloc(2 * nredges * sizeof(SortPair<ImgIdx, ImgIdx>)); // new SortPair[2 * N];
-
-        rank_to_index((SortValue<ImgIdx> *)vals, (ImgIdx)nredges, rankToIndex, 0U, (uint_fast8_t)(sizeof(float) << 3),
-                      sort_space, omp_get_max_threads());
-
-        Free(vals);
-        Free(sort_space);
-    }
+    Free(vals);
+    Free(sort_space);
 }
 
 template <class Pixel>
@@ -6306,8 +6127,8 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(const Pixel *img, i
 
     _node[_rootIdx].parentIdx = ROOTIDX;
 
-    printTree();
-    std::getchar();
+    // printTree();
+    // std::getchar();
 
     Free(_parentAry);
     _parentAry = nullptr;
