@@ -144,6 +144,11 @@ template <class Pixel> class AlphaTree {
     void HybridParallel(const Pixel *img, int numthreads);
     void HybridParallelOld(const Pixel *img, int numthreads);
 
+    void HybridPilotFlooding(const Pixel *img, ImgIdx *startpidx, uint8_t *isVisited, uint8_t *isAvailable,
+                             int8_t *redundant_edge, ImgIdx numpartitions, ImgIdx *blockWidths, ImgIdx *blockHeights,
+                             ImgIdx numlevels, HierarQueue **queues, ImgIdx *subtree_cur, ImgIdx *subtree_max,
+                             ImgIdx *dhist, uint8_t *qrank, ImgIdx blksz_x, ImgIdx blksz_y, ImgIdx npartition_x,
+                             ImgIdx npartition_y);
     void markRedundantEdges(int8_t *redundant_edge, const ImgIdx &p, const uint8_t &connected_neighbor,
                             const uint8_t *qrank);
     ImgIdx mergeSubtreeHybrid(uint8_t *dimg, ImgIdx blksz_x, ImgIdx blksz_y, ImgIdx npartition_x, ImgIdx npartition_y,

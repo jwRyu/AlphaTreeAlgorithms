@@ -5763,117 +5763,21 @@ void AlphaTree<Pixel>::markRedundantEdges(int8_t *redundant_edge, const ImgIdx &
     _node[squirrel]._rootIdx = ROOTIDX;
 }
 
-template <class Pixel> void AlphaTree<Pixel>::HybridParallel(const Pixel *img, int numthreads) {
-    // call clear
-    if (_node)
-        Free(_node);
-    ImgIdx imgSize, dimgSize, nredges;
-    RankItem<double> *rankitem;
-    ImgIdx p, q;
-    imgSize = _width * _height;
-    nredges = _width * (_height - 1) + (_width - 1) * _height +
-              ((_connectivity == 8) ? ((_width - 1) * (_height - 1) * 2) : 0);
-    dimgSize = (_connectivity >> 1) * _width * _height;
-    rankitem = (RankItem<double> *)Malloc(nredges * sizeof(RankItem<double>));
-
-    ImgIdx *indexToRank = (ImgIdx *)Calloc((size_t)dimgSize * sizeof(ImgIdx));
-    uint8_t *qrank = (uint8_t *)Malloc((size_t)dimgSize);
-    _parentAry = (ImgIdx *)Calloc((size_t)imgSize * sizeof(ImgIdx));
-
-    int64_t numpartitions;
-    if (numthreads > 2)
-        numpartitions = _min(imgSize / 2, _min(256, numthreads * 4));
-    else
-        numpartitions = 2;
-    // int64_t numpartitions = numthreads;
-    int npartition_x, npartition_y;
-    {
-        int optpart = 1;
-        double optborderlength = (double)numpartitions * (double)imgSize;
-        for (int px = 2; px < numpartitions; px++) {
-            if (numpartitions % px == 0) {
-                int py = numpartitions / px;
-
-                if (((double)px * (double)_height + (double)py * (double)_width) < optborderlength) {
-                    optpart = px;
-                    optborderlength = ((double)px * (double)_height + (double)py * (double)_width);
-                }
-            }
-        }
-        npartition_x = (int)optpart;
-        npartition_y = (int)numpartitions / npartition_x;
-    }
-
-    int32_t numbins = numpartitions; // number of levels in Quantization (= number of threads used)
-
-    uint8_t *isVisited, *isAvailable;
-    isVisited = (uint8_t *)Calloc((size_t)((imgSize)));
-    isAvailable = (uint8_t *)Malloc((size_t)(imgSize));
-    set_isAvailable_par(isAvailable, npartition_x, npartition_y);
-
-    ImgIdx binsize = nredges / (int64_t)numbins;
-    numbins = (nredges + binsize - 1) / binsize;
-    const ImgIdx numlevels = numbins; // for compatibility
-    const ImgIdx blksz_x = _width / npartition_x;
-    const ImgIdx blksz_y = _height / npartition_y;
-    const ImgIdx blksz_xn = blksz_x + (_width % npartition_x);
-    const ImgIdx blksz_yn = blksz_y + (_height % npartition_y);
-    numpartitions = (int64_t)npartition_x * (int64_t)npartition_y;
-
-    ImgIdx *startpidx = (ImgIdx *)Malloc(numpartitions * sizeof(ImgIdx));
-    ImgIdx *blocksize = (ImgIdx *)Malloc(numpartitions * sizeof(ImgIdx));
+template <class Pixel>
+void AlphaTree<Pixel>::HybridPilotFlooding(const Pixel *img, ImgIdx *startpidx, uint8_t *isVisited,
+                                           uint8_t *isAvailable, int8_t *redundant_edge, ImgIdx numpartitions,
+                                           ImgIdx *blockWidths, ImgIdx *blockHeights, ImgIdx numlevels,
+                                           HierarQueue **queues, ImgIdx *subtree_cur, ImgIdx *subtree_max,
+                                           ImgIdx *dhist, uint8_t *qrank, ImgIdx blksz_x, ImgIdx blksz_y,
+                                           ImgIdx npartition_x, ImgIdx npartition_y) {
     ImgIdx *subtree_size = (ImgIdx *)Calloc((numpartitions) * sizeof(ImgIdx));
     ImgIdx *subtree_start = (ImgIdx *)Calloc((numpartitions + 1) * sizeof(ImgIdx));
-    ImgIdx *subtree_nborderedges = (ImgIdx *)Calloc((numpartitions) * sizeof(ImgIdx));
-    ImgIdx *subtree_cur = (ImgIdx *)Malloc(numpartitions * sizeof(ImgIdx));
-    ImgIdx *subtree_max = (ImgIdx *)Malloc(numpartitions * sizeof(ImgIdx));
-    ImgIdx *blockWidths = (ImgIdx *)Malloc(numpartitions * sizeof(ImgIdx));
-    ImgIdx *blockHeights = (ImgIdx *)Malloc(numpartitions * sizeof(ImgIdx));
-    ImgIdx *dhist = (ImgIdx *)Calloc((size_t)numbins * (size_t)numpartitions * sizeof(ImgIdx));
-
-    double *nrmsds = (double *)Malloc(numpartitions * sizeof(double));
-
-    omp_set_num_threads(_min(numthreads, omp_get_num_procs()));
-
-    int32_t *rankToIndex = (int32_t *)Calloc(nredges * sizeof(int32_t));
-
-    double t0 = get_wall_time();
-
-    // HP
-    computeDifferenceAndSort(indexToRank, rankitem, img, nredges, rankToIndex);
-
-    double t1 = get_wall_time();
-
-    printf("computeDifferenceAndSort = %f\n", t1 - t0);
-
-    set_subblock_properties(startpidx, blockWidths, blockHeights, blocksize, npartition_x, npartition_y, blksz_x,
-                            blksz_y, blksz_xn, blksz_yn);
-    quantize_ranks_compute_histogram(qrank, indexToRank, img, dhist, blockWidths, blockHeights, startpidx, binsize,
-                                     numbins, npartition_x, npartition_y, subtree_max);
-
     // subtree_size allocation (no TSE)
     for (int blk = 0; blk < numpartitions; blk++)
         subtree_size[blk] = blockWidths[blk] * blockHeights[blk] * _connectivity;
-
-    HierarQueue **queues;
-    memalloc_queues(&queues, numpartitions, blocksize, subtree_max);
-
-    ImgIdx *hypernode_level = (ImgIdx *)Malloc(dimgSize * sizeof(ImgIdx));
-#pragma omp parallel for
-    for (ImgIdx i = 0; i < dimgSize; i++)
-        hypernode_level[i] = ROOTIDX;
-
-    int8_t *levelroots = (int8_t *)Calloc(numbins * numpartitions * sizeof(int8_t));
-    int8_t *redundant_edge = (int8_t *)Calloc(dimgSize * sizeof(int8_t));
-
-    double treesizemult_intv = 0.05;
-    double treesizemult = 1.0 - treesizemult_intv;
-
     {
         ImgIdx shamt = _connectivity >> 2;
         ImgIdx wstride_d = _width << shamt;
-
-        treesizemult = treesizemult + treesizemult_intv;
 
         subtree_start[0] = 0;
         for (int blk = 0; blk < numpartitions; blk++)
@@ -5882,7 +5786,7 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(const Pixel *img, i
         _maxSize = subtree_start[numpartitions];
         _node = (AlphaNode<Pixel> *)Calloc((size_t)(_maxSize) * sizeof(AlphaNode<Pixel>));
 
-#pragma omp parallel for private(p, q) schedule(dynamic, 1)
+#pragma omp parallel for schedule(dynamic, 1)
         for (int blk = 0; blk < numpartitions; blk++) {
             const ImgIdx blockArea = blockWidths[blk] * blockHeights[blk];
             ImgIdx *blockDiffHist = dhist + numlevels * blk;
@@ -5908,7 +5812,8 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(const Pixel *img, i
             {
                 while ((int64_t)queue->min_level <= (int64_t)currentLevel) // flood all levels below currentLevel
                 {
-                    auto [p, isAv] = computeFloodingContextHybridPartition(isFirstPixel, queue->pop(), isAvailable);
+                    const auto [p, isAv] =
+                        computeFloodingContextHybridPartition(isFirstPixel, queue->pop(), isAvailable);
 
                     if (isVisited[p]) {
                         queue->find_minlev();
@@ -5917,7 +5822,7 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(const Pixel *img, i
                     isVisited[p] = 1;
                     uint8_t connected_neighbor = 0;
                     if (_connectivity == 4) {
-                        q = p << shamt;
+                        const ImgIdx q = p << shamt;
                         if (is_available(isAv, 0)) {
                             if (isVisited[p + _width])
                                 connected_neighbor |= 0x1;
@@ -6015,13 +5920,108 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(const Pixel *img, i
             _rootIdx = _node[_rootIdx].parentIdx;
     }
 
+#pragma omp parallel for
+    for (ImgIdx p = 0; p < _maxSize; p++)
+        _node[p]._rootIdx = ROOTIDX;
+}
+
+template <class Pixel> void AlphaTree<Pixel>::HybridParallel(const Pixel *img, int numthreads) {
+    // call clear
+    if (_node)
+        Free(_node);
+    ImgIdx imgSize, dimgSize, nredges;
+    RankItem<double> *rankitem;
+    imgSize = _width * _height;
+    nredges = _width * (_height - 1) + (_width - 1) * _height +
+              ((_connectivity == 8) ? ((_width - 1) * (_height - 1) * 2) : 0);
+    dimgSize = (_connectivity >> 1) * _width * _height;
+    rankitem = (RankItem<double> *)Malloc(nredges * sizeof(RankItem<double>));
+
+    ImgIdx *indexToRank = (ImgIdx *)Calloc((size_t)dimgSize * sizeof(ImgIdx));
+    uint8_t *qrank = (uint8_t *)Malloc((size_t)dimgSize);
+    _parentAry = (ImgIdx *)Calloc((size_t)imgSize * sizeof(ImgIdx));
+
+    ImgIdx numpartitions;
+    if (numthreads > 2)
+        numpartitions = _min(imgSize / 2, _min(256, numthreads * 4));
+    else
+        numpartitions = 2;
+    // int64_t numpartitions = numthreads;
+    int npartition_x, npartition_y;
+    {
+        int optpart = 1;
+        double optborderlength = (double)numpartitions * (double)imgSize;
+        for (int px = 2; px < numpartitions; px++) {
+            if (numpartitions % px == 0) {
+                int py = numpartitions / px;
+
+                if (((double)px * (double)_height + (double)py * (double)_width) < optborderlength) {
+                    optpart = px;
+                    optborderlength = ((double)px * (double)_height + (double)py * (double)_width);
+                }
+            }
+        }
+        npartition_x = (int)optpart;
+        npartition_y = (int)numpartitions / npartition_x;
+    }
+
+    int32_t numbins = numpartitions; // number of levels in Quantization (= number of threads used)
+
+    uint8_t *isVisited, *isAvailable;
+    isVisited = (uint8_t *)Calloc((size_t)((imgSize)));
+    isAvailable = (uint8_t *)Malloc((size_t)(imgSize));
+    set_isAvailable_par(isAvailable, npartition_x, npartition_y);
+
+    ImgIdx binsize = nredges / (int64_t)numbins;
+    numbins = (nredges + binsize - 1) / binsize;
+    const ImgIdx numlevels = numbins; // for compatibility
+    const ImgIdx blksz_x = _width / npartition_x;
+    const ImgIdx blksz_y = _height / npartition_y;
+    const ImgIdx blksz_xn = blksz_x + (_width % npartition_x);
+    const ImgIdx blksz_yn = blksz_y + (_height % npartition_y);
+    numpartitions = (int64_t)npartition_x * (int64_t)npartition_y;
+
+    ImgIdx *startpidx = (ImgIdx *)Malloc(numpartitions * sizeof(ImgIdx));
+    ImgIdx *blocksize = (ImgIdx *)Malloc(numpartitions * sizeof(ImgIdx));
+    ImgIdx *subtree_nborderedges = (ImgIdx *)Calloc((numpartitions) * sizeof(ImgIdx));
+    ImgIdx *subtree_cur = (ImgIdx *)Malloc(numpartitions * sizeof(ImgIdx));
+    ImgIdx *subtree_max = (ImgIdx *)Malloc(numpartitions * sizeof(ImgIdx));
+    ImgIdx *blockWidths = (ImgIdx *)Malloc(numpartitions * sizeof(ImgIdx));
+    ImgIdx *blockHeights = (ImgIdx *)Malloc(numpartitions * sizeof(ImgIdx));
+    ImgIdx *dhist = (ImgIdx *)Calloc((size_t)numbins * (size_t)numpartitions * sizeof(ImgIdx));
+
+    double *nrmsds = (double *)Malloc(numpartitions * sizeof(double));
+
+    omp_set_num_threads(_min(numthreads, omp_get_num_procs()));
+
+    int32_t *rankToIndex = (int32_t *)Calloc(nredges * sizeof(int32_t));
+
+    double t0 = get_wall_time();
+
+    // HP
+    computeDifferenceAndSort(indexToRank, rankitem, img, nredges, rankToIndex);
+
+    double t1 = get_wall_time();
+
+    printf("computeDifferenceAndSort = %f\n", t1 - t0);
+
+    set_subblock_properties(startpidx, blockWidths, blockHeights, blocksize, npartition_x, npartition_y, blksz_x,
+                            blksz_y, blksz_xn, blksz_yn);
+    quantize_ranks_compute_histogram(qrank, indexToRank, img, dhist, blockWidths, blockHeights, startpidx, binsize,
+                                     numbins, npartition_x, npartition_y, subtree_max);
+
+    HierarQueue **queues;
+    memalloc_queues(&queues, numpartitions, blocksize, subtree_max);
+
+    int8_t *redundant_edge = (int8_t *)Calloc(dimgSize * sizeof(int8_t));
+
+    HybridPilotFlooding(img, startpidx, isVisited, isAvailable, redundant_edge, numpartitions, blockWidths,
+                        blockHeights, numlevels, queues, subtree_cur, subtree_max, dhist, qrank, blksz_x, blksz_y,
+                        npartition_x, npartition_y);
+
     ////////////////////////////////////////////////////////////////////////
     // Initialize refined tree
     ////////////////////////////////////////////////////////////////////////
-
-#pragma omp parallel for
-    for (p = 0; p < _maxSize; p++)
-        _node[p]._rootIdx = ROOTIDX;
 
     _maxSize = imgSize + nredges;
     AlphaNode<Pixel> *pilottree = _node;
@@ -6068,13 +6068,9 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(const Pixel *img, i
     Free(dhist);
     Free(startpidx);
     Free(blocksize);
-    Free(subtree_start);
     Free(subtree_nborderedges);
-    Free(subtree_size);
     Free(subtree_cur);
     Free(subtree_max);
-    Free(hypernode_level);
-    Free(levelroots);
     Free(redundant_edge);
     Free(pilottree);
     Free(indexToRank);
