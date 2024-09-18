@@ -5884,34 +5884,27 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(const Pixel *img, i
 
 #pragma omp parallel for private(p, q) schedule(dynamic, 1)
         for (int blk = 0; blk < numpartitions; blk++) {
-            ImgIdx blockWidth = blockWidths[blk];
-            ImgIdx blockHeight = blockHeights[blk];
-            ImgIdx blockArea = blockWidth * blockHeight;
+            const ImgIdx blockArea = blockWidths[blk] * blockHeights[blk];
             ImgIdx *blockDiffHist = dhist + numlevels * blk;
             HierarQueue *queue = queues[blk];
-            ImgIdx nidx = subtree_start[blk];
-            int nidxblk = blk;
-            ImgIdx iNode = 0;
+            ImgIdx nodeIdx = subtree_start[blk];
             Pixel maxdiff = subtree_max[blk];
 
             // printf("th%d: subtree for blk %d: setting queue\n", omp_get_thread_num(), (int)blk);
             queue->set_queue(blockDiffHist);
             // queue->set_queue(blockDiffHist, maxdiff);
 
-            ImgIdx stackTop = nidx++;
+            ImgIdx stackTop = nodeIdx++;
             ImgIdx prevTop = stackTop;
-            AlphaNode<Pixel> *pNode = _node + stackTop;
-            pNode->set(0, maxdiff, (double)0.0, (Pixel)-1, (Pixel)0);
-            pNode->parentIdx = stackTop;
-            pNode->_rootIdx = ROOTIDX;
             Pixel currentLevel = maxdiff;
+            _node[stackTop] = AlphaNode<Pixel>((double)currentLevel, stackTop);
 
             ImgIdx x0 = startpidx[blk]; /*starting point*/
             queue->push((x0 << shamt) << 1, currentLevel);
             prevTop = stackTop; /*to find redundant _node*/
             bool isFirstPixel = true;
 
-            while (true) // flooding
+            while (_node[stackTop].area < blockArea) // flooding
             {
                 while ((int64_t)queue->min_level <= (int64_t)currentLevel) // flood all levels below currentLevel
                 {
@@ -5956,12 +5949,12 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(const Pixel *img, i
                     if ((int64_t)currentLevel > (int64_t)queue->min_level) { // Go to lower level
                         currentLevel = queue->min_level;
 
-                        const ImgIdx newStackTop = nidx++;
+                        const ImgIdx newStackTop = nodeIdx++;
                         _node[newStackTop] = AlphaNode<Pixel>(pixVal, (double)currentLevel, stackTop);
                         stackTop = newStackTop;
 
                         if (currentLevel) {
-                            const ImgIdx singletonNodeIdx = nidx++;
+                            const ImgIdx singletonNodeIdx = nodeIdx++;
                             _node[singletonNodeIdx] = AlphaNode<Pixel>(pixVal, 0.0, stackTop);
                             prevTop = singletonNodeIdx;
                             _parentAry[p] = singletonNodeIdx;
@@ -5971,7 +5964,7 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(const Pixel *img, i
                         queue->find_minlev();
 
                         if (currentLevel) {
-                            const ImgIdx singletonNodeIdx = nidx++;
+                            const ImgIdx singletonNodeIdx = nodeIdx++;
                             _node[singletonNodeIdx] = AlphaNode<Pixel>(pixVal, 0.0, stackTop);
                             _node[stackTop].add(_node[singletonNodeIdx]);
                             _parentAry[p] = singletonNodeIdx;
@@ -5986,44 +5979,31 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(const Pixel *img, i
                 }
 
                 // Remove redundant node
-                if (_node[prevTop].parentIdx == stackTop && _node[prevTop].area == _node[stackTop].area) 
+                if (_node[prevTop].parentIdx == stackTop && _node[prevTop].area == _node[stackTop].area) {
                     _node[prevTop].parentIdx = _node[stackTop].parentIdx;
                     stackTop = prevTop;
-                
-
-                if (_node[stackTop].area == blockArea) // root _node found...done
-                    break;
-
-                // go to higher level
-                iNode = _node[stackTop].parentIdx;
-                if ((int64_t)queue->min_level < (int64_t)_node[iNode].alpha) // new level from queue
-                {
-                    iNode = nidx++;
-
-                    _node[iNode].alpha = queue->min_level;
-                    _node[iNode].copy(_node + stackTop);
-                    _node[iNode].parentIdx = _node[stackTop].parentIdx;
-                    _node[iNode]._rootIdx = ROOTIDX;
-                    _node[stackTop].parentIdx = iNode;
-                } else // go to existing _node
-                {
-                    if (_node[iNode].area == blockArea) // root _node found...done
-                        break;
-                    _node[iNode].add(_node + stackTop);
                 }
 
-                if (_node[iNode].area == blockArea) // root _node found...done
-                    break;
+                if (_node[stackTop].area < blockArea) {
+                    // go to higher level
+                    ImgIdx nextStackTop = _node[stackTop].parentIdx;
+                    if ((int64_t)queue->min_level < (int64_t)_node[nextStackTop].alpha) { // new level from queue
+                        const ImgIdx queueTop = nodeIdx++;
 
-                prevTop = stackTop;
-                stackTop = iNode;
-                currentLevel = _node[stackTop].alpha;
+                        _node[queueTop] = AlphaNode<Pixel>(queue->min_level, _node[stackTop].parentIdx);
+                        _node[queueTop].add(_node[stackTop]);
+                        _node[stackTop].parentIdx = queueTop;
+                        nextStackTop = queueTop;
+                    } else
+                        _node[nextStackTop].add(_node + stackTop);
+
+                    prevTop = stackTop;
+                    stackTop = nextStackTop;
+                    currentLevel = _node[stackTop].alpha;
+                }
             }
-
-            stackTop = (_node[stackTop].area == blockArea) ? stackTop : iNode; // remove redundant root
             _node[stackTop].parentIdx = ROOTIDX;
-
-            subtree_cur[nidxblk] = nidx;
+            subtree_cur[blk] = nodeIdx;
         }
     }
 
