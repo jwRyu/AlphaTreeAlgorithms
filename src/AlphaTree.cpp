@@ -5723,8 +5723,47 @@ std::pair<ImgIdx, uint8_t> AlphaTree<Pixel>::computeFloodingContextHybridPartiti
     return {p, isAv};
 }
 
-template <class Pixel> void AlphaTree<Pixel>::HybridParallel(const Pixel *img, int numthreads) {
+template <class Pixel>
+void AlphaTree<Pixel>::markRedundantEdges(int8_t *redundant_edge, const ImgIdx &p, const uint8_t &connected_neighbor,
+                                          const uint8_t *qrank) {
+    // mark from the leaf to the stackTop _node to help finding hypernode levelroots
+    const ImgIdx leaf1 = _parentAry[p];
+    ImgIdx squirrel;
+    for (squirrel = leaf1; _node[squirrel].parentIdx != squirrel; squirrel = _node[squirrel].parentIdx)
+        _node[squirrel]._rootIdx = p;
+    _node[squirrel]._rootIdx = p;
 
+    const ImgIdx shamt = _connectivity >> 2;
+    const ImgIdx wstride_d = _width << shamt;
+    const ImgIdx q = p << shamt;
+    if (connected_neighbor & 0x1) {
+        const ImgIdx leaf2 = _parentAry[p + _width];
+        if (qrank[q] > get_nearest_common_ancestor_level(p, leaf2))
+            redundant_edge[q] = 1;
+    }
+    if (connected_neighbor & 0x2) {
+        const ImgIdx leaf2 = _parentAry[p + 1];
+        if (qrank[q + 1] > get_nearest_common_ancestor_level(p, leaf2))
+            redundant_edge[q + 1] = 1;
+    }
+    if (connected_neighbor & 0x4) {
+        const ImgIdx leaf2 = _parentAry[p - 1];
+        if (qrank[q - 1] > get_nearest_common_ancestor_level(p, leaf2))
+            redundant_edge[q - 1] = 1;
+    }
+    if (connected_neighbor & 0x8) {
+        const ImgIdx leaf2 = _parentAry[p - _width];
+        if (qrank[q - wstride_d] > get_nearest_common_ancestor_level(p, leaf2))
+            redundant_edge[q - wstride_d] = 1;
+    }
+
+    // Cleanup
+    for (squirrel = leaf1; _node[squirrel].parentIdx != squirrel; squirrel = _node[squirrel].parentIdx)
+        _node[squirrel]._rootIdx = ROOTIDX;
+    _node[squirrel]._rootIdx = ROOTIDX;
+}
+
+template <class Pixel> void AlphaTree<Pixel>::HybridParallel(const Pixel *img, int numthreads) {
     // call clear
     if (_node)
         Free(_node);
@@ -5845,15 +5884,12 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(const Pixel *img, i
 
 #pragma omp parallel for private(p, q) schedule(dynamic, 1)
         for (int blk = 0; blk < numpartitions; blk++) {
-            uint8_t connected_neighbor; // marks neighbors that are already visited
-            ImgIdx lsbclearmask = ~1;   // mask for clearing 1st bit
             ImgIdx blockWidth = blockWidths[blk];
             ImgIdx blockHeight = blockHeights[blk];
             ImgIdx blockArea = blockWidth * blockHeight;
             ImgIdx *blockDiffHist = dhist + numlevels * blk;
             HierarQueue *queue = queues[blk];
             ImgIdx nidx = subtree_start[blk];
-            ImgIdx blkts = 0;
             int nidxblk = blk;
             ImgIdx iNode = 0;
             Pixel maxdiff = subtree_max[blk];
@@ -5871,7 +5907,7 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(const Pixel *img, i
             Pixel currentLevel = maxdiff;
 
             ImgIdx x0 = startpidx[blk]; /*starting point*/
-            queue->push(((x0 << shamt) << 1) & lsbclearmask, currentLevel);
+            queue->push((x0 << shamt) << 1, currentLevel);
             prevTop = stackTop; /*to find redundant _node*/
             bool isFirstPixel = true;
 
@@ -5885,128 +5921,75 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(const Pixel *img, i
                         queue->find_minlev();
                         continue;
                     }
-
                     isVisited[p] = 1;
-                    connected_neighbor = 0;
+                    uint8_t connected_neighbor = 0;
                     if (_connectivity == 4) {
                         q = p << shamt;
-                        ImgIdx q1;
                         if (is_available(isAv, 0)) {
-                            if (isVisited[p + _width]) // neighbor alread visited - which means this edge might be on
-                                                       // lower level than the alpha value of the edge corresponds to
-                            {
+                            if (isVisited[p + _width])
                                 connected_neighbor |= 0x1;
-                            } else // push new neighbor
+                            else
                                 queue->push((q << 1) | 1, qrank[q]);
                         }
                         if (is_available(isAv, 1)) {
-                            q1 = q + 1;
-                            if (isVisited[p + 1]) {
+                            if (isVisited[p + 1])
                                 connected_neighbor |= 0x2;
-                            } else
-                                queue->push(((q1) << 1) | 1, qrank[q1]);
+                            else
+                                queue->push(((q + 1) << 1) | 1, qrank[q + 1]);
                         }
                         if (is_available(isAv, 2)) {
-                            q1 = q - 1;
-                            if (isVisited[p - 1]) {
+                            if (isVisited[p - 1])
                                 connected_neighbor |= 0x4;
-                            } else
-                                queue->push(((q1) << 1) & lsbclearmask, qrank[q1]);
+                            else
+                                queue->push(((q - 1) << 1), qrank[q - 1]);
                         }
-
                         if (is_available(isAv, 3)) {
-                            q1 = q - wstride_d;
-                            if (isVisited[p - _width]) {
+                            if (isVisited[p - _width])
                                 connected_neighbor |= 0x8;
-                            } else
-                                queue->push(((q1) << 1) & lsbclearmask, qrank[q1]);
+                            else
+                                queue->push(((q - wstride_d) << 1), qrank[q - wstride_d]);
                         }
+                    } else { // 8N
                     }
 
-                    if ((int64_t)currentLevel > (int64_t)queue->min_level) // go to lower level
-                    {
-                        Pixel pix_val = img[p];
+                    const auto pixVal = img[p];
+                    if ((int64_t)currentLevel > (int64_t)queue->min_level) { // Go to lower level
                         currentLevel = queue->min_level;
 
-                        iNode = nidx++;
-
-                        _node[iNode].set(1, currentLevel, (double)pix_val, pix_val, pix_val);
-                        _node[iNode].parentIdx = stackTop;
-                        _node[iNode]._rootIdx = ROOTIDX;
-                        stackTop = iNode;
+                        const ImgIdx newStackTop = nidx++;
+                        _node[newStackTop] = AlphaNode<Pixel>(pixVal, (double)currentLevel, stackTop);
+                        stackTop = newStackTop;
 
                         if (currentLevel) {
-                            iNode = nidx++;
-
-                            _node[iNode].copy(_node + stackTop);
-                            _node[iNode].alpha = 0;
-                            _node[iNode].parentIdx = stackTop;
-                            _node[iNode]._rootIdx = ROOTIDX;
-                            prevTop = iNode;
-                        }
-                        _parentAry[p] = iNode;
+                            const ImgIdx singletonNodeIdx = nidx++;
+                            _node[singletonNodeIdx] = AlphaNode<Pixel>(pixVal, 0.0, stackTop);
+                            prevTop = singletonNodeIdx;
+                            _parentAry[p] = singletonNodeIdx;
+                        } else
+                            _parentAry[p] = stackTop;
                     } else {
                         queue->find_minlev();
 
                         if (currentLevel) {
-                            Pixel pix_val = img[p];
-
-                            iNode = nidx++;
-
-                            _node[iNode].set(1, 0, (double)pix_val, pix_val, pix_val);
-                            _node[stackTop].add(_node + iNode);
-                            _node[iNode].parentIdx = stackTop;
-                            _node[iNode]._rootIdx = ROOTIDX;
-                            _parentAry[p] = iNode;
+                            const ImgIdx singletonNodeIdx = nidx++;
+                            _node[singletonNodeIdx] = AlphaNode<Pixel>(pixVal, 0.0, stackTop);
+                            _node[stackTop].add(_node[singletonNodeIdx]);
+                            _parentAry[p] = singletonNodeIdx;
                         } else {
                             _parentAry[p] = stackTop;
-                            _node[stackTop].add(img[p]);
+                            _node[stackTop].add(pixVal);
                         }
                     }
 
-                    if (connected_neighbor) {
-                        // mark from the leaf to the stackTop _node to help finding hypernode levelroots
-                        ImgIdx squirrel, leaf1 = _parentAry[p], leaf2;
-                        for (squirrel = leaf1; _node[squirrel].parentIdx != squirrel;
-                             squirrel = _node[squirrel].parentIdx)
-                            _node[squirrel]._rootIdx = p;
-                        _node[squirrel]._rootIdx = p;
-
-                        q = p << shamt;
-                        if (connected_neighbor & 0x1) {
-                            leaf2 = _parentAry[p + _width];
-                            if (qrank[q] > get_nearest_common_ancestor_level(p, leaf2))
-                                redundant_edge[q] = 1;
-                        }
-                        if (connected_neighbor & 0x2) {
-                            leaf2 = _parentAry[p + 1];
-                            if (qrank[q + 1] > get_nearest_common_ancestor_level(p, leaf2))
-                                redundant_edge[q + 1] = 1;
-                        }
-                        if (connected_neighbor & 0x4) {
-                            leaf2 = _parentAry[p - 1];
-                            if (qrank[q - 1] > get_nearest_common_ancestor_level(p, leaf2))
-                                redundant_edge[q - 1] = 1;
-                        }
-                        if (connected_neighbor & 0x8) {
-                            leaf2 = _parentAry[p - _width];
-                            if (qrank[q - wstride_d] > get_nearest_common_ancestor_level(p, leaf2))
-                                redundant_edge[q - wstride_d] = 1;
-                        }
-
-                        // cleanup pawprints
-                        for (squirrel = leaf1; _node[squirrel].parentIdx != squirrel;
-                             squirrel = _node[squirrel].parentIdx)
-                            _node[squirrel]._rootIdx = ROOTIDX;
-                        _node[squirrel]._rootIdx = ROOTIDX;
-                    }
+                    if (connected_neighbor)
+                        markRedundantEdges(redundant_edge, p, connected_neighbor, qrank);
                 }
 
-                // remove_redundant_node(_node, nidx, prevTop, stackTop);
-                if (_node[prevTop].parentIdx == stackTop && _node[prevTop].area == _node[stackTop].area) {
+                // Remove redundant node
+                if (_node[prevTop].parentIdx == stackTop && _node[prevTop].area == _node[stackTop].area) 
                     _node[prevTop].parentIdx = _node[stackTop].parentIdx;
                     stackTop = prevTop;
-                }
+                
 
                 if (_node[stackTop].area == blockArea) // root _node found...done
                     break;
@@ -6015,7 +5998,6 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(const Pixel *img, i
                 iNode = _node[stackTop].parentIdx;
                 if ((int64_t)queue->min_level < (int64_t)_node[iNode].alpha) // new level from queue
                 {
-
                     iNode = nidx++;
 
                     _node[iNode].alpha = queue->min_level;
@@ -6042,10 +6024,7 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(const Pixel *img, i
             _node[stackTop].parentIdx = ROOTIDX;
 
             subtree_cur[nidxblk] = nidx;
-
-            blkts += nidx - subtree_start[nidxblk];
-
-        } // flood_end
+        }
     }
 
     if (numpartitions > 1)
