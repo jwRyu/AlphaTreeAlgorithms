@@ -144,6 +144,10 @@ template <class Pixel> class AlphaTree {
     void HybridParallel(const Pixel *img, int numthreads);
     void HybridParallelOld(const Pixel *img, int numthreads);
 
+    ImgIdx mergeSubtreeHybrid(uint8_t *dimg, ImgIdx blksz_x, ImgIdx blksz_y, ImgIdx npartition_x,
+                              ImgIdx npartition_y, ImgIdx *subtree_cur);
+    std::pair<ImgIdx, uint8_t> computeFloodingContextHybridPartition(bool &isFirstPixel, const ImgIdx &qitem,
+                                                                     const uint8_t *isAvailable);
     // void computePartitionDiffLogBucket(const Pixel *img, double *dimg, BucketSort &lb, ImgIdx startPixelIndex,
     //                                    ImgIdx blockWidth, ImgIdx blockHeight);
     // void runBucketSort(ImgIdx *indexTorank, int32_t *rankToIndex, ImgIdx *bucketHist, ImgIdx numBuckets,
