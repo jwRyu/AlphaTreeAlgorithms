@@ -133,7 +133,7 @@ template <class Pixel> class AlphaTree {
     void FloodHierarQueue(const Pixel *img);
     void FloodLadderQueue(const Pixel *img, int thres = 64);
     void FloodHierarHeapQueueNoCache(const Pixel *img, double a = 12.0, double r = 0.5, int listsize = 12);
-    void FloodHierarHeapQueue(const Pixel *img, double a = 12.0, double r = 0.5, int listsize = 12);
+    void FloodHierarHeapQueue(const Pixel *img, float a = 12.0, float r = 0.5, int listsize = 12);
     void FloodHierHeapQueueHisteq(const Pixel *img, int listsize = 12, int a = 0);
     void FloodTrieHypergraph(const Pixel *img);
     void FloodHierarQueueHypergraph(const Pixel *img);
@@ -167,15 +167,15 @@ template <class Pixel> class AlphaTree {
     void setBlockDimensions(ImgIdx npartition_x, ImgIdx npartition_y, ImgIdx blksz_x, ImgIdx blksz_y, ImgIdx *blocksize,
                             ImgIdx *blockWidths, ImgIdx *blockHeights, ImgIdx *startpidx, ImgIdx *subtree_start);
 
-    void runFloodHHPQ(ImgIdx startingPixel, const Pixel *img, double a, double r, int listsize, ImgIdx imgSize,
-                      ImgIdx nredges, ImgIdx dimgSize, uint64_t numLevels, const ImgIdx *dhist, const double *dimg,
+    void runFloodHHPQ(ImgIdx startingPixel, const Pixel *img, float a, float r, int listsize, ImgIdx imgSize,
+                      ImgIdx nredges, ImgIdx dimgSize, uint64_t numLevels, const ImgIdx *dhist, const float *dimg,
                       const uint8_t *isAvailable);
 
     void sortAlphaNodes();
     void markRedundant(ImgIdx imgIdx, ImgIdx eIdx, uint8_t *edgeStatus, ImgIdx *queuedEdges,
                        uint8_t *numQueuedEdges) const;
     void registerEdge(ImgIdx imgIdx, ImgIdx edgeIdx, ImgIdx *queuedEdges, uint8_t *numQueuedEdges) const;
-    void compute_dimg_hhpq(double *dimg, ImgIdx *dhist, const Pixel *img, double a);
+    void compute_dimg_hhpq(float *dimg, ImgIdx *dhist, const Pixel *img, double a);
     void compute_dimg_hhpq_par(double *dimg, ImgIdx *dhist, const Pixel *img, double a);
     Pixel abs_diff(Pixel p, Pixel q);
     uint8_t compute_incidedge_queue(Pixel d0, Pixel d1);

@@ -2,7 +2,7 @@
 #include <HHPQ.hpp>
 #include <cmath>
 
-#define RUN_FANCY_VIS_FOR_DEBUG 1
+#define RUN_FANCY_VIS_FOR_DEBUG 0
 
 template <class Pixel> AlphaTree<Pixel>::~AlphaTree() { clear(); }
 
@@ -964,7 +964,7 @@ void AlphaTree<Pixel>::compute_dimg(ImgIdx &minidx, double &mindiff, Pixel *dimg
 }
 
 template <class Pixel>
-void AlphaTree<Pixel>::compute_dimg_hhpq(double *dimg, ImgIdx *dhist, const Pixel *img, double a) {
+void AlphaTree<Pixel>::compute_dimg_hhpq(float *dimg, ImgIdx *dhist, const Pixel *img, double a) {
     ImgIdx imgidx = 0;
     ImgIdx dimgidx = 0;
     if (_connectivity == 4) {
@@ -2767,19 +2767,19 @@ FLOOD_END:
 }
 
 // hhpq
-template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueue(const Pixel *img, double a, double r, int listsize) {
+template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueue(const Pixel *img, float a, float r, int listsize) {
     assert(_connectivity == 4 || _connectivity == 8 || _connectivity == 12);
     clear();
     const ImgIdx imgSize = _width * _height;
     const ImgIdx nredges = _width * (_height - 1) + (_width - 1) * _height +
                            ((_connectivity == 8) ? ((_width - 1) * (_height - 1) * 2) : 0);
     const ImgIdx dimgSize = (1 + (_connectivity >> 1)) * _width * _height;
-    const double alphaMax = _pixelDissim.maximumDissmilarity();
-    const uint64_t numLevels = HHPQ::alphaToLevel((double)alphaMax, a) + 1;
+    const float alphaMax = _pixelDissim.maximumDissmilarity();
+    const uint64_t numLevels = HHPQ::alphaToLevel((float)alphaMax, a) + 1;
     assert(numLevels < 10e3); // More than 10k levels is infeasible and inefficient
 
     ImgIdx *dhist = (ImgIdx *)Calloc((size_t)numLevels * sizeof(ImgIdx));
-    double *dimg = (double *)Malloc((size_t)dimgSize * sizeof(double));
+    float *dimg = (float *)Malloc((size_t)dimgSize * sizeof(float));
 
     compute_dimg_hhpq(dimg, dhist, img, a); // Calculate pixel differences and make histogram
 
@@ -2822,14 +2822,14 @@ void AlphaTree<Pixel>::markRedundant(ImgIdx imgIdx, ImgIdx eIdx, uint8_t *edgeSt
 }
 
 template <class Pixel>
-void AlphaTree<Pixel>::runFloodHHPQ(ImgIdx startingPixel, const Pixel *img, double a, double r, int listsize,
+void AlphaTree<Pixel>::runFloodHHPQ(ImgIdx startingPixel, const Pixel *img, float a, float r, int listsize,
                                     ImgIdx imgSize, ImgIdx nredges, ImgIdx dimgSize, uint64_t numLevels,
-                                    const ImgIdx *dhist, const double *dimg, const uint8_t *isAvailable) {
+                                    const ImgIdx *dhist, const float *dimg, const uint8_t *isAvailable) {
     uint8_t *isVisited = (uint8_t *)Calloc((size_t)((imgSize)));
     HHPQ *queue = new HHPQ(dhist, numLevels, nredges, isVisited, a, listsize, r);
 
     ImgIdx stackTop = _curSize++; // Dummy root with maximum possible alpha
-    double currentLevel = std::numeric_limits<double>::infinity();
+    float currentLevel = std::numeric_limits<float>::infinity();
     _node[stackTop] = AlphaNode<Pixel>(currentLevel);
 
     ImgIdx prevTop = stackTop;
@@ -2844,10 +2844,10 @@ void AlphaTree<Pixel>::runFloodHHPQ(ImgIdx startingPixel, const Pixel *img, doub
             if (isVisited[p]) {
 
 #if RUN_FANCY_VIS_FOR_DEBUG
-                // printVisit(p, currentLevel);
-                // queue->print();
-                // printAll(isVisited, dimg);
-                // std::getchar();
+                printVisit(p, currentLevel);
+                queue->print();
+                printAll(isVisited, dimg);
+                std::getchar();
 #endif
 
                 continue;
@@ -2855,11 +2855,13 @@ void AlphaTree<Pixel>::runFloodHHPQ(ImgIdx startingPixel, const Pixel *img, doub
 
             isVisited[p] = 1;
 
+#if RUN_FANCY_VIS_FOR_DEBUG
             // printVisit(p, currentLevel);
             // printTree();
             // queue->print();
             // printAll(isVisited, edgeStatus, img);
             // std::getchar();
+#endif
 
             auto isAv = isAvailable[p];
             if (_connectivity == 4) {
@@ -2925,7 +2927,7 @@ void AlphaTree<Pixel>::runFloodHHPQ(ImgIdx startingPixel, const Pixel *img, doub
         // go to higher level
         if (_node[stackTop].area < imgSize) {
             ImgIdx newParentIdx = _node[stackTop].parentIdx;
-            if (!queue->empty() && (double)queue->front().alpha < (double)_node[newParentIdx].alpha) {
+            if (!queue->empty() && (float)queue->front().alpha < (float)_node[newParentIdx].alpha) {
                 newParentIdx = _curSize++;
                 _node[newParentIdx] = AlphaNode<Pixel>(_node[stackTop]);
                 _node[newParentIdx].alpha = queue->front().alpha;
@@ -2939,20 +2941,9 @@ void AlphaTree<Pixel>::runFloodHHPQ(ImgIdx startingPixel, const Pixel *img, doub
             stackTop = newParentIdx;
             currentLevel = _node[stackTop].alpha;
         }
-
-        // queue->print();
-        // printTree();
-        // printAll(isVisited, edgeStatus, img);
-        // std::getchar();
     }
     _rootIdx = _node[prevTop].area == imgSize ? prevTop : stackTop;
     _node[_rootIdx].parentIdx = ROOTIDX;
-
-    // sortAlphaNodes();
-    // _curSize--; // Remove dummy root
-
-    // printParentAry();
-    // printTree();
     delete queue;
     Free(isVisited);
 }

@@ -3,14 +3,14 @@
 #include <cmath>
 #include <cstring>
 
-ImgIdx HHPQ::alphaToLevel(const double &alpha, const double &a) { return (ImgIdx)(a * log2(1.0 + alpha)); }
+ImgIdx HHPQ::alphaToLevel(const float &alpha, const float &a) { return (ImgIdx)(a * log2f(1.0 + alpha)); }
 
-ImgIdx HHPQ::alphaToLevel(const double &alpha) const {
-    return std::min<ImgIdx>((ImgIdx)(_a * log2(1.0 + alpha)), _numLevels - 1);
+ImgIdx HHPQ::alphaToLevel(const float &alpha) const {
+    return std::min<ImgIdx>((ImgIdx)(_a * log2f(1.0 + alpha)), _numLevels - 1);
 }
 
-HHPQ::HHPQ(const ImgIdx *dhist, ImgIdx numLevels_, ImgIdx size, const uint8_t *isVisited_, double a_, int cacheSize,
-           double r)
+HHPQ::HHPQ(const ImgIdx *dhist, ImgIdx numLevels_, ImgIdx size, const uint8_t *isVisited_, float a_, int cacheSize,
+           float r)
     : _numLevels(numLevels_), _a(a_), _lowestNonemptyLevel(numLevels_), _curSizeCache(0), _maxSizeCache(cacheSize),
       _isVisited(isVisited_), _size(0) {
     initHQ(dhist, size, r);
@@ -34,7 +34,7 @@ HHPQ::~HHPQ() {
     }
 }
 
-void HHPQ::initHQ(const ImgIdx *dhist, ImgIdx size, double r) {
+void HHPQ::initHQ(const ImgIdx *dhist, ImgIdx size, float r) {
     _cache = (QItem *)Malloc(_maxSizeCache * sizeof(QItem));
     ImgIdx cumsum = 0;
     _levelMaxSizes = (ImgIdx *)Calloc((size_t)_numLevels * sizeof(ImgIdx));
@@ -101,7 +101,7 @@ void HHPQ::print() {
     printf("---------- HHPQ::print END -------------\n");
 }
 
-void HHPQ::push(const ImgIdx &idx, const double &alpha) {
+void HHPQ::push(const ImgIdx &idx, const float &alpha) {
     _size++;
     const QItem newItem(idx, alpha);
 

@@ -32,7 +32,7 @@ class HHPQ {
 
     void push_queue(const QItem &item, const ImgIdx &level);
 
-    void initHQ(const ImgIdx *dhist, ImgIdx size, double r);
+    void initHQ(const ImgIdx *dhist, ImgIdx size, float r);
 
   public:
     /// @brief  Print the queue in terminal
@@ -50,8 +50,8 @@ class HHPQ {
     /// @param cacheSize Size of the cache. Cache size Bigger than 20 may decrease speed
     /// @param r Percentile of the number of sorted levels in the initial HHPQ setup. Should correlate to the ratio of
     /// redundant edges, but this parameter does not terribly affect the performace. Using default value is recommended.
-    HHPQ(const ImgIdx *dhist, ImgIdx numLevels_, ImgIdx size, const uint8_t *isVisited_, double a_ = 15.0,
-         int cacheSize = 15, double r = 0.2);
+    HHPQ(const ImgIdx *dhist, ImgIdx numLevels_, ImgIdx size, const uint8_t *isVisited_, float a_ = 15.0,
+         int cacheSize = 15, float r = 0.2);
     ~HHPQ();
 
     /// @brief Convert alpha value to HHPQ level. Use this outside the class to build the pixel difference histogram
@@ -59,8 +59,8 @@ class HHPQ {
     /// @param alpha Pixel dissimilarity value
     /// @param a Scaler constant for the HHPQ
     /// @return Level index converted from the alpha value
-    static ImgIdx alphaToLevel(const double &alpha, const double &a);
-    ImgIdx alphaToLevel(const double &alpha) const;
+    static ImgIdx alphaToLevel(const float &alpha, const float &a);
+    ImgIdx alphaToLevel(const float &alpha) const;
 
     /// @brief Make the HHPQ ready for pushing multiple items followed by a single pop()
     /// @details This helps reducing memory swaps by simply replacing the top item instead of running separate pop() and
@@ -81,7 +81,7 @@ class HHPQ {
     /// @brief Push an item into HHPQ
     /// @param idx Index element of the new item
     /// @param alpha Alpha element of the new item
-    void push(const ImgIdx &idx, const double &alpha = std::numeric_limits<double>::infinity());
+    void push(const ImgIdx &idx, const float &alpha = std::numeric_limits<float>::infinity());
 
     /// @brief Check if the queue is empty
     /// @return True if the queue is empty
