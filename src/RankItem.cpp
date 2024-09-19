@@ -1,6 +1,6 @@
 #include <RankItem.hpp>
 
-template <class Pixel> ImgIdx RankItem<Pixel>::get_pidx0(ImgIdx _connectivity) {
+template <class Pixel> ImgIdx RankItem<Pixel>::get_pidx0(ImgIdx _connectivity) const {
     if (_connectivity == 4)
         return (this->dimgidx >> 1);
     else if (_connectivity == 8)
@@ -10,7 +10,7 @@ template <class Pixel> ImgIdx RankItem<Pixel>::get_pidx0(ImgIdx _connectivity) {
     }
 }
 
-template <class Pixel> ImgIdx RankItem<Pixel>::get_pidx1(ImgIdx _width, ImgIdx _connectivity) {
+template <class Pixel> ImgIdx RankItem<Pixel>::get_pidx1(ImgIdx _width, ImgIdx _connectivity) const {
     if (_connectivity == 4)
         return (this->dimgidx >> 1) + _width + (1 - _width) * (this->dimgidx & 1);
     else if (_connectivity == 8) {

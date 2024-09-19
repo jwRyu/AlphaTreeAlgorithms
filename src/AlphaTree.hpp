@@ -117,7 +117,6 @@ template <class Pixel> class AlphaTree {
     void printGraph(const uint8_t *isVisited, const bool *isRedundant, const Pixel *img) const;
     void printGraph(const uint8_t *isVisited, const uint8_t *edge, const Pixel *img) const;
     void printParentAry() const;
-    // void printAll(const uint8_t *isVisited, const bool *isRedundant, const Pixel *img) const;
     void printAll(const uint8_t *isVisited, const uint8_t *edge, const Pixel *img) const;
     void printVisit(ImgIdx p, double q) const;
     void printIsAvailable(const uint8_t *isAvailable) const;
@@ -144,21 +143,16 @@ template <class Pixel> class AlphaTree {
     void HybridParallel(const Pixel *img, int numthreads);
     void HybridParallelOld(const Pixel *img, int numthreads);
 
-    void HybridPilotFlooding(const Pixel *img, ImgIdx *startpidx, uint8_t *isVisited, uint8_t *isAvailable,
-                             int8_t *redundant_edge, ImgIdx numpartitions, ImgIdx *blockWidths, ImgIdx *blockHeights,
-                             ImgIdx numlevels, HierarQueue **queues, ImgIdx *subtree_cur, ImgIdx *subtree_max,
-                             ImgIdx *dhist, uint8_t *qrank, ImgIdx blksz_x, ImgIdx blksz_y, ImgIdx npartition_x,
-                             ImgIdx npartition_y);
+    void HybridPilotFlooding(const Pixel *img, ImgIdx *startpidx, int8_t *redundant_edge, ImgIdx numpartitions,
+                             ImgIdx *blocksize, ImgIdx *blockWidths, ImgIdx *blockHeights, ImgIdx numlevels,
+                             ImgIdx *subtree_cur, ImgIdx *subtree_max, ImgIdx *dhist, uint8_t *qrank, ImgIdx blksz_x,
+                             ImgIdx blksz_y, ImgIdx npartition_x, ImgIdx npartition_y);
     void markRedundantEdges(int8_t *redundant_edge, const ImgIdx &p, const uint8_t &connected_neighbor,
                             const uint8_t *qrank);
     ImgIdx mergeSubtreeHybrid(uint8_t *dimg, ImgIdx blksz_x, ImgIdx blksz_y, ImgIdx npartition_x, ImgIdx npartition_y,
                               ImgIdx *subtree_cur);
     std::pair<ImgIdx, uint8_t> computeFloodingContextHybridPartition(bool &isFirstPixel, const ImgIdx &qitem,
                                                                      const uint8_t *isAvailable);
-    // void computePartitionDiffLogBucket(const Pixel *img, double *dimg, BucketSort &lb, ImgIdx startPixelIndex,
-    //                                    ImgIdx blockWidth, ImgIdx blockHeight);
-    // void runBucketSort(ImgIdx *indexTorank, int32_t *rankToIndex, ImgIdx *bucketHist, ImgIdx numBuckets,
-    //                    const RankItem<double> *rankItems);
     void computeDiffHybridParallel(const Pixel *img, double a, ImgIdx *bucketHist, ImgIdx numBuckets,
                                    RankItem<double> *rankItems);
 
@@ -267,7 +261,7 @@ template <class Pixel> class AlphaTree {
                         ImgIdx shamt, ImgIdx npartition_x, ImgIdx npartition_y, int32_t numbins);
     void merge_subtrees(uint8_t *qrank, int64_t blksz_x, int64_t blksz_y, ImgIdx neighbor_offset, ImgIdx shamt,
                         ImgIdx npartition_x, ImgIdx npartition_y, int32_t numbins);
-    void connect_pilotnode(AlphaNode<Pixel> *pilottree, ImgIdx nredges, ImgIdx imgSize);
+    void connect_pilotnode(AlphaNode<Pixel> *pilottree);
     void set_qindex(ImgIdx *qindex, ImgIdx *dhist, int64_t numpartitions, int32_t numbins, ImgIdx npartition_x,
                     ImgIdx npartition_y, int64_t blksz_x, int64_t blksz_y, int64_t blksz_xn, int64_t blksz_yn);
     void set_qindex(ImgIdx *qindex, ImgIdx *dhist, int64_t numpartitions, int32_t numbins);
