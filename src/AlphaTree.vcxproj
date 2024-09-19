@@ -126,13 +126,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="allocator.h" />
-    <ClInclude Include="AlphaTree.h" />
-    <ClInclude Include="defines.h" />
-    <ClInclude Include="HierarQueue.h" />
-    <ClInclude Include="HybridQueue.h" />
-    <ClInclude Include="HeapQueue.h" />
-    <ClInclude Include="Trie.h" />
+    <ClInclude Include="allocator.hpp" />
+    <ClInclude Include="AlphaTree.hpp" />
+    <ClInclude Include="defines.hpp" />
+    <ClInclude Include="HierarQueue.hpp" />
+    <ClInclude Include="HybridQueue.hpp" />
+    <ClInclude Include="HeapQueue.hpp" />
+    <ClInclude Include="Trie.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="allocator.cpp" />

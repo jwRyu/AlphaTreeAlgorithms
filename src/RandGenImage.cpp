@@ -1,8 +1,7 @@
-#include "RandGenImage.hpp"
-#include <random>
+#include <RandGenImage.hpp>
 
-void RandGenImage::randomize8(_uint8 *img, int width, int height, int bit_depth, int ch) {
-    _uint8 pix;
+void RandGenImage::randomize8(uint8_t *img, int width, int height, int bit_depth, int ch) {
+    uint8_t pix;
     int imgsize = width * height;
     int shamt = 8 - bit_depth;
 
@@ -10,63 +9,63 @@ void RandGenImage::randomize8(_uint8 *img, int width, int height, int bit_depth,
         return;
 
     for (int i = 0; i < imgsize * ch; i++) {
-        pix = ((_uint8)(rand() & 0xff));
+        pix = ((uint8_t)(rand() & 0xff));
 
         img[i] = pix >> shamt;
     }
 }
 
-void RandGenImage::randomize16(_uint16 *img, int width, int height, int bit_depth, int ch) {
-    _uint16 pix;
+void RandGenImage::randomize16(uint16_t *img, int width, int height, int bit_depth, int ch) {
+    uint16_t pix;
     int imgsize = width * height;
     int shamt = 16 - bit_depth;
 
     if (img == nullptr)
         return;
 
-    for (_int64 i = 0; i < imgsize * ch; i++) {
-        pix = ((_uint16)(rand() & 0xff) << 8);
-        pix |= ((_uint16)(rand() & 0xff));
+    for (int64_t i = 0; i < imgsize * ch; i++) {
+        pix = ((uint16_t)(rand() & 0xff) << 8);
+        pix |= ((uint16_t)(rand() & 0xff));
 
-        img[i] = (_uint16)(pix >> shamt);
+        img[i] = (uint16_t)(pix >> shamt);
     }
 }
 
-void RandGenImage::randomize32(_uint32 *img, int width, int height, int bit_depth) {
-    _uint32 pix;
+void RandGenImage::randomize32(uint32_t *img, int width, int height, int bit_depth) {
+    uint32_t pix;
     int imgsize = width * height;
     int shamt = 32 - bit_depth;
 
     if (img == nullptr)
         return;
 
-    for (_int64 i = 0; i < imgsize; i++) {
-        pix = ((_uint32)(rand() & 0xff) << 24);
-        pix |= ((_uint32)(rand() & 0xff) << 16);
-        pix |= ((_uint32)(rand() & 0xff) << 8);
-        pix |= ((_uint32)(rand() & 0xff));
-        img[i] = (_uint32)(pix >> shamt);
+    for (int64_t i = 0; i < imgsize; i++) {
+        pix = ((uint32_t)(rand() & 0xff) << 24);
+        pix |= ((uint32_t)(rand() & 0xff) << 16);
+        pix |= ((uint32_t)(rand() & 0xff) << 8);
+        pix |= ((uint32_t)(rand() & 0xff));
+        img[i] = (uint32_t)(pix >> shamt);
     }
 }
 
-void RandGenImage::randomize64(_uint64 *img, int width, int height, int bit_depth) {
-    _uint64 pix;
+void RandGenImage::randomize64(uint64_t *img, int width, int height, int bit_depth) {
+    uint64_t pix;
     int imgsize = width * height;
     int shamt = 64 - bit_depth;
 
     if (img == nullptr)
         return;
 
-    for (_int64 i = 0; i < imgsize; i++) {
-        pix = ((_uint64)(rand() & 0xff) << 56);
-        pix |= ((_uint64)(rand() & 0xff) << 48);
-        pix |= ((_uint64)(rand() & 0xff) << 40);
-        pix |= ((_uint64)(rand() & 0xff) << 32);
-        pix |= ((_uint64)(rand() & 0xff) << 24);
-        pix |= ((_uint64)(rand() & 0xff) << 16);
-        pix |= ((_uint64)(rand() & 0xff) << 8);
-        pix |= ((_uint64)(rand() & 0xff));
+    for (int64_t i = 0; i < imgsize; i++) {
+        pix = ((uint64_t)(rand() & 0xff) << 56);
+        pix |= ((uint64_t)(rand() & 0xff) << 48);
+        pix |= ((uint64_t)(rand() & 0xff) << 40);
+        pix |= ((uint64_t)(rand() & 0xff) << 32);
+        pix |= ((uint64_t)(rand() & 0xff) << 24);
+        pix |= ((uint64_t)(rand() & 0xff) << 16);
+        pix |= ((uint64_t)(rand() & 0xff) << 8);
+        pix |= ((uint64_t)(rand() & 0xff));
         // pix = pix % 100;
-        img[i] = (_uint64)(pix >> shamt);
+        img[i] = (uint64_t)(pix >> shamt);
     }
 }

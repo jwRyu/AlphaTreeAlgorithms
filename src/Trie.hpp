@@ -1,6 +1,6 @@
 #pragma once
 
-#include "allocator.h"
+#include <allocator.hpp>
 
 #define TRIE_DEBUG 0
 
@@ -13,7 +13,7 @@ template <class Trieidx> class Trie {
     Trieidx **trie;
     // ImgIdx *levelsize;
     ImgIdx triesize, mask_field, nbits;
-    _int8 shamt, numlevels;
+    int8_t shamt, numlevels;
     // delayed non-leaf node push
 
 #if TRIE_DEBUG
@@ -23,7 +23,7 @@ template <class Trieidx> class Trie {
     // 	//tmptmptmp
     // 	ofstream f;
 
-    //_int32 curSize;//tmp
+    // int32_t curSize;//tmp
   public:
     Trie(ImgIdx triesize_in) {
 #if TRIE_DEBUG
@@ -33,7 +33,7 @@ template <class Trieidx> class Trie {
         triesize = triesize_in;
         ImgIdx size;
         shamt = 2;
-        for (_int8 nbyte = sizeof(Trieidx); nbyte; nbyte >>= 1)
+        for (int8_t nbyte = sizeof(Trieidx); nbyte; nbyte >>= 1)
             shamt++;
         nbits = 1 << shamt;
         mask_field = nbits - 1;
@@ -44,7 +44,7 @@ template <class Trieidx> class Trie {
         trie = (Trieidx **)Malloc(sizeof(Trieidx *) * numlevels);
         // levelsize = (ImgIdx*)Malloc(sizeof(ImgIdx) * numlevels);
         size = triesize + 1;
-        for (_int16 i = 0; i < numlevels; i++) {
+        for (int16_t i = 0; i < numlevels; i++) {
             size >>= shamt;
             trie[i] = (Trieidx *)Malloc(sizeof(Trieidx) * (size + 1));
             for (ImgIdx j = 0; j < (size + 1); j++)
@@ -60,7 +60,7 @@ template <class Trieidx> class Trie {
         // 		f << triesize << endl;
     }
     ~Trie() {
-        for (_int16 i = 0; i < numlevels; i++)
+        for (int16_t i = 0; i < numlevels; i++)
             Free(trie[i]);
         Free(trie);
 
@@ -70,16 +70,16 @@ template <class Trieidx> class Trie {
     inline ImgIdx top() { return minidx; }
     inline ImgIdx get_minlev() { return minidx >> 1; }
     inline ImgIdx min_incidence() { return minidx & 1; }
-    inline _int8 push(ImgIdx in, _int8 incidence) {
+    inline int8_t push(ImgIdx in, int8_t incidence) {
         // curSize++; //tmp
         // tmp
         /*		f << '0' << '\n' << in << endl;*/
         return push((in << 1) + incidence);
     }
-    inline _int8 push(ImgIdx in) {
+    inline int8_t push(ImgIdx in) {
         ImgIdx n = in, s_in, shamt1;
         Trieidx *p;
-        _int8 ret = 0;
+        int8_t ret = 0;
 
 #if TRIE_DEBUG
         cout << "Push " << in << endl;
@@ -100,7 +100,7 @@ template <class Trieidx> class Trie {
         *p = *p | ((Trieidx)1 << (n & mask_field));
         n = s_in;
         s_in >>= shamt;
-        for (_int16 i = 1; i < numlevels; i++) {
+        for (int16_t i = 1; i < numlevels; i++) {
             p = &(trie[i][s_in]);
             shamt1 = n & mask_field;
             // if (((*p) >> shamt1) & 1)
@@ -119,7 +119,7 @@ template <class Trieidx> class Trie {
     inline void pop() {
         ImgIdx s_idx = minidx >> shamt, shamt1;
         Trieidx *p, tmp;
-        _int16 lvl;
+        int16_t lvl;
 
         // curSize--;//tmp
         // 		//tmp

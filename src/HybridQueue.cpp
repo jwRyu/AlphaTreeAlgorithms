@@ -1,11 +1,11 @@
-#include "HybridQueue.h"
+#include "HybridQueue.hpp"
 
 #if PROFILE
 #include <fstream>
 #endif
 
 template <class Pixel>
-void HierarHeapQueue_HEQ<Pixel>::initHQ(ImgIdx *dhist, _uint32 *histeqmap_in, ImgIdx numlevels_in, ImgIdx size,
+void HierarHeapQueue_HEQ<Pixel>::initHQ(ImgIdx *dhist, uint32_t *histeqmap_in, ImgIdx numlevels_in, ImgIdx size,
                                         double a_in, int listsize) {
     list = (HQentry<Pixel> *)Malloc(listsize * sizeof(HQentry<Pixel>));
     maxSize_list = listsize - 1;
@@ -40,13 +40,13 @@ void HierarHeapQueue_HEQ<Pixel>::initHQ(ImgIdx *dhist, _uint32 *histeqmap_in, Im
 }
 
 template <class Pixel>
-HierarHeapQueue_HEQ<Pixel>::HierarHeapQueue_HEQ(ImgIdx *dhist, _uint32 *histeqmap_in, ImgIdx numlevels_in, double a_in,
+HierarHeapQueue_HEQ<Pixel>::HierarHeapQueue_HEQ(ImgIdx *dhist, uint32_t *histeqmap_in, ImgIdx numlevels_in, double a_in,
                                                 ImgIdx size) {
     initHQ(dhist, histeqmap_in, numlevels_in, size, a_in, 12);
 }
 
 template <class Pixel>
-HierarHeapQueue_HEQ<Pixel>::HierarHeapQueue_HEQ(ImgIdx *dhist, _uint32 *histeqmap_in, ImgIdx numlevels_in, ImgIdx size,
+HierarHeapQueue_HEQ<Pixel>::HierarHeapQueue_HEQ(ImgIdx *dhist, uint32_t *histeqmap_in, ImgIdx numlevels_in, ImgIdx size,
                                                 double a_in, int listsize) {
     initHQ(dhist, histeqmap_in, numlevels_in, size, a_in, listsize);
 }
@@ -74,7 +74,7 @@ template <class Pixel> void HierarHeapQueue_HEQ<Pixel>::push_1stitem(ImgIdx idx,
     curSize_list++;
 }
 
-template <class Pixel> void HierarHeapQueue_HEQ<Pixel>::endPushes(_uint8 *isVisited) {
+template <class Pixel> void HierarHeapQueue_HEQ<Pixel>::endPushes(uint8_t *isVisited) {
     if (_emptyTop)
         pop(isVisited);
 }
@@ -130,7 +130,7 @@ template <class Pixel> void HierarHeapQueue_HEQ<Pixel>::push_queue(ImgIdx idx, P
     }
 }
 
-template <class Pixel> ImgIdx HierarHeapQueue_HEQ<Pixel>::pop(_uint8 *isVisited) {
+template <class Pixel> ImgIdx HierarHeapQueue_HEQ<Pixel>::pop(uint8_t *isVisited) {
     ImgIdx ret = top();
     if (curSize_list == 0) {
         while (!check_queue_level(isVisited))
@@ -147,7 +147,7 @@ template <class Pixel> ImgIdx HierarHeapQueue_HEQ<Pixel>::pop(_uint8 *isVisited)
     return ret;
 }
 
-template <class Pixel> int HierarHeapQueue_HEQ<Pixel>::check_queue_level(_uint8 *isVisited) {
+template <class Pixel> int HierarHeapQueue_HEQ<Pixel>::check_queue_level(uint8_t *isVisited) {
     if (queue_minlev < curthr)
         return hqueue[queue_minlev]->get_cursize();
     else {
@@ -179,7 +179,7 @@ template <class Pixel> int HierarHeapQueue_HEQ<Pixel>::check_queue_level(_uint8 
     }
 }
 
-template <class Pixel> void HierarHeapQueue_HEQ<Pixel>::pop_queue(_uint8 *isVisited) {
+template <class Pixel> void HierarHeapQueue_HEQ<Pixel>::pop_queue(uint8_t *isVisited) {
     hqueue[queue_minlev]->pop();
 
     if (!hqueue[queue_minlev]->get_cursize()) {
@@ -189,10 +189,10 @@ template <class Pixel> void HierarHeapQueue_HEQ<Pixel>::pop_queue(_uint8 *isVisi
     }
 }
 
-template class HierarHeapQueue_HEQ<_uint8>;
-template class HierarHeapQueue_HEQ<_uint16>;
-template class HierarHeapQueue_HEQ<_uint32>;
-template class HierarHeapQueue_HEQ<_uint64>;
+template class HierarHeapQueue_HEQ<uint8_t>;
+template class HierarHeapQueue_HEQ<uint16_t>;
+template class HierarHeapQueue_HEQ<uint32_t>;
+template class HierarHeapQueue_HEQ<uint64_t>;
 
 template <class Pixel>
 HierarHeapQueue<Pixel>::HierarHeapQueue(ImgIdx *dhist, ImgIdx numlevels_in, ImgIdx size, double a_in, int listsize,
@@ -265,14 +265,14 @@ template <class Pixel> void HierarHeapQueue<Pixel>::push_queue(ImgIdx idx, Pixel
     }
 }
 
-template <class Pixel> ImgIdx HierarHeapQueue<Pixel>::pop(_uint8 *isVisited) {
+template <class Pixel> ImgIdx HierarHeapQueue<Pixel>::pop(uint8_t *isVisited) {
     ImgIdx ret = top();
 
     pop_queue(isVisited);
     return ret;
 }
 
-template <class Pixel> int HierarHeapQueue<Pixel>::check_queue_level(_uint8 *isVisited) {
+template <class Pixel> int HierarHeapQueue<Pixel>::check_queue_level(uint8_t *isVisited) {
     if (queue_minlev < curthr)
         return hqueue[queue_minlev]->get_cursize();
     else {
@@ -302,7 +302,7 @@ template <class Pixel> int HierarHeapQueue<Pixel>::check_queue_level(_uint8 *isV
     }
 }
 
-template <class Pixel> void HierarHeapQueue<Pixel>::pop_queue(_uint8 *isVisited) {
+template <class Pixel> void HierarHeapQueue<Pixel>::pop_queue(uint8_t *isVisited) {
     hqueue[queue_minlev]->pop();
 
     if (!hqueue[queue_minlev]->get_cursize()) {
@@ -312,10 +312,10 @@ template <class Pixel> void HierarHeapQueue<Pixel>::pop_queue(_uint8 *isVisited)
     }
 }
 
-template class HierarHeapQueue<_uint8>;
-template class HierarHeapQueue<_uint16>;
-template class HierarHeapQueue<_uint32>;
-template class HierarHeapQueue<_uint64>;
+template class HierarHeapQueue<uint8_t>;
+template class HierarHeapQueue<uint16_t>;
+template class HierarHeapQueue<uint32_t>;
+template class HierarHeapQueue<uint64_t>;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // HierarHeapQueue_cache
@@ -428,7 +428,7 @@ template <class Pixel> void HierarHeapQueue_cache<Pixel>::push_1stitem(ImgIdx id
 #endif
 }
 
-template <class Pixel> void HierarHeapQueue_cache<Pixel>::endPushes(_uint8 *isVisited) {
+template <class Pixel> void HierarHeapQueue_cache<Pixel>::endPushes(uint8_t *isVisited) {
     if (_emptyTop)
         pop(isVisited);
 #if PROFILE
@@ -555,7 +555,7 @@ template <class Pixel> void HierarHeapQueue_cache<Pixel>::push_queue(ImgIdx idx,
     }
 }
 
-template <class Pixel> ImgIdx HierarHeapQueue_cache<Pixel>::pop(_uint8 *isVisited) {
+template <class Pixel> ImgIdx HierarHeapQueue_cache<Pixel>::pop(uint8_t *isVisited) {
 #if PROFILE
     // printf("pop %d, size %d\n", top(), curSize);
     curSize--;
@@ -588,7 +588,7 @@ template <class Pixel> ImgIdx HierarHeapQueue_cache<Pixel>::pop(_uint8 *isVisite
     return ret;
 }
 
-template <class Pixel> int HierarHeapQueue_cache<Pixel>::check_queue_level(_uint8 *isVisited) {
+template <class Pixel> int HierarHeapQueue_cache<Pixel>::check_queue_level(uint8_t *isVisited) {
 #if PROFILE
 #endif
     if (queue_minlev < curthr)
@@ -633,7 +633,7 @@ template <class Pixel> int HierarHeapQueue_cache<Pixel>::check_queue_level(_uint
     }
 }
 
-template <class Pixel> void HierarHeapQueue_cache<Pixel>::pop_queue(_uint8 *isVisited) {
+template <class Pixel> void HierarHeapQueue_cache<Pixel>::pop_queue(uint8_t *isVisited) {
 
 #if PROFILE
     double t1 = get_cpu_time();
@@ -653,10 +653,10 @@ template <class Pixel> void HierarHeapQueue_cache<Pixel>::pop_queue(_uint8 *isVi
     }
 }
 
-template class HierarHeapQueue_cache<_uint8>;
-template class HierarHeapQueue_cache<_uint16>;
-template class HierarHeapQueue_cache<_uint32>;
-template class HierarHeapQueue_cache<_uint64>;
+template class HierarHeapQueue_cache<uint8_t>;
+template class HierarHeapQueue_cache<uint16_t>;
+template class HierarHeapQueue_cache<uint32_t>;
+template class HierarHeapQueue_cache<uint64_t>;
 
 // HierarHeapQueue_cache end
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -691,7 +691,7 @@ template <class Pixel> void Cache_Heapqueue<Pixel>::push_1stitem(ImgIdx idx, Pix
 }
 
 template <class Pixel> void Cache_Heapqueue<Pixel>::push(ImgIdx idx, Pixel alpha) {
-    _int16 i;
+    int16_t i;
     if (_emptyTop && alpha < list[0].alpha) {
         _emptyTop = 0;
         list[0].pidx = idx;
@@ -723,7 +723,7 @@ template <class Pixel> void Cache_Heapqueue<Pixel>::push(ImgIdx idx, Pixel alpha
 
 template <class Pixel> ImgIdx Cache_Heapqueue<Pixel>::pop() {
     ImgIdx ret = top();
-    _int8 i;
+    int8_t i;
     if (curSize_list == 0) {
         list[0].pidx = hqueue->top();
         list[0].alpha = hqueue->top_alpha();
@@ -738,10 +738,10 @@ template <class Pixel> ImgIdx Cache_Heapqueue<Pixel>::pop() {
     return ret;
 }
 
-template class Cache_Heapqueue<_uint8>;
-template class Cache_Heapqueue<_uint16>;
-template class Cache_Heapqueue<_uint32>;
-template class Cache_Heapqueue<_uint64>;
+template class Cache_Heapqueue<uint8_t>;
+template class Cache_Heapqueue<uint16_t>;
+template class Cache_Heapqueue<uint32_t>;
+template class Cache_Heapqueue<uint64_t>;
 template class Cache_Heapqueue<float>;
 template class Cache_Heapqueue<double>;
 
@@ -780,7 +780,7 @@ template <class Pixel> void Cache_Quad_Heapqueue<Pixel>::push_1stitem(ImgIdx idx
 }
 
 template <class Pixel> void Cache_Quad_Heapqueue<Pixel>::push(ImgIdx idx, Pixel alpha) {
-    _int16 i;
+    int16_t i;
 
     if (_emptyTop && alpha < list[0].alpha) {
         _emptyTop = 0;
@@ -812,7 +812,7 @@ template <class Pixel> void Cache_Quad_Heapqueue<Pixel>::push(ImgIdx idx, Pixel 
 
 template <class Pixel> ImgIdx Cache_Quad_Heapqueue<Pixel>::pop() {
     ImgIdx ret = top();
-    _int8 i;
+    int8_t i;
 
     if (curSize_list == 0) {
         list[0].pidx = hqueue->top();
@@ -827,10 +827,10 @@ template <class Pixel> ImgIdx Cache_Quad_Heapqueue<Pixel>::pop() {
     return ret;
 }
 
-template class Cache_Quad_Heapqueue<_uint8>;
-template class Cache_Quad_Heapqueue<_uint16>;
-template class Cache_Quad_Heapqueue<_uint32>;
-template class Cache_Quad_Heapqueue<_uint64>;
+template class Cache_Quad_Heapqueue<uint8_t>;
+template class Cache_Quad_Heapqueue<uint16_t>;
+template class Cache_Quad_Heapqueue<uint32_t>;
+template class Cache_Quad_Heapqueue<uint64_t>;
 template class Cache_Quad_Heapqueue<float>;
 template class Cache_Quad_Heapqueue<double>;
 
@@ -840,7 +840,7 @@ template class Cache_Quad_Heapqueue<double>;
 // CirCache_Hierqueue
 
 template <class Pixel>
-void CirCache_Hierqueue<Pixel>::initHQ(_uint64 qsize_in, ImgIdx *dhist, _int32 numlevels, size_t listsize) {
+void CirCache_Hierqueue<Pixel>::initHQ(uint64_t qsize_in, ImgIdx *dhist, int32_t numlevels, size_t listsize) {
     int shamt = 0;
     for (int lsize = listsize; lsize; lsize >>= 1)
         shamt++;
@@ -848,7 +848,7 @@ void CirCache_Hierqueue<Pixel>::initHQ(_uint64 qsize_in, ImgIdx *dhist, _int32 n
     mask = listsize - 1;
     this->maxSize_queue = qsize_in;
     hqueue = new HierarQueue(qsize_in, dhist, numlevels);
-    list = (HQentry<_int32> *)Malloc(listsize * sizeof(HQentry<_int32>));
+    list = (HQentry<int32_t> *)Malloc(listsize * sizeof(HQentry<int32_t>));
     maxSize_list = listsize;
     curSize_list = 0;
     liststart = 0;
@@ -856,12 +856,12 @@ void CirCache_Hierqueue<Pixel>::initHQ(_uint64 qsize_in, ImgIdx *dhist, _int32 n
 }
 
 template <class Pixel>
-CirCache_Hierqueue<Pixel>::CirCache_Hierqueue(_uint64 qsize_in, ImgIdx *dhist, _int32 numlevels) {
+CirCache_Hierqueue<Pixel>::CirCache_Hierqueue(uint64_t qsize_in, ImgIdx *dhist, int32_t numlevels) {
     initHQ(qsize_in, dhist, numlevels, 16);
 }
 
 template <class Pixel>
-CirCache_Hierqueue<Pixel>::CirCache_Hierqueue(_uint64 qsize_in, ImgIdx *dhist, _int32 numlevels, size_t listsize) {
+CirCache_Hierqueue<Pixel>::CirCache_Hierqueue(uint64_t qsize_in, ImgIdx *dhist, int32_t numlevels, size_t listsize) {
     initHQ(qsize_in, dhist, numlevels, listsize);
 }
 
@@ -870,14 +870,14 @@ template <class Pixel> CirCache_Hierqueue<Pixel>::~CirCache_Hierqueue() {
     Free(list);
 }
 
-template <class Pixel> void CirCache_Hierqueue<Pixel>::push_1stitem(ImgIdx idx, _int32 alpha) {
+template <class Pixel> void CirCache_Hierqueue<Pixel>::push_1stitem(ImgIdx idx, int32_t alpha) {
     list[0].pidx = idx;
     list[0].alpha = alpha;
     curSize_list++;
 }
 
-template <class Pixel> void CirCache_Hierqueue<Pixel>::push(ImgIdx idx, _int32 alpha) {
-    _int16 i, j, k;
+template <class Pixel> void CirCache_Hierqueue<Pixel>::push(ImgIdx idx, int32_t alpha) {
+    int16_t i, j, k;
 
     if (_emptyTop && alpha < list[liststart].alpha) {
         _emptyTop = 0;
@@ -885,7 +885,7 @@ template <class Pixel> void CirCache_Hierqueue<Pixel>::push(ImgIdx idx, _int32 a
         list[liststart].alpha = alpha;
         return;
     }
-    if ((_int64)alpha < hqueue->get_minlev()) {
+    if ((int64_t)alpha < hqueue->get_minlev()) {
         if (curSize_list < maxSize_list) // spare room in the list
         {
             j = (liststart - 1) & mask;
@@ -925,10 +925,10 @@ template <class Pixel> ImgIdx CirCache_Hierqueue<Pixel>::pop() {
     return ret;
 }
 
-template class CirCache_Hierqueue<_uint8>;
-template class CirCache_Hierqueue<_uint16>;
-template class CirCache_Hierqueue<_uint32>;
-template class CirCache_Hierqueue<_uint64>;
+template class CirCache_Hierqueue<uint8_t>;
+template class CirCache_Hierqueue<uint16_t>;
+template class CirCache_Hierqueue<uint32_t>;
+template class CirCache_Hierqueue<uint64_t>;
 template class CirCache_Hierqueue<float>;
 template class CirCache_Hierqueue<double>;
 
@@ -938,10 +938,10 @@ template class CirCache_Hierqueue<double>;
 // HierarQueueCache
 
 template <class Pixel>
-void HierarQueueCache<Pixel>::initHQ(_uint64 qsize_in, ImgIdx *dhist, _int32 numlevels, size_t listsize) {
+void HierarQueueCache<Pixel>::initHQ(uint64_t qsize_in, ImgIdx *dhist, int32_t numlevels, size_t listsize) {
     this->maxSize_queue = qsize_in;
     hqueue = new HierarQueue(qsize_in, dhist, numlevels);
-    list = (HQentry<_int32> *)Malloc((listsize + 1) * sizeof(HQentry<_int32>));
+    list = (HQentry<int32_t> *)Malloc((listsize + 1) * sizeof(HQentry<int32_t>));
     list[0].pidx = 0;
     list[0].alpha = 0;
     list++;
@@ -950,12 +950,12 @@ void HierarQueueCache<Pixel>::initHQ(_uint64 qsize_in, ImgIdx *dhist, _int32 num
     qtime = 0; // tmp
 }
 
-template <class Pixel> HierarQueueCache<Pixel>::HierarQueueCache(_uint64 qsize_in, ImgIdx *dhist, _int32 numlevels) {
+template <class Pixel> HierarQueueCache<Pixel>::HierarQueueCache(uint64_t qsize_in, ImgIdx *dhist, int32_t numlevels) {
     initHQ(qsize_in, dhist, numlevels, 12);
 }
 
 template <class Pixel>
-HierarQueueCache<Pixel>::HierarQueueCache(_uint64 qsize_in, ImgIdx *dhist, _int32 numlevels, size_t listsize) {
+HierarQueueCache<Pixel>::HierarQueueCache(uint64_t qsize_in, ImgIdx *dhist, int32_t numlevels, size_t listsize) {
     initHQ(qsize_in, dhist, numlevels, listsize);
 }
 
@@ -964,14 +964,14 @@ template <class Pixel> HierarQueueCache<Pixel>::~HierarQueueCache() {
     Free(list - 1);
 }
 
-template <class Pixel> void HierarQueueCache<Pixel>::push_1stitem(ImgIdx idx, _int32 alpha) {
+template <class Pixel> void HierarQueueCache<Pixel>::push_1stitem(ImgIdx idx, int32_t alpha) {
     list[0].pidx = idx;
     list[0].alpha = alpha;
     curSize_list++;
 }
 
-template <class Pixel> void HierarQueueCache<Pixel>::push(ImgIdx idx, _int32 alpha) {
-    _int16 i;
+template <class Pixel> void HierarQueueCache<Pixel>::push(ImgIdx idx, int32_t alpha) {
+    int16_t i;
 
     if (_emptyTop && alpha < list[0].alpha) {
         _emptyTop = 0;
@@ -979,7 +979,7 @@ template <class Pixel> void HierarQueueCache<Pixel>::push(ImgIdx idx, _int32 alp
         list[0].alpha = alpha;
         return;
     }
-    if ((_int64)alpha < hqueue->get_minlev()) {
+    if ((int64_t)alpha < hqueue->get_minlev()) {
         if (curSize_list < maxSize_list) // spare room in the list
         {
             for (i = curSize_list; alpha < list[i].alpha; i--)
@@ -1003,7 +1003,7 @@ template <class Pixel> void HierarQueueCache<Pixel>::push(ImgIdx idx, _int32 alp
 
 template <class Pixel> ImgIdx HierarQueueCache<Pixel>::pop() {
     ImgIdx ret = top();
-    _int8 i;
+    int8_t i;
 
     if (curSize_list == 0) {
         list[0].pidx = hqueue->top();
@@ -1018,10 +1018,10 @@ template <class Pixel> ImgIdx HierarQueueCache<Pixel>::pop() {
     return ret;
 }
 
-template class HierarQueueCache<_uint8>;
-template class HierarQueueCache<_uint16>;
-template class HierarQueueCache<_uint32>;
-template class HierarQueueCache<_uint64>;
+template class HierarQueueCache<uint8_t>;
+template class HierarQueueCache<uint16_t>;
+template class HierarQueueCache<uint32_t>;
+template class HierarQueueCache<uint64_t>;
 
 // HierarQueueCache end
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1029,10 +1029,10 @@ template class HierarQueueCache<_uint64>;
 // Cache_Hierqueue_l1
 
 template <class Pixel>
-void Cache_Hierqueue_l1<Pixel>::initHQ(_uint64 qsize_in, ImgIdx *dhist, _int32 numlevels, size_t listsize) {
+void Cache_Hierqueue_l1<Pixel>::initHQ(uint64_t qsize_in, ImgIdx *dhist, int32_t numlevels, size_t listsize) {
     this->maxSize_queue = qsize_in;
     hqueue = new HQueue_l1idx(qsize_in, dhist, numlevels);
-    list = (HQentry<_int32> *)Malloc((listsize + 1) * sizeof(HQentry<_int32>));
+    list = (HQentry<int32_t> *)Malloc((listsize + 1) * sizeof(HQentry<int32_t>));
     list[0].pidx = 0;
     list[0].alpha = 0;
     list++;
@@ -1043,12 +1043,12 @@ void Cache_Hierqueue_l1<Pixel>::initHQ(_uint64 qsize_in, ImgIdx *dhist, _int32 n
 }
 
 template <class Pixel>
-Cache_Hierqueue_l1<Pixel>::Cache_Hierqueue_l1(_uint64 qsize_in, ImgIdx *dhist, _int32 numlevels) {
+Cache_Hierqueue_l1<Pixel>::Cache_Hierqueue_l1(uint64_t qsize_in, ImgIdx *dhist, int32_t numlevels) {
     initHQ(qsize_in, dhist, numlevels, 12);
 }
 
 template <class Pixel>
-Cache_Hierqueue_l1<Pixel>::Cache_Hierqueue_l1(_uint64 qsize_in, ImgIdx *dhist, _int32 numlevels, size_t listsize) {
+Cache_Hierqueue_l1<Pixel>::Cache_Hierqueue_l1(uint64_t qsize_in, ImgIdx *dhist, int32_t numlevels, size_t listsize) {
     initHQ(qsize_in, dhist, numlevels, listsize);
 }
 
@@ -1057,14 +1057,14 @@ template <class Pixel> Cache_Hierqueue_l1<Pixel>::~Cache_Hierqueue_l1() {
     Free(list - 1);
 }
 
-template <class Pixel> void Cache_Hierqueue_l1<Pixel>::push_1stitem(ImgIdx idx, _int32 alpha) {
+template <class Pixel> void Cache_Hierqueue_l1<Pixel>::push_1stitem(ImgIdx idx, int32_t alpha) {
     list[0].pidx = idx;
     list[0].alpha = alpha;
     curSize_list++;
 }
 
-template <class Pixel> void Cache_Hierqueue_l1<Pixel>::push(ImgIdx idx, _int32 alpha) {
-    _int16 i;
+template <class Pixel> void Cache_Hierqueue_l1<Pixel>::push(ImgIdx idx, int32_t alpha) {
+    int16_t i;
 
     if (_emptyTop && alpha < list[0].alpha) {
         _emptyTop = 0;
@@ -1073,7 +1073,7 @@ template <class Pixel> void Cache_Hierqueue_l1<Pixel>::push(ImgIdx idx, _int32 a
         return;
     }
 
-    if ((_int64)alpha < hqueue->get_minlev()) {
+    if ((int64_t)alpha < hqueue->get_minlev()) {
         if (curSize_list < maxSize_list) // spare room in the list
         {
             for (i = curSize_list; alpha < list[i].alpha; i--)
@@ -1097,7 +1097,7 @@ template <class Pixel> void Cache_Hierqueue_l1<Pixel>::push(ImgIdx idx, _int32 a
 
 template <class Pixel> ImgIdx Cache_Hierqueue_l1<Pixel>::pop() {
     ImgIdx ret = top();
-    _int8 i;
+    int8_t i;
 
     if (curSize_list == 0) {
         list[0].pidx = hqueue->top();
@@ -1113,10 +1113,10 @@ template <class Pixel> ImgIdx Cache_Hierqueue_l1<Pixel>::pop() {
     return ret;
 }
 
-template class Cache_Hierqueue_l1<_uint8>;
-template class Cache_Hierqueue_l1<_uint16>;
-template class Cache_Hierqueue_l1<_uint32>;
-template class Cache_Hierqueue_l1<_uint64>;
+template class Cache_Hierqueue_l1<uint8_t>;
+template class Cache_Hierqueue_l1<uint16_t>;
+template class Cache_Hierqueue_l1<uint32_t>;
+template class Cache_Hierqueue_l1<uint64_t>;
 
 // Cache_Hierqueue_l1 end
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1124,10 +1124,10 @@ template class Cache_Hierqueue_l1<_uint64>;
 // Cache_Hierqueue_l2
 
 template <class Pixel>
-void Cache_Hierqueue_l2<Pixel>::initHQ(_uint64 qsize_in, ImgIdx *dhist, _int32 numlevels, size_t listsize) {
+void Cache_Hierqueue_l2<Pixel>::initHQ(uint64_t qsize_in, ImgIdx *dhist, int32_t numlevels, size_t listsize) {
     this->maxSize_queue = qsize_in;
     hqueue = new HQueue_l2idx(qsize_in, dhist, numlevels);
-    list = (HQentry<_int32> *)Malloc((listsize + 1) * sizeof(HQentry<_int32>));
+    list = (HQentry<int32_t> *)Malloc((listsize + 1) * sizeof(HQentry<int32_t>));
     list[0].pidx = 0;
     list[0].alpha = 0;
     list++;
@@ -1137,12 +1137,12 @@ void Cache_Hierqueue_l2<Pixel>::initHQ(_uint64 qsize_in, ImgIdx *dhist, _int32 n
 }
 
 template <class Pixel>
-Cache_Hierqueue_l2<Pixel>::Cache_Hierqueue_l2(_uint64 qsize_in, ImgIdx *dhist, _int32 numlevels) {
+Cache_Hierqueue_l2<Pixel>::Cache_Hierqueue_l2(uint64_t qsize_in, ImgIdx *dhist, int32_t numlevels) {
     initHQ(qsize_in, dhist, numlevels, 12);
 }
 
 template <class Pixel>
-Cache_Hierqueue_l2<Pixel>::Cache_Hierqueue_l2(_uint64 qsize_in, ImgIdx *dhist, _int32 numlevels, size_t listsize) {
+Cache_Hierqueue_l2<Pixel>::Cache_Hierqueue_l2(uint64_t qsize_in, ImgIdx *dhist, int32_t numlevels, size_t listsize) {
     initHQ(qsize_in, dhist, numlevels, listsize);
 }
 
@@ -1151,14 +1151,14 @@ template <class Pixel> Cache_Hierqueue_l2<Pixel>::~Cache_Hierqueue_l2() {
     Free(list - 1);
 }
 
-template <class Pixel> void Cache_Hierqueue_l2<Pixel>::push_1stitem(ImgIdx idx, _int32 alpha) {
+template <class Pixel> void Cache_Hierqueue_l2<Pixel>::push_1stitem(ImgIdx idx, int32_t alpha) {
     list[0].pidx = idx;
     list[0].alpha = alpha;
     curSize_list++;
 }
 
-template <class Pixel> void Cache_Hierqueue_l2<Pixel>::push(ImgIdx idx, _int32 alpha) {
-    _int16 i;
+template <class Pixel> void Cache_Hierqueue_l2<Pixel>::push(ImgIdx idx, int32_t alpha) {
+    int16_t i;
 
     if (_emptyTop && alpha < list[0].alpha) {
         _emptyTop = 0;
@@ -1167,7 +1167,7 @@ template <class Pixel> void Cache_Hierqueue_l2<Pixel>::push(ImgIdx idx, _int32 a
         return;
     }
 
-    if ((_int64)alpha < hqueue->get_minlev()) {
+    if ((int64_t)alpha < hqueue->get_minlev()) {
         if (curSize_list < maxSize_list) // spare room in the list
         {
             for (i = curSize_list; alpha < list[i].alpha; i--)
@@ -1191,7 +1191,7 @@ template <class Pixel> void Cache_Hierqueue_l2<Pixel>::push(ImgIdx idx, _int32 a
 
 template <class Pixel> ImgIdx Cache_Hierqueue_l2<Pixel>::pop() {
     ImgIdx ret = top();
-    _int8 i;
+    int8_t i;
 
     if (curSize_list == 0) {
         list[0].pidx = hqueue->top();
@@ -1206,10 +1206,10 @@ template <class Pixel> ImgIdx Cache_Hierqueue_l2<Pixel>::pop() {
     return ret;
 }
 
-template class Cache_Hierqueue_l2<_uint8>;
-template class Cache_Hierqueue_l2<_uint16>;
-template class Cache_Hierqueue_l2<_uint32>;
-template class Cache_Hierqueue_l2<_uint64>;
+template class Cache_Hierqueue_l2<uint8_t>;
+template class Cache_Hierqueue_l2<uint16_t>;
+template class Cache_Hierqueue_l2<uint32_t>;
+template class Cache_Hierqueue_l2<uint64_t>;
 
 // Cache_Hierqueue_l2 end
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1218,7 +1218,7 @@ template class Cache_Hierqueue_l2<_uint64>;
 
 void Trie_Cache::initHQ(ImgIdx size, size_t listsize) {
     this->maxSize_queue = size;
-    trie = new Trie<_uint64>(size);
+    trie = new Trie<uint64_t>(size);
     list = (ImgIdx *)Malloc((listsize + 1) * sizeof(ImgIdx));
     list[0] = 0;
     list++;
@@ -1237,7 +1237,7 @@ Trie_Cache::~Trie_Cache() {
 }
 
 void Trie_Cache::push(ImgIdx idx) {
-    _int16 i;
+    int16_t i;
     if (idx < trie->top()) {
         if (curSize_list < maxSize_list) // spare room in the list
         {
@@ -1259,7 +1259,7 @@ void Trie_Cache::push(ImgIdx idx) {
 }
 
 void Trie_Cache::pop() {
-    _int8 i;
+    int8_t i;
     if (curSize_list == 0) {
         list[0] = trie->top();
 
@@ -1294,7 +1294,7 @@ HybridQueue_HQueue_Rank::~HybridQueue_HQueue_Rank() {
     Free(list - 1);
 }
 void HybridQueue_HQueue_Rank::push(ImgIdx idx) {
-    _int16 i;
+    int16_t i;
     if (idx < queue->top()) {
         if (curSize_list < maxSize_list) // spare room in the list
         {
@@ -1371,7 +1371,7 @@ HybridQueue_HQueue_Rank1::~HybridQueue_HQueue_Rank1() {
 }
 
 void HybridQueue_HQueue_Rank1::push(ImgIdx idx) {
-    _int16 i, j, lm;
+    int16_t i, j, lm;
     lm = (l0 - 1) & mask;
     if (idx < queue->top()) {
         if (curSize_list < maxSize_list) // spare room in the list
@@ -1429,11 +1429,11 @@ void HybridQueue_HQueue_Rank1::pop() {
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // HybridQueue_HQueue
 
-void HybridQueue_HQueue::initHQ(_uint64 qsize_in, ImgIdx *dhist, _int32 numlevels, size_t listsize) {
+void HybridQueue_HQueue::initHQ(uint64_t qsize_in, ImgIdx *dhist, int32_t numlevels, size_t listsize) {
     this->maxSize_queue = qsize_in;
     queue = new HQueue_l1idx(qsize_in, dhist, numlevels);
     list = (ImgIdx *)Malloc((listsize) * sizeof(ImgIdx));
-    levels = (_int64 *)Malloc((listsize + 1) * sizeof(_int64));
+    levels = (int64_t *)Malloc((listsize + 1) * sizeof(int64_t));
     levels[0] = 0;
     levels++;
     maxSize_list = listsize - 1;
@@ -1442,11 +1442,11 @@ void HybridQueue_HQueue::initHQ(_uint64 qsize_in, ImgIdx *dhist, _int32 numlevel
     minlevnotfixed = 0;
 }
 
-HybridQueue_HQueue::HybridQueue_HQueue(_uint64 qsize_in, ImgIdx *dhist, _int32 numlevels) {
+HybridQueue_HQueue::HybridQueue_HQueue(uint64_t qsize_in, ImgIdx *dhist, int32_t numlevels) {
     initHQ(qsize_in, dhist, numlevels, LISTSIZE_DEFAULT);
 }
 
-HybridQueue_HQueue::HybridQueue_HQueue(_uint64 qsize_in, ImgIdx *dhist, _int32 numlevels, size_t listsize) {
+HybridQueue_HQueue::HybridQueue_HQueue(uint64_t qsize_in, ImgIdx *dhist, int32_t numlevels, size_t listsize) {
     initHQ(qsize_in, dhist, numlevels, listsize);
 }
 
@@ -1456,8 +1456,8 @@ HybridQueue_HQueue::~HybridQueue_HQueue() {
     Free(levels - 1);
 }
 
-void HybridQueue_HQueue::push(ImgIdx idx, _int64 level) {
-    _int16 i;
+void HybridQueue_HQueue::push(ImgIdx idx, int64_t level) {
+    int16_t i;
     if (curSize_list == -1) // should be run only the first time
     {
         list[0] = idx;
@@ -1504,7 +1504,7 @@ ImgIdx HybridQueue_HQueue::pop() {
 
         pop_queue();
     } else {
-        for (_int8 i = 0; i < curSize_list; i++) {
+        for (int8_t i = 0; i < curSize_list; i++) {
             list[i] = list[i + 1];
             levels[i] = levels[i + 1];
         }

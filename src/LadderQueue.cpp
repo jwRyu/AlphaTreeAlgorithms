@@ -1,7 +1,5 @@
 
-#include "LadderQueue.hpp"
-#include "assert.h"
-#include <cmath>
+#include <LadderQueue.hpp>
 
 bool verbose = false;
 

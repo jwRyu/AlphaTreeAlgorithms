@@ -2,12 +2,9 @@
 #ifndef ALPHATREECONFIG_H
 #define ALPHATREECONFIG_H
 
-#define CONFIGFILENAME "config.txt"
+#define CONFIGFILENAME "/home/jiwoo/AlphaTreeAlgorithms/config.txt"
 
-#include <map>
-#include <optional>
-#include <string>
-#include <unordered_map>
+#include <defines.hpp>
 
 class AlphaTreeConfig {
   public:

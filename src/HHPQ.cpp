@@ -1,5 +1,5 @@
 #include <HHPQ.hpp>
-#include <allocator.h>
+#include <allocator.hpp>
 #include <cmath>
 #include <cstring>
 
@@ -9,10 +9,10 @@ ImgIdx HHPQ::alphaToLevel(const double &alpha) const {
     return std::min<ImgIdx>((ImgIdx)(_a * log2(1.0 + alpha)), _numLevels - 1);
 }
 
-HHPQ::HHPQ(const ImgIdx *dhist, ImgIdx numLevels_, ImgIdx size, const _uint8 *isVisited_, double a_, int cacheSize,
-           double r, _uint8 *edgeStatus_)
+HHPQ::HHPQ(const ImgIdx *dhist, ImgIdx numLevels_, ImgIdx size, const uint8_t *isVisited_, double a_, int cacheSize,
+           double r)
     : _numLevels(numLevels_), _a(a_), _lowestNonemptyLevel(numLevels_), _curSizeCache(0), _maxSizeCache(cacheSize),
-      _isVisited(isVisited_), _edgeStatus(edgeStatus_), _size(0) {
+      _isVisited(isVisited_), _size(0) {
     initHQ(dhist, size, r);
 }
 
@@ -101,11 +101,9 @@ void HHPQ::print() {
     printf("---------- HHPQ::print END -------------\n");
 }
 
-void HHPQ::push(const ImgIdx &idx, const double &alpha, ImgIdx edgeIdx) {
+void HHPQ::push(const ImgIdx &idx, const double &alpha) {
     _size++;
-    const QItem newItem(idx, alpha, edgeIdx);
-    if (_edgeStatus)
-        _edgeStatus[edgeIdx] = QItem::EDGE_ENQUEUED;
+    const QItem newItem(idx, alpha);
 
     if (_curSizeCache == 0) {
         _curSizeCache++;
@@ -204,8 +202,6 @@ bool HHPQ::isFrontLevelEmptyAfterSort() {
         for (ImgIdx p = 0; p < levelSize; p++) {
             if (!_isVisited[level[p].index])
                 pQ->push(level[p]);
-            else if (_edgeStatus)
-                _edgeStatus[level[p].edgeIdx] = QItem::EDGE_REDUNDANT;
         }
         Free(_unsortedLevels[_lowestNonemptyLevel]);
         _unsortedLevels[_lowestNonemptyLevel] = 0;

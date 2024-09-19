@@ -39,7 +39,7 @@ template <class Pixel> double PixelDissimilarity<Pixel>::LInfinity(ImgIdx index1
     return dist;
 }
 
-template class PixelDissimilarity<_uint8>;
-template class PixelDissimilarity<_uint16>;
-template class PixelDissimilarity<_uint32>;
-template class PixelDissimilarity<_uint64>;
+template class PixelDissimilarity<uint8_t>;
+template class PixelDissimilarity<uint16_t>;
+template class PixelDissimilarity<uint32_t>;
+template class PixelDissimilarity<uint64_t>;

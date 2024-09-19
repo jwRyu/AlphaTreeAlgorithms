@@ -1,8 +1,4 @@
-#include "AlphaTreeConfig.h"
-#include <algorithm>
-#include <fstream>
-#include <iostream>
-#include <sstream>
+#include <AlphaTreeConfig.hpp>
 
 AlphaTreeConfig::AlphaTreeConfig(const std::string &filename, const std::string &commentToken)
     : filename(filename), commentToken(commentToken) {

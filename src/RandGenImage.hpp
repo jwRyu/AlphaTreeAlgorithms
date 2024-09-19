@@ -1,9 +1,9 @@
-#include "defines.h"
+#include <defines.hpp>
 
 class RandGenImage {
   public:
-    static void randomize8(_uint8 *img, int width, int height, int bit_depth, int ch);
-    static void randomize16(_uint16 *img, int width, int height, int bit_depth, int ch);
-    static void randomize32(_uint32 *img, int width, int height, int bit_depth);
-    static void randomize64(_uint64 *img, int width, int height, int bit_depth);
+    static void randomize8(uint8_t *img, int width, int height, int bit_depth, int ch);
+    static void randomize16(uint16_t *img, int width, int height, int bit_depth, int ch);
+    static void randomize32(uint32_t *img, int width, int height, int bit_depth);
+    static void randomize64(uint64_t *img, int width, int height, int bit_depth);
 };
