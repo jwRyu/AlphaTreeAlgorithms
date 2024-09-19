@@ -26,4 +26,5 @@ template class RankItem<uint8_t>;
 template class RankItem<uint16_t>;
 template class RankItem<uint32_t>;
 template class RankItem<uint64_t>;
+template class RankItem<float>;
 template class RankItem<double>;

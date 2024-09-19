@@ -61,18 +61,18 @@ using namespace pmt;
 template <class Pixel> class AlphaNode {
   public:
     ImgIdx area = 0;
-    double alpha = std::numeric_limits<Pixel>::infinity();
-    double sumPix = 0.0;
+    float alpha = std::numeric_limits<Pixel>::infinity();
+    float sumPix = 0.0;
     Pixel minPix = std::numeric_limits<Pixel>::max();
     Pixel maxPix = std::numeric_limits<Pixel>::min();
     ImgIdx parentIdx = ROOTIDX;
     ImgIdx _rootIdx = ROOTIDX;
 
     AlphaNode() = default;
-    AlphaNode(Pixel pixelVal, double alpha_, ImgIdx parentidx_ = ROOTIDX);
-    AlphaNode(double alpha_, ImgIdx parentidx_ = ROOTIDX);
+    AlphaNode(Pixel pixelVal, float alpha_, ImgIdx parentidx_ = ROOTIDX);
+    AlphaNode(float alpha_, ImgIdx parentidx_ = ROOTIDX);
 
-    inline void set(ImgIdx area_in, double level, double sumPix_in, Pixel minPix_in, Pixel maxPix_in);
+    inline void set(ImgIdx area_in, float level, float sumPix_in, Pixel minPix_in, Pixel maxPix_in);
     inline void add(AlphaNode *q);
     inline void add(const AlphaNode &q);
     inline void add(const Pixel &pix_val);
@@ -179,14 +179,13 @@ template <class Pixel> class AlphaTree {
     void compute_dimg_hhpq_par(double *dimg, ImgIdx *dhist, const Pixel *img, double a);
     Pixel abs_diff(Pixel p, Pixel q);
     uint8_t compute_incidedge_queue(Pixel d0, Pixel d1);
-    void computeDimgRadixf(RankItem<double> *&rankitem, const Pixel *img, SortValue<float> *&vals);
-    void compute_dimg_par4(RankItem<double> *&rankitem, const Pixel *img, SortValue<Pixel> *&vals);
-    Pixel compute_dimg(double *dimg, const Pixel *img);
+    void computeDimgRadixf(RankItem<float> *&rankitem, const Pixel *img, SortValue<float> *&vals);
+    Pixel compute_dimg(float *dimg, const Pixel *img);
     Pixel compute_dimg1(Pixel *dimg, ImgIdx *dhist, const Pixel *img);
-    void compute_dimg(ImgIdx &minidx, double &mindiff, Pixel *dimg, ImgIdx *dhist, const Pixel *img, double a);
+    void compute_dimg(ImgIdx &minidx, float &mindiff, Pixel *dimg, ImgIdx *dhist, const Pixel *img, double a);
     void compute_dimg(Pixel *dimg, ImgIdx *dhist, const Pixel *img, double a);
     Pixel compute_dimg(Pixel *dimg, ImgIdx *dhist, const Pixel *img);
-    double compute_dimg(double *dimg, ImgIdx *dhist, const Pixel *img);
+    float compute_dimg(float *dimg, ImgIdx *dhist, const Pixel *img);
     void set_isAvailable(uint8_t *isAvailable);
     void set_isAvailable(uint8_t *isAvailable, int npartitions_hor, int npartitions_ver);
     uint8_t is_available(uint8_t isAvailable, uint8_t iNeighbour) const;
@@ -208,11 +207,11 @@ template <class Pixel> class AlphaTree {
     void remove_redundant_node(ImgIdx &prev_top, ImgIdx &stack_top);
     int get_bitdepth(uint64_t num);
     ImgIdx initialize_node(const Pixel *img, Pixel *dimg, Pixel maxpixval);
-    void initialize_node1(const Pixel *img, RankItem<double> *rankitem, Pixel maxpixval);
-    void initialize_node1(const Pixel *img, RankItem<double> *rankitem, Pixel maxpixval, int32_t *rankToIndex);
+    void initialize_node1(const Pixel *img, RankItem<float> *rankitem, Pixel maxpixval);
+    void initialize_node1(const Pixel *img, RankItem<float> *rankitem, Pixel maxpixval, int32_t *rankToIndex);
     void initialize_node(const Pixel *img, RankItem<Pixel> *rankitem, Pixel maxpixval);
     void initialize_node_par(const Pixel *img, RankItem<Pixel> *rankitem, Pixel maxpixval);
-    void initialize_node_par1(const Pixel *img, RankItem<double> *rankitem, Pixel maxpixval, int32_t *rankToIndex);
+    void initialize_node_par1(const Pixel *img, RankItem<float> *rankitem, Pixel maxpixval, int32_t *rankToIndex);
     void init_hypergraph_nodes(Pixel *dimg);
     void init_hypergraph_nodes(ImgIdx *rank);
     void set_isAvailable_hypergraph(uint8_t *isAvailable);
@@ -248,7 +247,7 @@ template <class Pixel> class AlphaTree {
     ImgIdx find_root(AlphaNode<Pixel> *pilottree, ImgIdx p, Pixel below_this_qlevel);
     ImgIdx descendroots(ImgIdx q, int64_t qlevel, AlphaNode<Pixel> *pilottree);
     void unionfind_refine_qlevel(int64_t qlevel, int64_t binsize, ImgIdx nredges, AlphaNode<Pixel> *pilottree,
-                                 RankItem<double> *rankitem, int8_t *redundant_edge, int32_t *rankToIndex);
+                                 RankItem<float> *rankitem, int8_t *redundant_edge, int32_t *rankToIndex);
     void compute_dhist_par(uint8_t *qrank, ImgIdx *dhist, ImgIdx *startpidx, int32_t numbins, int8_t npartition_x,
                            int8_t npartition_y, int64_t blksz_x, int64_t blksz_y, int64_t blksz_xn, int64_t blksz_yn);
     void compute_dhist_par_hypergraph(uint8_t *qrank, ImgIdx *dhist, ImgIdx *startpidx, int32_t numbins,
@@ -272,9 +271,9 @@ template <class Pixel> class AlphaTree {
                                  int8_t npartition_x, int8_t npartition_y, int64_t blksz_x, int64_t blksz_y,
                                  int64_t blksz_xn, int64_t blksz_yn);
     void memalloc_queues(HierarQueue ***queues, int64_t numpartitions, ImgIdx *blocksize, ImgIdx *subtree_max);
-    void computeDimgAndRankToIndex(RankItem<double> *&rankitem, const Pixel *img, ImgIdx nredges, int32_t *rankToIndex);
-    void compute_difference_and_sort(RankItem<double> *&rankitem, const Pixel *img, ImgIdx nredges);
-    void computeDifferenceAndSort(ImgIdx *rank, RankItem<double> *&rankitem, const Pixel *img, ImgIdx nredges,
+    void computeDimgAndRankToIndex(RankItem<float> *&rankitem, const Pixel *img, ImgIdx nredges, int32_t *rankToIndex);
+    void compute_difference_and_sort(RankItem<float> *&rankitem, const Pixel *img, ImgIdx nredges);
+    void computeDifferenceAndSort(ImgIdx *rank, RankItem<float> *&rankitem, const Pixel *img, ImgIdx nredges,
                                   int32_t *&rankToIndex);
     ImgIdx NewAlphaNode(ImgIdx &size, ImgIdx &maxsize);
     ImgIdx NewAlphaNode(AlphaNode<Pixel> *tree, ImgIdx &size, ImgIdx &maxsize, Pixel level, AlphaNode<Pixel> *pCopy);
