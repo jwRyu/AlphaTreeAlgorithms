@@ -6,7 +6,6 @@ class QuadHeapQueue {
     ImgIdx cursize;
     ImgIdx maxsize;
     QItem *arr;
-    double pop_level;
 
   public:
     ImgIdx get_cursize() { return cursize; }

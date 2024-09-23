@@ -153,8 +153,6 @@ template <class Pixel> class AlphaTree {
                               ImgIdx *subtree_cur);
     std::pair<ImgIdx, uint8_t> computeFloodingContextHybridPartition(bool &isFirstPixel, const ImgIdx &qitem,
                                                                      const uint8_t *isAvailable);
-    void computeDiffHybridParallel(const Pixel *img, double a, ImgIdx *bucketHist, ImgIdx numBuckets,
-                                   RankItem<double> *rankItems);
 
     ImgIdx mergePartition(Pixel *dimg, int64_t blksz_x, int64_t blksz_y, ImgIdx npartition_x, ImgIdx npartition_y,
                           ImgIdx *subtree_cur);
@@ -176,7 +174,6 @@ template <class Pixel> class AlphaTree {
                        uint8_t *numQueuedEdges) const;
     void registerEdge(ImgIdx imgIdx, ImgIdx edgeIdx, ImgIdx *queuedEdges, uint8_t *numQueuedEdges) const;
     void compute_dimg_hhpq(float *dimg, ImgIdx *dhist, const Pixel *img, double a);
-    void compute_dimg_hhpq_par(double *dimg, ImgIdx *dhist, const Pixel *img, double a);
     Pixel abs_diff(Pixel p, Pixel q);
     uint8_t compute_incidedge_queue(Pixel d0, Pixel d1);
     void computeDimgRadixf(RankItem<float> *&rankitem, const Pixel *img, SortValue<float> *&vals);
