@@ -5,10 +5,10 @@
 
 struct QItem {
     ImgIdx index = -1;
-    double alpha = std::numeric_limits<double>::infinity();
+    float alpha = std::numeric_limits<float>::infinity();
 
     // QItem(ImgIdx index_, Pixel alpha_) : index(index_), alpha(alpha_) {}
-    QItem(ImgIdx index_, double alpha_) : index(index_), alpha(alpha_) {}
+    QItem(ImgIdx index_, float alpha_) : index(index_), alpha(alpha_) {}
     bool operator<(const QItem &other) const { return alpha < other.alpha; }
     // bool operator<=(const QItem &other) const { return alpha <= other.alpha; }
     void print() { printf("(%d, %.2f) ", (int)index, (double)alpha); }
