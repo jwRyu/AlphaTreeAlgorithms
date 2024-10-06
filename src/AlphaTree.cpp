@@ -286,56 +286,6 @@ void AlphaTree<Pixel>::printGraph(const uint8_t *isVisited, const uint8_t *edge,
     printf("\n");
 }
 
-template <class Pixel>
-void AlphaTree<Pixel>::printGraph(const uint8_t *isVisited, const bool *isRedundant, const Pixel *img) const {
-    printf("Index |   Graph (Left)   |   Image (Right)\n");
-    printf("------------------------------------------\n");
-    for (int i = 0; i < _height - 1; i++) {
-        printf("%3d | ", i * _width);
-        for (int j = 0; j < _width - 1; j++) {
-            int imgIdx = i * _width + j;
-            int dimgIdx = imgIdx * 2 + 1;
-            if (isRedundant == 0 || isRedundant[dimgIdx] == 0)
-                printf("%d   ", (int)isVisited[imgIdx]);
-            else
-                printf("%d x ", (int)isVisited[imgIdx]);
-        }
-        printf("%d   |   ", (int)isVisited[i * _width + _width - 1]);
-
-        for (int j = 0; j < _width; j++) {
-            int imgIdx = i * _width + j;
-            printf("%2d ", (int)img[imgIdx]);
-        }
-        printf("\n    | ");
-
-        for (int j = 0; j < _width; j++) {
-            int imgIdx = i * _width + j;
-            int dimgIdx = imgIdx * 2;
-            if (isRedundant == 0 || isRedundant[dimgIdx] == 0)
-                printf("    ");
-            else
-                printf("x   ");
-        }
-        printf("|\n");
-    }
-    printf("%3d | ", (_height - 1) * _width);
-    for (int j = 0; j < _width - 1; j++) {
-        int imgIdx = (_height - 1) * _width + j;
-        int dimgIdx = imgIdx * 2 + 1;
-        if (isRedundant == 0 || isRedundant[dimgIdx] == 0)
-            printf("%d   ", (int)isVisited[imgIdx]);
-        else
-            printf("%d x ", (int)isVisited[imgIdx]);
-    }
-    printf("%d   |   ", (int)isVisited[_width * _height - 1]);
-
-    for (int j = 0; j < _width; j++) {
-        int imgIdx = (_height - 1) * _width + j;
-        printf("%2d ", (int)img[imgIdx]);
-    }
-    printf("\n");
-}
-
 template <class Pixel> void AlphaTree<Pixel>::printParentAry() const {
     printf("Parent Array\n");
     for (int i = 0; i < _height; i++) {
@@ -380,42 +330,79 @@ template <class Pixel> uint8_t AlphaTree<Pixel>::compute_incidedge_queue(Pixel d
 
 template <class Pixel>
 void AlphaTree<Pixel>::computeDimgRadixf(RankItem<float> *&rankitem, const Pixel *img, SortValue<float> *&vals) {
+    const int shamt = _connectivity >> 2;
     if (_connectivity == 4) {
 #pragma omp parallel for schedule(guided, 1)
         for (ImgIdx i = 0; i < _height; i++) {
-            float d;
             ImgIdx imgidx = i * _width;
-            ImgIdx dimgidx = imgidx << (_connectivity >> 2);
+            ImgIdx dimgidx = imgidx << shamt;
             ImgIdx contidx = dimgidx - i;
             if (i < _height - 1) {
                 for (ImgIdx j = 0; j < _width - 1; j++) {
                     // caclulate histogram here
                     vals[contidx].val_ = (float)_pixelDissim.computeDissimilarity(imgidx, imgidx + _width);
-                    d = (float)(vals[contidx].val_);
-                    rankitem[contidx].alpha = d;
-                    rankitem[contidx++].dimgidx = dimgidx++;
+                    rankitem[contidx] = RankItem<float>(dimgidx++, vals[contidx].val_);
+                    contidx++;
 
                     vals[contidx].val_ = (float)_pixelDissim.computeDissimilarity(imgidx, imgidx + 1);
-                    d = (float)(vals[contidx].val_);
-                    rankitem[contidx].alpha = d;
-                    rankitem[contidx++].dimgidx = dimgidx++;
+                    rankitem[contidx] = RankItem<float>(dimgidx++, vals[contidx].val_);
+                    contidx++;
                     imgidx++;
                 }
                 vals[contidx].val_ = (float)_pixelDissim.computeDissimilarity(imgidx, imgidx + _width);
-                d = (float)(vals[contidx].val_);
-                rankitem[contidx].alpha = d;
-                rankitem[contidx++].dimgidx = dimgidx;
+                rankitem[contidx] = RankItem<float>(dimgidx, vals[contidx].val_);
+                contidx++;
                 dimgidx += 2;
                 imgidx++;
             } else {
                 for (ImgIdx j = 0; j < _width - 1; j++) {
                     dimgidx++;
                     vals[contidx].val_ = (float)_pixelDissim.computeDissimilarity(imgidx, imgidx + 1);
-                    d = (float)(vals[contidx].val_);
-                    rankitem[contidx].alpha = d;
-                    rankitem[contidx++].dimgidx = dimgidx++;
+                    rankitem[contidx] = RankItem<float>(dimgidx++, vals[contidx].val_);
+                    contidx++;
                     imgidx++;
                 }
+            }
+        }
+    } else if (_connectivity == 8) {
+        for (ImgIdx i = 0; i < _height; i++) {
+            ImgIdx imgidx = i * _width;
+            ImgIdx dimgidx = imgidx << shamt;
+
+            const bool top = i > 0;
+            const bool bottom = i < _height - 1;
+
+            ImgIdx contidx = dimgidx - 3 * i - (top ? _width - 1 : 0);
+            for (ImgIdx j = 0; j < _width; j++, imgidx++) {
+                const bool right = j < _width - 1;
+
+                if (bottom) {
+                    vals[contidx].val_ = (float)_pixelDissim.computeDissimilarity(imgidx, imgidx + _width);
+                    rankitem[contidx] = RankItem<float>(dimgidx, vals[contidx].val_);
+                    contidx++;
+                }
+                dimgidx++;
+
+                if (bottom && right) {
+                    vals[contidx].val_ = (float)_pixelDissim.computeDissimilarity(imgidx, imgidx + _width + 1);
+                    rankitem[contidx] = RankItem<float>(dimgidx, vals[contidx].val_);
+                    contidx++;
+                }
+                dimgidx++;
+
+                if (right) {
+                    vals[contidx].val_ = (float)_pixelDissim.computeDissimilarity(imgidx, imgidx + 1);
+                    rankitem[contidx] = RankItem<float>(dimgidx, vals[contidx].val_);
+                    contidx++;
+                }
+                dimgidx++;
+
+                if (top && right) {
+                    vals[contidx].val_ = (float)_pixelDissim.computeDissimilarity(imgidx, imgidx - _width + 1);
+                    rankitem[contidx] = RankItem<float>(dimgidx, vals[contidx].val_);
+                    contidx++;
+                }
+                dimgidx++;
             }
         }
     }
@@ -2452,7 +2439,6 @@ FLOOD_END:
     Free(isAvailable);
 }
 
-// hhpq
 template <class Pixel> void AlphaTree<Pixel>::FloodHierarHeapQueue(const Pixel *img, float a, float r, int listsize) {
     assert(_connectivity == 4 || _connectivity == 8 || _connectivity == 12);
     clear();
@@ -3673,17 +3659,21 @@ ImgIdx AlphaTree<Pixel>::merge_subtrees(uint8_t *dimg, int64_t blksz_x, int64_t 
     return p;
 }
 
+// implement 8N
 template <class Pixel>
 ImgIdx AlphaTree<Pixel>::mergeSubtreeHybrid(uint8_t *dimg, ImgIdx blksz_x, ImgIdx blksz_y, ImgIdx npartition_x,
                                             ImgIdx npartition_y, ImgIdx *subtree_cur) {
+    const int shamt = _connectivity / 4;
     const ImgIdx blksz_x0 = blksz_x;
     const ImgIdx blksz_y0 = blksz_y;
     const ImgIdx npartition_x0 = npartition_x;
     const ImgIdx npartition_y0 = npartition_y;
     const ImgIdx blkrow = _width * blksz_y0;
     while (npartition_x > 1 || npartition_y > 1) {
+
+        // Merge vertically
         if ((npartition_x == 1 || blksz_x >= blksz_y) && npartition_y > 1) {
-            const ImgIdx numblk = npartition_x * (npartition_y / 2); // 8N
+            const ImgIdx numblk = npartition_x * (npartition_y / 2);
 
 #pragma omp parallel for schedule(dynamic, 1)
             for (int blk = 0; blk < numblk; blk++) {
@@ -3696,7 +3686,7 @@ ImgIdx AlphaTree<Pixel>::mergeSubtreeHybrid(uint8_t *dimg, ImgIdx blksz_x, ImgId
                 for (ImgIdx p = p0; p < pn; p++) {
                     const ImgIdx bx = _min(((p % _width) / blksz_x0), npartition_x0 - 1);
                     const ImgIdx bidx = by * npartition_x0 + bx;
-                    const ImgIdx dimgidx = p << 1; // 8N
+                    const ImgIdx dimgidx = p << shamt; // 8N
 
                     connect(_parentAry[p], _parentAry[p + _width], (ImgIdx)subtree_cur[bidx]++, (Pixel)dimg[dimgidx]);
                 }
@@ -3721,7 +3711,7 @@ ImgIdx AlphaTree<Pixel>::mergeSubtreeHybrid(uint8_t *dimg, ImgIdx blksz_x, ImgId
                 for (ImgIdx p = p0; p < pn; p += _width) {
                     const ImgIdx by = _min((p / blkrow), npartition_y0 - 1);
                     const ImgIdx bidx = by * npartition_x0 + bx;
-                    const ImgIdx dimgidx = (p << 1) + 1; // 8N
+                    const ImgIdx dimgidx = (p << shamt) + 1; // 8N
 
                     connect(_parentAry[p], _parentAry[p + 1], (ImgIdx)subtree_cur[bidx]++, (Pixel)dimg[dimgidx]);
                     // connect 8N
@@ -4530,6 +4520,8 @@ void AlphaTree<Pixel>::blockwise_tse(ImgIdx *subtree_size, ImgIdx *subtree_nbord
     }
 }
 
+// test quantize_ranks_compute_histogram. make sure thing are run in parallel (parallel for loop check etc.)
+
 // blockwise quantization and histogram computation (for pilot_rank)
 template <class Pixel>
 void AlphaTree<Pixel>::quantize_ranks_compute_histogram(uint8_t *qrank, ImgIdx *rank, const Pixel *img, ImgIdx *dhist,
@@ -4540,56 +4532,83 @@ void AlphaTree<Pixel>::quantize_ranks_compute_histogram(uint8_t *qrank, ImgIdx *
 
 #pragma omp parallel for
     for (int blk = 0; blk < numpartitions; blk++) {
-        ImgIdx p, q;
-        ImgIdx blockWidth = blockWidths[blk];
-        ImgIdx blockHeight = blockHeights[blk];
+        const ImgIdx blockWidth = blockWidths[blk];
+        const ImgIdx blockHeight = blockHeights[blk];
+        const bool topBlock = (blk / npartition_x) > 0;
+        const bool rightBlock = (blk % npartition_x) < (npartition_x - 1);
+        const bool bottomBlock = (blk / npartition_x) < (npartition_y - 1);
+        const ImgIdx startPixelIndex = startpidx[blk];
+        const int shamt = _connectivity / 4;
         ImgIdx *blockDiffHist = dhist + numbins * blk;
-        bool lastcol = (blk % npartition_x) == (npartition_x - 1);
-        bool lastrow = (blk / npartition_x) == (npartition_y - 1);
-        ImgIdx startPixelIndex = startpidx[blk];
         Pixel maxdiff = 0;
 
-        for (ImgIdx i = 0; i < blockHeight; i++) {
-            ImgIdx r;
-            uint8_t qr;
-            p = startPixelIndex + i * _width;
-            bool blklastrow = (i == blockHeight - 1);
-            for (ImgIdx j = 0; j < blockWidth - 1; j++) {
-                q = p << 1;
-                if (i < blockHeight - 1 || !lastrow) {
-                    r = rank[q];
-                    qr = QUANTIZE_RANK(r, binsize);
-                    qrank[q] = qr;
-                    blockDiffHist[qr]++;
-                    if (!blklastrow)
-                        maxdiff = _max(maxdiff, qr);
+        if (_connectivity == 4) {
+            for (ImgIdx i = 0; i < blockHeight; i++) {
+                const bool bottom = i < blockHeight - 1;
+                for (ImgIdx j = 0; j < blockWidth; j++) {
+                    const bool right = j < blockWidth - 1;
+                    const ImgIdx p = startPixelIndex + i * _width + j;
+                    const ImgIdx q = p << shamt;
+                    if (bottomBlock || bottom) {
+                        const uint8_t qr = QUANTIZE_RANK(rank[q], binsize);
+                        qrank[q] = qr;
+                        blockDiffHist[qr]++;
+                        if (bottom) // maxdiff is for max queue level for PQ in subblock flooding, thus inter-block
+                                    // edges are ignored
+                            maxdiff = _max(maxdiff, qr);
+                    }
+                    if (rightBlock || right) {
+                        const uint8_t qr = QUANTIZE_RANK(rank[q + 1], binsize);
+                        qrank[q + 1] = qr;
+                        blockDiffHist[qr]++;
+                        if (right)
+                            maxdiff = _max(maxdiff, qr);
+                    }
                 }
-                r = rank[q + 1];
-                qr = QUANTIZE_RANK(r, binsize);
-                qrank[q + 1] = qr;
-                blockDiffHist[qr]++;
-                maxdiff = _max(maxdiff, qr);
-                p++;
             }
-
-            q = p << 1;
-            if (i < blockHeight - 1 || !lastrow) {
-                r = rank[q];
-                qr = QUANTIZE_RANK(r, binsize);
-                qrank[q] = qr;
-                blockDiffHist[qr]++;
-                if (!blklastrow)
-                    maxdiff = _max(maxdiff, qr);
+            blockDiffHist[maxdiff]++; // dummy for subroot
+            subtree_max[blk] = maxdiff;
+        } else if (_connectivity == 8) {
+            for (ImgIdx i = 0; i < blockHeight; i++) {
+                const bool top = i > 0;
+                const bool bottom = i < blockHeight - 1;
+                for (ImgIdx j = 0; j < blockWidth; j++) {
+                    const bool right = j < blockWidth - 1;
+                    const ImgIdx p = startPixelIndex + i * _width + j;
+                    const ImgIdx q = p << shamt;
+                    if (bottomBlock || bottom) {
+                        const uint8_t qr = QUANTIZE_RANK(rank[q], binsize);
+                        qrank[q] = qr;
+                        blockDiffHist[qr]++;
+                        if (bottom)
+                            maxdiff = _max(maxdiff, qr);
+                    }
+                    if ((bottomBlock && rightBlock) || (bottom && right)) {
+                        const uint8_t qr = QUANTIZE_RANK(rank[q + 1], binsize);
+                        qrank[q + 1] = qr;
+                        blockDiffHist[qr]++;
+                        if (bottom && right)
+                            maxdiff = _max(maxdiff, qr);
+                    }
+                    if (right || rightBlock) {
+                        const uint8_t qr = QUANTIZE_RANK(rank[q + 2], binsize);
+                        qrank[q + 2] = qr;
+                        blockDiffHist[qr]++;
+                        if (right)
+                            maxdiff = _max(maxdiff, qr);
+                    }
+                    if ((topBlock && rightBlock) || (top && right)) {
+                        const uint8_t qr = QUANTIZE_RANK(rank[q + 3], binsize);
+                        qrank[q + 3] = qr;
+                        blockDiffHist[qr]++;
+                        if (top && right)
+                            maxdiff = _max(maxdiff, qr);
+                    }
+                }
             }
-            if (!lastcol) {
-                r = rank[q + 1];
-                qr = QUANTIZE_RANK(r, binsize);
-                qrank[q + 1] = qr;
-                blockDiffHist[qr]++;
-            }
+            blockDiffHist[maxdiff]++; // dummy for subroot
+            subtree_max[blk] = maxdiff;
         }
-        blockDiffHist[maxdiff]++; // dummy for subroot
-        subtree_max[blk] = maxdiff;
     }
 }
 
@@ -5224,16 +5243,35 @@ template <class Pixel>
 void AlphaTree<Pixel>::set_subblock_properties(ImgIdx *startpidx, ImgIdx *blockWidths, ImgIdx *blockHeights,
                                                ImgIdx *blocksize, int8_t npartition_x, int8_t npartition_y,
                                                int64_t blksz_x, int64_t blksz_y, int64_t blksz_xn, int64_t blksz_yn) {
-    ImgIdx p = 0, q;
+    const ImgIdx nrEdgePerPixel = _connectivity / 2;
+    ImgIdx p = 0;
     for (int8_t y = 0; y < npartition_y; y++) {
-        q = y * _width * (ImgIdx)blksz_y;
-        bool lastrow = (y == npartition_y - 1);
-        ImgIdx blockHeight = lastrow ? blksz_yn : blksz_y;
+        const ImgIdx q = y * _width * (ImgIdx)blksz_y;
+        const bool firstrow = (y == 0);
+        const bool lastrow = (y == npartition_y - 1);
+        const ImgIdx blockHeight = lastrow ? blksz_yn : blksz_y;
         for (int8_t x = 0; x < npartition_x; x++) {
             startpidx[p] = q + (ImgIdx)x * (ImgIdx)blksz_x;
-            bool lastcol = (x == npartition_x - 1);
-            ImgIdx blockWidth = lastcol ? blksz_xn : blksz_x;
-            blocksize[p] = blockHeight * blockWidth * 2 - (ImgIdx)lastrow * blockWidth - (ImgIdx)lastcol * blockHeight;
+            const bool lastcol = (x == npartition_x - 1);
+            const ImgIdx blockWidth = lastcol ? blksz_xn : blksz_x;
+            blocksize[p] = blockHeight * blockWidth * nrEdgePerPixel;
+            // clang-format off
+            if (_connectivity == 4) {
+                //   -  -  -
+                //   -  p  1
+                //   -  0  -
+                if (lastrow) blocksize[p] -= blockWidth;
+                if (lastcol) blocksize[p] -= blockHeight;
+            } else if (_connectivity == 8) {
+                //   -  -  3
+                //   -  p  2
+                //   -  0  1
+                if (firstrow) blocksize[p] -= blockWidth;
+                if (lastcol)  blocksize[p] -= 3 * blockHeight;
+                if (lastrow)  blocksize[p] -= 2 * blockWidth;
+                blocksize[p] += (ImgIdx)(firstrow && lastcol) + (ImgIdx)(lastrow && lastcol);
+            }
+            // clang-format on
             blockWidths[p] = blockWidth;
             blockHeights[p] = blockHeight;
             p++;
@@ -5298,48 +5336,31 @@ void AlphaTree<Pixel>::computeDifferenceAndSort(ImgIdx *rank, RankItem<float> *&
 }
 
 template <class Pixel>
-std::pair<ImgIdx, uint8_t> AlphaTree<Pixel>::computeFloodingContextHybridPartition(bool &isFirstPixel,
-                                                                                   const ImgIdx &qitem,
-                                                                                   const uint8_t *isAvailable) {
-    const int shamt = (_connectivity >> 2) + 1;
-    ImgIdx p = qitem >> shamt;
-    uint8_t isAv = isAvailable[p];
+std::pair<ImgIdx, uint8_t> AlphaTree<Pixel>::getFloodingContext(bool &isFirstPixel, const ImgIdx &qitem,
+                                                                const uint8_t *isAvailable) {
+    const ImgIdx mask = _connectivity == 4 ? 0b1 : 0b11;
+    ImgIdx p = qitem >> ((_connectivity >> 2) + 1);
 
     if (isFirstPixel) {
         isFirstPixel = 0;
-        return {p, isAv};
+        return {p, isAvailable[p]};
     }
 
-    const bool isRedundant = qitem & 1;
-    const bool edgeDirection = (qitem >> 1) & 1;
+    const bool edgeIncident = qitem & 1;
+    const bool edgeDirection = (qitem >> 1) & mask;
 
-    if (isRedundant) {
-        if (_connectivity == 4) {
-            if (edgeDirection) // horizontal edge
-            {
-                p++;
-                isAv = isAvailable[p];
-                isAv &= ~0x4; // do not check the neighbor which pushed this pixel (p) into the
-                              // queue
-            } else            // vertical edge
-            {
-                p += _width;
-                isAv = isAvailable[p];
-                isAv &= ~0x8;
-            }
-        } else {
-            isAv = 0;
-        }
+    uint8_t isAv;
+    if (_connectivity == 4) {
+        static const ImgIdx edgeStrides[2] = {_width, 1};
+        static const ImgIdx isAvMasks[2][2] = {{0b1110, 0b0111}, {0b1101, 0b1011}};
+        p += (ImgIdx)edgeIncident * edgeStrides[edgeDirection];
+        isAv = isAvailable[p] & isAvMasks[edgeDirection][edgeIncident];
     } else {
-        if (edgeDirection) // horizontal edge
-        {
-            isAv = isAvailable[p];
-            isAv &= ~0x2;
-        } else // vertical edge
-        {
-            isAv = isAvailable[p];
-            isAv &= ~0x1;
-        }
+        static const ImgIdx edgeStrides[4] = {_width, _width + 1, 1, -_width + 1};
+        static const ImgIdx isAvMasks[4][2] = {
+            {0b11111110, 0b11101111}, {0b11111101, 0b11011111}, {0b11111011, 0b10111111}, {0b11110111, 0b01111111}};
+        p += (ImgIdx)edgeIncident * edgeStrides[edgeDirection];
+        isAv = isAvailable[p] & isAvMasks[edgeDirection][edgeIncident];
     }
 
     return {p, isAv};
@@ -5348,8 +5369,9 @@ std::pair<ImgIdx, uint8_t> AlphaTree<Pixel>::computeFloodingContextHybridPartiti
 template <class Pixel>
 void AlphaTree<Pixel>::markRedundantEdges(int8_t *redundant_edge, const ImgIdx &p, const uint8_t &connected_neighbor,
                                           const uint8_t *qrank) {
-    // mark from the leaf to the stackTop _node to help finding hypernode levelroots
     const ImgIdx leaf1 = _parentAry[p];
+
+    // Mark from the leaf to the stackTop _node to help finding hypernode levelroots
     ImgIdx squirrel;
     for (squirrel = leaf1; _node[squirrel].parentIdx != squirrel; squirrel = _node[squirrel].parentIdx)
         _node[squirrel]._rootIdx = p;
@@ -5358,25 +5380,68 @@ void AlphaTree<Pixel>::markRedundantEdges(int8_t *redundant_edge, const ImgIdx &
     const ImgIdx shamt = _connectivity >> 2;
     const ImgIdx wstride_d = _width << shamt;
     const ImgIdx q = p << shamt;
-    if (connected_neighbor & 0x1) {
-        const ImgIdx leaf2 = _parentAry[p + _width];
-        if (qrank[q] > get_nearest_common_ancestor_level(p, leaf2))
-            redundant_edge[q] = 1;
-    }
-    if (connected_neighbor & 0x2) {
-        const ImgIdx leaf2 = _parentAry[p + 1];
-        if (qrank[q + 1] > get_nearest_common_ancestor_level(p, leaf2))
-            redundant_edge[q + 1] = 1;
-    }
-    if (connected_neighbor & 0x4) {
-        const ImgIdx leaf2 = _parentAry[p - 1];
-        if (qrank[q - 1] > get_nearest_common_ancestor_level(p, leaf2))
-            redundant_edge[q - 1] = 1;
-    }
-    if (connected_neighbor & 0x8) {
-        const ImgIdx leaf2 = _parentAry[p - _width];
-        if (qrank[q - wstride_d] > get_nearest_common_ancestor_level(p, leaf2))
-            redundant_edge[q - wstride_d] = 1;
+    if (_connectivity == 4) {
+        if (connected_neighbor & 0x1) {
+            const ImgIdx leaf2 = _parentAry[p + _width];
+            if (qrank[q] > get_nearest_common_ancestor_level(p, leaf2))
+                redundant_edge[q] = 1;
+        }
+        if (connected_neighbor & 0x2) {
+            const ImgIdx leaf2 = _parentAry[p + 1];
+            if (qrank[q + 1] > get_nearest_common_ancestor_level(p, leaf2))
+                redundant_edge[q + 1] = 1;
+        }
+        if (connected_neighbor & 0x4) {
+            const ImgIdx leaf2 = _parentAry[p - 1];
+            if (qrank[q - 1] > get_nearest_common_ancestor_level(p, leaf2))
+                redundant_edge[q - 1] = 1;
+        }
+        if (connected_neighbor & 0x8) {
+            const ImgIdx leaf2 = _parentAry[p - _width];
+            if (qrank[q - wstride_d] > get_nearest_common_ancestor_level(p, leaf2))
+                redundant_edge[q - wstride_d] = 1;
+        }
+    } else { // 8N
+        if (connected_neighbor & 0b00000001) {
+            const ImgIdx leaf2 = _parentAry[p + _width];
+            if (qrank[q] > get_nearest_common_ancestor_level(p, leaf2))
+                redundant_edge[q] = 1;
+        }
+        if (connected_neighbor & 0b00000010) {
+            const ImgIdx leaf2 = _parentAry[p + _width + 1];
+            if (qrank[q + 1] > get_nearest_common_ancestor_level(p, leaf2))
+                redundant_edge[q + 1] = 1;
+        }
+        if (connected_neighbor & 0b00000100) {
+            const ImgIdx leaf2 = _parentAry[p + 1];
+            if (qrank[q + 2] > get_nearest_common_ancestor_level(p, leaf2))
+                redundant_edge[q + 2] = 1;
+        }
+        if (connected_neighbor & 0b00001000) {
+            const ImgIdx leaf2 = _parentAry[p - _width + 1];
+            if (qrank[q + 3] > get_nearest_common_ancestor_level(p, leaf2))
+                redundant_edge[q + 3] = 1;
+        }
+        if (connected_neighbor & 0b00010000) {
+            const ImgIdx leaf2 = _parentAry[p - _width];
+            if (qrank[q - wstride_d] > get_nearest_common_ancestor_level(p, leaf2))
+                redundant_edge[q - wstride_d] = 1;
+        }
+        if (connected_neighbor & 0b00100000) {
+            const ImgIdx leaf2 = _parentAry[p - _width - 1];
+            if (qrank[q - wstride_d - 3] > get_nearest_common_ancestor_level(p, leaf2))
+                redundant_edge[q - wstride_d - 3] = 1;
+        }
+        if (connected_neighbor & 0b01000000) {
+            const ImgIdx leaf2 = _parentAry[p - 1];
+            if (qrank[q - 2] > get_nearest_common_ancestor_level(p, leaf2))
+                redundant_edge[q - 2] = 1;
+        }
+        if (connected_neighbor & 0b10000000) {
+            const ImgIdx leaf2 = _parentAry[p + _width - 1];
+            if (qrank[q + wstride_d - 1] > get_nearest_common_ancestor_level(p, leaf2))
+                redundant_edge[q + wstride_d - 1] = 1;
+        }
     }
 
     // Cleanup
@@ -5393,6 +5458,7 @@ void AlphaTree<Pixel>::HybridPilotFlooding(const Pixel *img, ImgIdx *startpidx, 
                                            ImgIdx blksz_y, ImgIdx npartition_x, ImgIdx npartition_y) {
 
     const ImgIdx imgSize = _width * _height;
+    const ImgIdx shamt = _connectivity >> 2;
 
     uint8_t *isVisited = (uint8_t *)Calloc((size_t)((imgSize)));
     uint8_t *isAvailable = (uint8_t *)Malloc((size_t)(imgSize));
@@ -5406,137 +5472,192 @@ void AlphaTree<Pixel>::HybridPilotFlooding(const Pixel *img, ImgIdx *startpidx, 
     // subtree_size allocation (no TSE)
     for (int blk = 0; blk < numpartitions; blk++)
         subtree_size[blk] = blockWidths[blk] * blockHeights[blk] * _connectivity;
-    {
-        ImgIdx shamt = _connectivity >> 2;
-        ImgIdx wstride_d = _width << shamt;
 
-        subtree_start[0] = 0;
-        for (int blk = 0; blk < numpartitions; blk++)
-            subtree_start[blk + 1] = subtree_size[blk] + subtree_start[blk];
+    subtree_start[0] = 0;
+    for (int blk = 0; blk < numpartitions; blk++)
+        subtree_start[blk + 1] = subtree_size[blk] + subtree_start[blk];
 
-        _maxSize = subtree_start[numpartitions];
-        _node = (AlphaNode<Pixel> *)Calloc((size_t)(_maxSize) * sizeof(AlphaNode<Pixel>));
+    _maxSize = subtree_start[numpartitions];
+    _node = (AlphaNode<Pixel> *)Calloc((size_t)(_maxSize) * sizeof(AlphaNode<Pixel>));
 
 #pragma omp parallel for schedule(dynamic, 1)
-        for (int blk = 0; blk < numpartitions; blk++) {
-            const ImgIdx blockArea = blockWidths[blk] * blockHeights[blk];
-            HierarQueue *queue = queues[blk];
-            ImgIdx nodeIdx = subtree_start[blk];
+    for (int blk = 0; blk < numpartitions; blk++) {
+        const ImgIdx blockArea = blockWidths[blk] * blockHeights[blk];
+        HierarQueue *queue = queues[blk];
+        ImgIdx nodeIdx = subtree_start[blk];
 
-            queue->set_queue(dhist + numlevels * blk);
+        queue->set_queue(dhist + numlevels * blk);
 
-            ImgIdx stackTop = nodeIdx++;
-            ImgIdx prevTop = stackTop;
-            Pixel currentLevel = subtree_max[blk];
-            _node[stackTop] = AlphaNode<Pixel>((double)currentLevel, stackTop);
+        ImgIdx stackTop = nodeIdx++;
+        ImgIdx prevTop = stackTop;
+        Pixel currentLevel = subtree_max[blk];
+        _node[stackTop] = AlphaNode<Pixel>((double)currentLevel, stackTop);
 
-            ImgIdx x0 = startpidx[blk]; /*starting point*/
-            queue->push((x0 << shamt) << 1, currentLevel);
-            prevTop = stackTop; /*to find redundant _node*/
-            bool isFirstPixel = true;
+        ImgIdx x0 = startpidx[blk]; /*starting point*/
+        queue->push((x0 << shamt) << 1, currentLevel);
+        prevTop = stackTop; /*to find redundant _node*/
+        bool isFirstPixel = true;
 
-            while (_node[stackTop].area < blockArea) // flooding
+        while (_node[stackTop].area < blockArea) // flooding
+        {
+            while ((int64_t)queue->min_level <= (int64_t)currentLevel) // flood all levels below currentLevel
             {
-                while ((int64_t)queue->min_level <= (int64_t)currentLevel) // flood all levels below currentLevel
-                {
-                    const auto [p, isAv] =
-                        computeFloodingContextHybridPartition(isFirstPixel, queue->pop(), isAvailable);
+                const auto [p, isAv] = getFloodingContext(isFirstPixel, queue->pop(), isAvailable);
 
-                    if (isVisited[p]) {
-                        queue->find_minlev();
-                        continue;
+                if (isVisited[p]) {
+                    queue->find_minlev();
+                    continue;
+                }
+                isVisited[p] = 1;
+
+                // printf("[block %d] Visiting %d at %f\n", blk, p, (double)queue->min_level);
+
+                uint8_t connected_neighbor = 0;
+                const ImgIdx wstride = _width << shamt;
+                auto packEdgeIncidence = [](const ImgIdx &edgeIndex, bool edgeIncidence) -> ImgIdx {
+                    if (edgeIncidence)
+                        return (edgeIndex << 1) | (ImgIdx)0b1;
+                    else
+                        return (edgeIndex << 1) & (ImgIdx)~0b1;
+                };
+
+                if (_connectivity == 4) {
+                    const ImgIdx q = p << shamt;
+                    if (is_available(isAv, 0)) {
+                        if (isVisited[p + _width])
+                            connected_neighbor |= 0b0001;
+                        else
+                            queue->push(packEdgeIncidence(q, 1), qrank[q]);
                     }
-                    isVisited[p] = 1;
-                    uint8_t connected_neighbor = 0;
-                    if (_connectivity == 4) {
-                        const ImgIdx q = p << shamt;
-                        if (is_available(isAv, 0)) {
-                            if (isVisited[p + _width])
-                                connected_neighbor |= 0x1;
-                            else
-                                queue->push((q << 1) | 1, qrank[q]);
-                        }
-                        if (is_available(isAv, 1)) {
-                            if (isVisited[p + 1])
-                                connected_neighbor |= 0x2;
-                            else
-                                queue->push(((q + 1) << 1) | 1, qrank[q + 1]);
-                        }
-                        if (is_available(isAv, 2)) {
-                            if (isVisited[p - 1])
-                                connected_neighbor |= 0x4;
-                            else
-                                queue->push(((q - 1) << 1), qrank[q - 1]);
-                        }
-                        if (is_available(isAv, 3)) {
-                            if (isVisited[p - _width])
-                                connected_neighbor |= 0x8;
-                            else
-                                queue->push(((q - wstride_d) << 1), qrank[q - wstride_d]);
-                        }
-                    } else { // 8N
+                    if (is_available(isAv, 1)) {
+                        if (isVisited[p + 1])
+                            connected_neighbor |= 0b0010;
+                        else
+                            queue->push(packEdgeIncidence(q + 1, 1), qrank[q + 1]);
                     }
-
-                    const auto pixVal = img[p];
-                    if ((int64_t)currentLevel > (int64_t)queue->min_level) { // Go to lower level
-                        currentLevel = queue->min_level;
-
-                        const ImgIdx newStackTop = nodeIdx++;
-                        _node[newStackTop] = AlphaNode<Pixel>(pixVal, (double)currentLevel, stackTop);
-                        stackTop = newStackTop;
-
-                        if (currentLevel) {
-                            const ImgIdx singletonNodeIdx = nodeIdx++;
-                            _node[singletonNodeIdx] = AlphaNode<Pixel>(pixVal, 0.0, stackTop);
-                            prevTop = singletonNodeIdx;
-                            _parentAry[p] = singletonNodeIdx;
-                        } else
-                            _parentAry[p] = stackTop;
-                    } else {
-                        queue->find_minlev();
-
-                        if (currentLevel) {
-                            const ImgIdx singletonNodeIdx = nodeIdx++;
-                            _node[singletonNodeIdx] = AlphaNode<Pixel>(pixVal, 0.0, stackTop);
-                            _node[stackTop].add(_node[singletonNodeIdx]);
-                            _parentAry[p] = singletonNodeIdx;
-                        } else {
-                            _parentAry[p] = stackTop;
-                            _node[stackTop].add(pixVal);
-                        }
+                    if (is_available(isAv, 2)) {
+                        if (isVisited[p - 1])
+                            connected_neighbor |= 0b0100;
+                        else
+                            queue->push(packEdgeIncidence(q - 1, 0), qrank[q - 1]);
                     }
-
-                    if (connected_neighbor)
-                        markRedundantEdges(redundant_edge, p, connected_neighbor, qrank);
+                    if (is_available(isAv, 3)) {
+                        if (isVisited[p - _width])
+                            connected_neighbor |= 0b1000;
+                        else
+                            queue->push(packEdgeIncidence(q - wstride, 0), qrank[q - wstride]);
+                    }
+                } else { // 8N
+                    const ImgIdx q = p << shamt;
+                    if (is_available(isAv, 0)) {
+                        if (isVisited[p + _width])
+                            connected_neighbor |= 0b00000001;
+                        else
+                            queue->push(packEdgeIncidence(q, 1), qrank[q]);
+                    }
+                    if (is_available(isAv, 1)) {
+                        if (isVisited[p + _width + 1])
+                            connected_neighbor |= 0b00000010;
+                        else
+                            queue->push(packEdgeIncidence(q + 1, 1), qrank[q + 1]);
+                    }
+                    if (is_available(isAv, 2)) {
+                        if (isVisited[p + 1])
+                            connected_neighbor |= 0b00000100;
+                        else
+                            queue->push(packEdgeIncidence(q + 2, 1), qrank[q + 2]);
+                    }
+                    if (is_available(isAv, 3)) {
+                        if (isVisited[p - _width + 1])
+                            connected_neighbor |= 0b00001000;
+                        else
+                            queue->push(packEdgeIncidence(q + 3, 1), qrank[q + 3]);
+                    }
+                    if (is_available(isAv, 4)) {
+                        if (isVisited[p - _width])
+                            connected_neighbor |= 0b00010000;
+                        else
+                            queue->push(packEdgeIncidence(q - wstride, 0), qrank[q - wstride]);
+                    }
+                    if (is_available(isAv, 5)) {
+                        if (isVisited[p - _width - 1])
+                            connected_neighbor |= 0b00100000;
+                        else
+                            queue->push(packEdgeIncidence(q - wstride - 3, 0), qrank[q - wstride - 3]);
+                    }
+                    if (is_available(isAv, 6)) {
+                        if (isVisited[p - 1])
+                            connected_neighbor |= 0b01000000;
+                        else
+                            queue->push(packEdgeIncidence(q - 2, 0), qrank[q - 2]);
+                    }
+                    if (is_available(isAv, 7)) {
+                        if (isVisited[p + _width - 1])
+                            connected_neighbor |= 0b10000000;
+                        else
+                            queue->push(packEdgeIncidence(q + wstride - 1, 0), qrank[q + wstride - 1]);
+                    }
                 }
 
-                // Remove redundant node
-                if (_node[prevTop].parentIdx == stackTop && _node[prevTop].area == _node[stackTop].area) {
-                    _node[prevTop].parentIdx = _node[stackTop].parentIdx;
-                    stackTop = prevTop;
-                }
+                const auto pixVal = img[p];
+                if ((int64_t)currentLevel > (int64_t)queue->min_level) { // Go to lower level
+                    currentLevel = queue->min_level;
 
-                if (_node[stackTop].area < blockArea) {
-                    // go to higher level
-                    ImgIdx nextStackTop = _node[stackTop].parentIdx;
-                    if ((int64_t)queue->min_level < (int64_t)_node[nextStackTop].alpha) { // new level from queue
-                        const ImgIdx queueTop = nodeIdx++;
+                    const ImgIdx newStackTop = nodeIdx++;
+                    _node[newStackTop] = AlphaNode<Pixel>(pixVal, (double)currentLevel, stackTop);
+                    stackTop = newStackTop;
 
-                        _node[queueTop] = AlphaNode<Pixel>(queue->min_level, _node[stackTop].parentIdx);
-                        _node[queueTop].add(_node[stackTop]);
-                        _node[stackTop].parentIdx = queueTop;
-                        nextStackTop = queueTop;
+                    if (currentLevel) {
+                        const ImgIdx singletonNodeIdx = nodeIdx++;
+                        _node[singletonNodeIdx] = AlphaNode<Pixel>(pixVal, 0.0, stackTop);
+                        prevTop = singletonNodeIdx;
+                        _parentAry[p] = singletonNodeIdx;
                     } else
-                        _node[nextStackTop].add(_node + stackTop);
+                        _parentAry[p] = stackTop;
+                } else {
+                    queue->find_minlev();
 
-                    prevTop = stackTop;
-                    stackTop = nextStackTop;
-                    currentLevel = _node[stackTop].alpha;
+                    if (currentLevel) {
+                        const ImgIdx singletonNodeIdx = nodeIdx++;
+                        _node[singletonNodeIdx] = AlphaNode<Pixel>(pixVal, 0.0, stackTop);
+                        _node[stackTop].add(_node[singletonNodeIdx]);
+                        _parentAry[p] = singletonNodeIdx;
+                    } else {
+                        _parentAry[p] = stackTop;
+                        _node[stackTop].add(pixVal);
+                    }
                 }
+
+                if (connected_neighbor)
+                    markRedundantEdges(redundant_edge, p, connected_neighbor, qrank);
             }
-            _node[stackTop].parentIdx = ROOTIDX;
-            subtree_cur[blk] = nodeIdx;
+
+            // Remove redundant node
+            if (_node[prevTop].parentIdx == stackTop && _node[prevTop].area == _node[stackTop].area) {
+                _node[prevTop].parentIdx = _node[stackTop].parentIdx;
+                stackTop = prevTop;
+            }
+
+            if (_node[stackTop].area < blockArea) {
+                // go to higher level
+                ImgIdx nextStackTop = _node[stackTop].parentIdx;
+                if ((int64_t)queue->min_level < (int64_t)_node[nextStackTop].alpha) { // new level from queue
+                    const ImgIdx queueTop = nodeIdx++;
+
+                    _node[queueTop] = AlphaNode<Pixel>(queue->min_level, _node[stackTop].parentIdx);
+                    _node[queueTop].add(_node[stackTop]);
+                    _node[stackTop].parentIdx = queueTop;
+                    nextStackTop = queueTop;
+                } else
+                    _node[nextStackTop].add(_node + stackTop);
+
+                prevTop = stackTop;
+                stackTop = nextStackTop;
+                currentLevel = _node[stackTop].alpha;
+            }
         }
+        _node[stackTop].parentIdx = ROOTIDX;
+        subtree_cur[blk] = nodeIdx;
     }
 
     if (numpartitions > 1)
@@ -5558,6 +5679,7 @@ void AlphaTree<Pixel>::HybridPilotFlooding(const Pixel *img, ImgIdx *startpidx, 
     Free(isAvailable);
 }
 
+// hp
 template <class Pixel> void AlphaTree<Pixel>::HybridParallel(const Pixel *img, int numthreads) {
     clear();
     const ImgIdx imgSize = _width * _height;
@@ -5570,7 +5692,8 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(const Pixel *img, i
     uint8_t *qrank = (uint8_t *)Malloc((size_t)dimgSize);
     _parentAry = (ImgIdx *)Calloc((size_t)imgSize * sizeof(ImgIdx));
 
-    ImgIdx numpartitionsTarget = _min(imgSize / 2, _min(256, numthreads * 3));
+    // ImgIdx numpartitionsTarget = _min(imgSize / 2, _min(256, numthreads * 3));
+    ImgIdx numpartitionsTarget = _min(imgSize / 2, _min(256, numthreads)); // TODO: study numtrhead constandst
     const auto [npartition_x, npartition_y] = computePartitionSize(numpartitionsTarget);
 
     ImgIdx binsize = nredges / numpartitionsTarget;
@@ -5593,11 +5716,28 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallel(const Pixel *img, i
 
     int32_t *rankToIndex = (int32_t *)Calloc(nredges * sizeof(int32_t));
 
-    // HP
     computeDifferenceAndSort(indexToRank, rankitem, img, nredges, rankToIndex);
+
+    // uint8_t *isVisited = (uint8_t *)Calloc((size_t)((imgSize)));
+    // printGraph(isVisited, nullptr, img);
+    // Free(isVisited);
+
+    // for (int rank = 0; rank < nredges; rank++) {
+    //     auto index = rankToIndex[rank];
+    //     printf("rank[%d]: ", rank);
+    //     rankitem[index].print();
+    //     printf("\n");
+    // }
+    // std::getchar();
 
     set_subblock_properties(startpidx, blockWidths, blockHeights, blocksize, npartition_x, npartition_y, blksz_x,
                             blksz_y, blksz_xn, blksz_yn);
+
+    // ImgIdx bsum = 0;
+    // for (int i = 0; i < numpartitions; i++)
+    //     bsum += blocksize[i];
+    // printf("bs sum = %d / nredges = %d \n", bsum, nredges);
+
     quantize_ranks_compute_histogram(qrank, indexToRank, img, dhist, blockWidths, blockHeights, startpidx, binsize,
                                      numbins, npartition_x, npartition_y, subtree_max);
 
@@ -5707,14 +5847,6 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallelOld(const Pixel *img
     int32_t *rankToIndex = (int32_t *)Calloc(nredges * sizeof(int32_t));
 
     computeDifferenceAndSort(rank, rankitem, img, nredges, rankToIndex);
-
-    // printGraph(isVisited, (uint8_t *)nullptr, img);
-    // for (int r = 0; r < nredges; r++) {
-    //     printf("Rank[%d]: index = %d, ", r, rankToIndex[r]);
-    //     rankitem[rankToIndex[r]].print();
-    //     printf("\n");
-    // }
-    // return;
 
     set_subblock_properties(startpidx, blockWidths, blockHeights, blocksize, npartition_x, npartition_y, blksz_x,
                             blksz_y, blksz_xn, blksz_yn);
@@ -5830,8 +5962,8 @@ template <class Pixel> void AlphaTree<Pixel>::HybridParallelOld(const Pixel *img
                 {
                     ImgIdx qitem = queue->pop();
                     ImgIdx didx = qitem >> 1;
-                    // the pixel which pushed this item into the queue, where it is easier to find the level of the edge
-                    // (level = stackTop)
+                    // the pixel which pushed this item into the queue, where it is easier to find the level of the
+                    // edge (level = stackTop)
 
                     p = didx >> shamt;
 

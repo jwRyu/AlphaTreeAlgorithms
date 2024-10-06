@@ -56,7 +56,7 @@ using namespace pmt;
 #define ROOTIDX -1
 
 #define CHKRNG(var, a, b) ((var >= a) && (var < b))
-#define QUANTIZE_RANK(rank, binsize) (rank) / (binsize)
+#define QUANTIZE_RANK(rank, binsize) (uint8_t)((rank) / (binsize))
 
 template <class Pixel> class AlphaNode {
   public:
@@ -114,7 +114,6 @@ template <class Pixel> class AlphaTree {
     void AreaFilter(double *outimg, double area);
 
     void printTree() const;
-    void printGraph(const uint8_t *isVisited, const bool *isRedundant, const Pixel *img) const;
     void printGraph(const uint8_t *isVisited, const uint8_t *edge, const Pixel *img) const;
     void printParentAry() const;
     void printAll(const uint8_t *isVisited, const uint8_t *edge, const Pixel *img) const;
@@ -151,8 +150,7 @@ template <class Pixel> class AlphaTree {
                             const uint8_t *qrank);
     ImgIdx mergeSubtreeHybrid(uint8_t *dimg, ImgIdx blksz_x, ImgIdx blksz_y, ImgIdx npartition_x, ImgIdx npartition_y,
                               ImgIdx *subtree_cur);
-    std::pair<ImgIdx, uint8_t> computeFloodingContextHybridPartition(bool &isFirstPixel, const ImgIdx &qitem,
-                                                                     const uint8_t *isAvailable);
+    std::pair<ImgIdx, uint8_t> getFloodingContext(bool &isFirstPixel, const ImgIdx &qitem, const uint8_t *isAvailable);
 
     ImgIdx mergePartition(Pixel *dimg, int64_t blksz_x, int64_t blksz_y, ImgIdx npartition_x, ImgIdx npartition_y,
                           ImgIdx *subtree_cur);
