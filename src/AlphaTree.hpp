@@ -142,6 +142,7 @@ template <class Pixel> class AlphaTree {
     void HybridParallel(const Pixel *img, int numthreads);
     void HybridParallelOld(const Pixel *img, int numthreads);
 
+    ImgIdx decodeImageIndex(const ImgIdx &qitem);
     void HybridPilotFlooding(const Pixel *img, ImgIdx *startpidx, int8_t *redundant_edge, ImgIdx numpartitions,
                              ImgIdx *blocksize, ImgIdx *blockWidths, ImgIdx *blockHeights, ImgIdx numlevels,
                              ImgIdx *subtree_cur, ImgIdx *subtree_max, ImgIdx *dhist, uint8_t *qrank, ImgIdx blksz_x,
