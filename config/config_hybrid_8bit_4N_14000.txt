@@ -1,13 +1,10 @@
-# ImageFileName=001_bw.png
-# ImageFileName=/home/jiwoo/2024/TIP/dataset
-# ImageFileName=/home/jiwoo/2024/TIP/dataset/001_S2A_MSIL2A_20241006T104921_N0511_R051_T31UES_20241006T151849-ql.png
-ImageFileName = KinhoEdgeBoosted.png
+ImageFileName=rand
 LogFileName=test
-UseRandomlyGeneratedImages=0
-RandomlyGeneratedImageWidth=4000
-RandomlyGeneratedImageHeight=4000
+UseRandomlyGeneratedImages=1
+RandomlyGeneratedImageWidth=14000
+RandomlyGeneratedImageHeight=14000
 NumberOfChannels=1
-NumberOfThreads=1
+NumberOfThreads=256
 
 # List of algorithms
 #
@@ -36,12 +33,12 @@ NumberOfThreads=1
 # 16. FloodHierHeapQueueNoCache
 # 17. FloodHeapQueueNaiveNoCache
 # 18. FloodHierHeapQueuePar
-AlphaTreeAlgorithm=FloodHierHeapQueue
+AlphaTreeAlgorithm=HybridParallel
 
-BitDepth=32
+BitDepth=8
 UseTreeSizeEstimation=1
-Connectivity=8
-NumberOfTestIterations=1
+Connectivity=4
+NumberOfTestIterations=5
 ParameterInteger1=3
 ParameterInteger2=2
 ParameterInteger3=3

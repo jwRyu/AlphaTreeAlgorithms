@@ -152,14 +152,28 @@ void AlphaTree<Pixel>::BuildAlphaTree(const Pixel *img, int height_in, int width
     }
 }
 
-template <class Pixel> void AlphaTree<Pixel>::AlphaFilter(Pixel *outimg, float alpha) {
-    for (int i = 0; i < _curSize; i++)
+template <class Pixel> void AlphaTree<Pixel>::AlphaFilter(Pixel *outimg, float alpha, size_t area) {
+#if RGB_FILTER
+    const bool randomNodeColor = true;
+#endif
+    for (int i = 0; i < _curSize; i++) {
+#if RGB_FILTER
+        if (randomNodeColor) {
+            _node[i].rgb[0] =
+                float(std::numeric_limits<Pixel>::max()) * float(rand()) / float(RAND_MAX) * _node[i].area;
+            _node[i].rgb[1] =
+                float(std::numeric_limits<Pixel>::max()) * float(rand()) / float(RAND_MAX) * _node[i].area;
+            _node[i].rgb[2] =
+                float(std::numeric_limits<Pixel>::max()) * float(rand()) / float(RAND_MAX) * _node[i].area;
+        }
+#endif
         _node[i]._rootIdx = _node[i].parentIdx;
+    }
 
     const ImgIdx imgSize = _height * _width;
     for (int i = 0; i < imgSize; i++) {
-        if (i % 10000 == 0)
-            printf("index / imgSize = %d %d (%f)%% \n", (int)i, (int)imgSize, 100.0 * (double)i / (double)imgSize);
+        // if (i % 10000 == 0)
+        //     printf("index / imgSize = %d %d (%f)%% \n", (int)i, (int)imgSize, 100.0 * (double)i / (double)imgSize);
         ImgIdx index = _parentAry ? _parentAry[i] : i;
         ImgIdx startIdx = index;
         ImgIdx prevIdx = index;
@@ -178,44 +192,19 @@ template <class Pixel> void AlphaTree<Pixel>::AlphaFilter(Pixel *outimg, float a
 #if RGB_FILTER
             const auto pMax = std::numeric_limits<Pixel>::max();
             const auto pMin = std::numeric_limits<Pixel>::min();
-            outimg[i] = CLIP(_node[index].rgb[0] / (float)_node[index].area, pMin, pMax);
-            outimg[i + imgSize] = CLIP(_node[index].rgb[1] / (float)_node[index].area, pMin, pMax);
-            outimg[i + 2 * imgSize] = CLIP(_node[index].rgb[2] / (float)_node[index].area, pMin, pMax);
+            if ((size_t)_node[index].area > area) {
+                outimg[i] = CLIP(_node[index].rgb[0] / (float)_node[index].area, pMin, pMax);
+                outimg[i + imgSize] = CLIP(_node[index].rgb[1] / (float)_node[index].area, pMin, pMax);
+                outimg[i + 2 * imgSize] = CLIP(_node[index].rgb[2] / (float)_node[index].area, pMin, pMax);
+            } else {
+                outimg[i] = 0;
+                outimg[i + imgSize] = 0;
+                outimg[i + 2 * imgSize] = 0;
+            }
 #else
             outimg[i] = (double)_node[index].area;
 #endif
         }
-    }
-}
-
-template <class Pixel> void AlphaTree<Pixel>::AlphaFilter(double *outimg, double alpha) {
-    ImgIdx i, imgSize;
-    alpha = _node[_rootIdx].alpha * alpha;
-
-    imgSize = _height * _width;
-    for (i = 0; i < imgSize; i++) {
-        ImgIdx index = _parentAry ? _parentAry[i] : i;
-        while (index != ROOTIDX && index < _curSize && _node[index] < alpha)
-            index = _node[index].parentIdx;
-        if (index >= 0 && index < _curSize)
-            outimg[i] = (double)_node[index].area;
-    }
-}
-
-template <class Pixel> void AlphaTree<Pixel>::AreaFilter(double *outimg, double area) {
-    ImgIdx i, imgSize;
-    ImgIdx iarea;
-    AlphaNode<Pixel> *pNode;
-
-    imgSize = _height * _width;
-    iarea = (ImgIdx)(area * (double)imgSize);
-    iarea = _min(imgSize, _max(0, iarea));
-    // val = 1;
-    for (i = 0; i < imgSize; i++) {
-        pNode = _parentAry ? &_node[_parentAry[i]] : &_node[i];
-        while (pNode->parentIdx != -1 && pNode->area < iarea)
-            pNode = &_node[pNode->parentIdx];
-        outimg[i] = (double)pNode->alpha;
     }
 }
 

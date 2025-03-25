@@ -93,15 +93,15 @@ module load OpenCV/4.6.0-foss-2022a-contrib
 ./AlphaTree config/config_hhq_64bit_8N_10000.txt | tee -a output/out_size_hhq_64bit_8N.txt
 
 
-./AlphaTree config/config_hq_8bit_4N_16000.txt
-./AlphaTree config/config_hq_8bit_8N_16000.txt
-./AlphaTree config/config_hq_16bit_4N_16000.txt
-./AlphaTree config/config_hq_16bit_8N_16000.txt
-./AlphaTree config/config_hhq_8bit_4N_16000.txt
-./AlphaTree config/config_hhq_8bit_8N_16000.txt
-./AlphaTree config/config_hhq_16bit_4N_16000.txt
-./AlphaTree config/config_hhq_16bit_8N_16000.txt
-./AlphaTree config/config_hhq_32bit_4N_16000.txt
-./AlphaTree config/config_hhq_32bit_8N_16000.txt
-./AlphaTree config/config_hhq_64bit_4N_16000.txt
-./AlphaTree config/config_hhq_64bit_8N_16000.txt
+./AlphaTree config/config_hq_8bit_4N_12000.txt
+./AlphaTree config/config_hq_8bit_8N_12000.txt
+./AlphaTree config/config_hq_16bit_4N_12000.txt
+./AlphaTree config/config_hq_16bit_8N_12000.txt
+./AlphaTree config/config_hhq_8bit_4N_12000.txt
+./AlphaTree config/config_hhq_8bit_8N_12000.txt
+./AlphaTree config/config_hhq_16bit_4N_12000.txt
+./AlphaTree config/config_hhq_16bit_8N_12000.txt
+./AlphaTree config/config_hhq_32bit_4N_12000.txt
+./AlphaTree config/config_hhq_32bit_8N_12000.txt
+./AlphaTree config/config_hhq_64bit_4N_12000.txt
+./AlphaTree config/config_hhq_64bit_8N_12000.txt

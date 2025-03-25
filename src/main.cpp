@@ -7,7 +7,7 @@
 
 // args: Filename, nchannels, numthreads, testimgsize, algorithmcode, bitdepth, tseflag
 int main(int argc, char **argv) {
-    // srand(time(NULL));
+    srand(time(NULL));
 
     const auto configFileName = argc < 2 ? "config.txt" : std::string(argv[1]);
     alphatreeConfig.initialize(configFileName);
@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
 
     auto [image, w, h, ch] = PNGCodec::imread(params.UseRandomlyGeneratedImages ? "RAND" : filePath);
 
-    const bool reduceImageBitdepth = true;
+    const bool reduceImageBitdepth = false;
 
     const auto &width = params.UseRandomlyGeneratedImages ? params.randomGenImageWidth : w;
     const auto &height = params.UseRandomlyGeneratedImages ? params.randomGenImageHeight : h;
@@ -120,10 +120,16 @@ int main(int argc, char **argv) {
                 tree.BuildAlphaTree(image.data(), height, width, nch, dMetric, conn, algCode, nthr, tse, fparam1,
                                     fparam2, iparam1);
 
-                const bool rgbFilter = false;
+                const bool rgbFilter = true;
                 if (rgbFilter) {
-                    tree.AlphaFilter(image.data(), 170);
-                    PNGCodec::imwrite(image, w, h, ch, "out005.png");
+
+                    int sizeThr = 16;
+                    for (int i = 1; i < 300; i++) {
+                        int alphaThr = 0.1 + i * 10;
+                        tree.AlphaFilter(image.data(), alphaThr, sizeThr);
+                        std::string str = "out_" + std::to_string(alphaThr) + ".png";
+                        PNGCodec::imwrite(image, w, h, ch, str.c_str());
+                    }
                 }
 
                 tEnd = get_wall_time();
