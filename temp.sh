@@ -1,1 +1,0 @@
-./AlphaTree test_config.txt | tee -a test_output.txt
